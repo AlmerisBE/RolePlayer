@@ -27,7 +27,6 @@ public class ConfigurationServiceTests {
     [Fact]
     public void ConfigurationService_Initialization_CreatesNewConfigIfNull() {
         var mockPluginInterface = Substitute.For<IDalamudPluginInterface>();
-
         mockPluginInterface.GetPluginConfig().Returns((IPluginConfiguration)null!);
 
         var service = new ConfigurationService(mockPluginInterface);
@@ -43,9 +42,7 @@ public class ConfigurationServiceTests {
         var service = new ConfigurationService(mockPluginInterface);
         var config = service.GetConfig();
 
-        // Modify a valid existing property
         config.Version = 2;
-
         service.Save();
 
         mockPluginInterface.Received(1).SavePluginConfig(config);

@@ -19,7 +19,6 @@ public class ConfigWindow : Window {
     }
 
     public override void Draw() {
-        // Placeholder for future configuration settings (e.g., Hide Locked Emotes)
-        ImGui.Text("Configuration is currently managed via the main emote window.");
+        ImGui.TextWrapped("Configuration options will be available here.");
     }
 }

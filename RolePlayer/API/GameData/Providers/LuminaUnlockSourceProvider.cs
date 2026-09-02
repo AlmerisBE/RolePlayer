@@ -24,7 +24,6 @@ public class LuminaUnlockSourceProvider : IUnlockSourceProvider {
             return;
         }
 
-        // 1. Collecter tous les UnlockLinks d'emotes valides
         var emoteUnlockLinks = new HashSet<uint>();
         foreach (var emote in emoteSheet) {
             if (emote.UnlockLink != 0) {
@@ -32,7 +31,6 @@ public class LuminaUnlockSourceProvider : IUnlockSourceProvider {
             }
         }
 
-        // 2. Chercher les objets correspondants en croisant les données
         foreach (var item in itemSheet) {
             var itemAction = item.ItemAction.ValueNullable;
             if (!itemAction.HasValue) {
