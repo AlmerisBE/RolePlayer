@@ -1,11 +1,11 @@
-﻿using Dalamud.Game.Command;
+﻿namespace RolePlayer.UI.Command.Services;
+
+using Dalamud.Game.Command;
 using Dalamud.Plugin.Services;
 using RolePlayer.UI.Command.Contracts;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-
-namespace RolePlayer.UI.Command.Services;
 
 public class CommandDispatcher : IDisposable {
     private ICommandManager commandManager;
@@ -23,7 +23,9 @@ public class CommandDispatcher : IDisposable {
 
     private void OnCommand(string command, string arguments) {
         var args = arguments.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
-        var subCommand = args.Length > 0 ? args[0].ToLowerInvariant() : string.Empty;
+
+        // Si aucun argument n'est fourni, on cible "emotes" par défaut
+        var subCommand = args.Length > 0 ? args[0].ToLowerInvariant() : "emotes";
         var subArguments = args.Length > 1 ? args[1] : string.Empty;
 
         var targetCommand = this.commands.FirstOrDefault(c => c.CommandTrigger.Equals(subCommand, StringComparison.InvariantCultureIgnoreCase));
