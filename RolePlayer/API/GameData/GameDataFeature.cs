@@ -1,7 +1,6 @@
 ﻿namespace RolePlayer.API.GameData;
 
 using Microsoft.Extensions.DependencyInjection;
-using RolePlayer.API.GameData.Provider;
 using RolePlayer.API.GameData.Providers;
 using RolePlayer.API.Penumbra.Contracts;
 using RolePlayer.Core.Framework;
@@ -13,5 +12,6 @@ public class GameDataFeature : IFeatureModule {
         services.AddSingleton<IPlayerStateProvider, PlayerStateProvider>();
         services.AddSingleton<IUnlockSourceProvider, MockUnlockSourceProvider>();
         services.AddSingleton<IEmotePathProvider, LuminaEmotePathProvider>();
+        services.AddSingleton<IEmoteDebugService, LuminaEmoteDebugService>();
     }
 }

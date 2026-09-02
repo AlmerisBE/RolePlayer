@@ -1,4 +1,4 @@
-﻿namespace RolePlayer.API.GameData.Provider;
+﻿namespace RolePlayer.API.GameData.Providers;
 
 using RolePlayer.UI.EmoteBrowser.Contracts;
 

@@ -2,19 +2,24 @@
 
 using Dalamud.Bindings.ImGui;
 using RolePlayer.UI.EmoteBrowser.Contracts;
+using System.Numerics;
 
 public class EmoteDetailsPanel {
     private IUnlockSourceProvider unlockSourceProvider;
     private IModStateProvider modStateProvider;
     private IEmoteSelectionState selectionState;
+    private IEmoteDebugService debugService;
 
     public EmoteDetailsPanel(
         IUnlockSourceProvider unlockSourceProvider,
         IModStateProvider modStateProvider,
-        IEmoteSelectionState selectionState) {
+        IEmoteSelectionState selectionState,
+        IEmoteDebugService debugService) {
+
         this.unlockSourceProvider = unlockSourceProvider;
         this.modStateProvider = modStateProvider;
         this.selectionState = selectionState;
+        this.debugService = debugService;
     }
 
     public void Draw() {
@@ -29,10 +34,16 @@ public class EmoteDetailsPanel {
 
         var modName = this.modStateProvider.GetModNameModifyingEmote(emote.Id);
         if (!string.IsNullOrEmpty(modName)) {
-            ImGui.TextColored(new System.Numerics.Vector4(0.2f, 0.8f, 0.2f, 1.0f), $"Modified by: {modName}");
+            ImGui.TextColored(new Vector4(0.2f, 0.8f, 0.2f, 1.0f), $"Modified by: {modName}");
         }
 
         var unlockSource = this.unlockSourceProvider.GetUnlockSource(emote.Id);
         ImGui.TextWrapped($"Source: {unlockSource}");
+
+        ImGui.Separator();
+
+        if (ImGui.Button("Debug to Console")) {
+            this.debugService.LogEmoteDetails(emote.Id);
+        }
     }
 }
