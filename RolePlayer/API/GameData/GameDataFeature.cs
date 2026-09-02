@@ -13,5 +13,6 @@ public class GameDataFeature : IFeatureModule {
         services.AddSingleton<IUnlockSourceProvider, MockUnlockSourceProvider>();
         services.AddSingleton<IEmotePathProvider, LuminaEmotePathProvider>();
         services.AddSingleton<IEmoteDebugService, LuminaEmoteDebugService>();
+        services.AddSingleton<IEmoteExecutionService, EmoteExecutionProvider>();
     }
 }

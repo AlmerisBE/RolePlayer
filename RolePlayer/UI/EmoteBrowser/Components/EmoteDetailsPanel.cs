@@ -9,17 +9,20 @@ public class EmoteDetailsPanel {
     private IModStateProvider modStateProvider;
     private IEmoteSelectionState selectionState;
     private IEmoteDebugService debugService;
+    private IEmoteExecutionService executionService;
 
     public EmoteDetailsPanel(
         IUnlockSourceProvider unlockSourceProvider,
         IModStateProvider modStateProvider,
         IEmoteSelectionState selectionState,
-        IEmoteDebugService debugService) {
+        IEmoteDebugService debugService,
+        IEmoteExecutionService executionService) { // Injection du nouveau service
 
         this.unlockSourceProvider = unlockSourceProvider;
         this.modStateProvider = modStateProvider;
         this.selectionState = selectionState;
         this.debugService = debugService;
+        this.executionService = executionService;
     }
 
     public void Draw() {
@@ -42,6 +45,19 @@ public class EmoteDetailsPanel {
 
         ImGui.Separator();
 
+        // Ajout du bouton d'exécution conditionnel
+        if (emote.IsUnlocked) {
+            if (ImGui.Button("Execute Emote", new Vector2(-1, 30))) {
+                this.executionService.ExecuteEmote(emote.Id);
+            }
+        }
+        else {
+            ImGui.TextDisabled("You have not unlocked this emote yet.");
+        }
+
+        ImGui.Separator();
+
+        // Bouton de débogage existant
         if (ImGui.Button("Debug to Console")) {
             this.debugService.LogEmoteDetails(emote.Id);
         }
