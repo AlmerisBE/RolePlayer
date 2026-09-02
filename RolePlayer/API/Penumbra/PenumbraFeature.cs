@@ -7,6 +7,6 @@ using RolePlayer.UI.EmoteBrowser.Contracts;
 
 public class PenumbraFeature : IFeatureModule {
     public void RegisterServices(IServiceCollection services) {
-        services.AddSingleton<IModStateProvider, MockModStateProvider>();
+        services.AddSingleton<IModStateProvider, PenumbraIpcProvider>();
     }
 }

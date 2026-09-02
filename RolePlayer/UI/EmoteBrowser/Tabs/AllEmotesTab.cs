@@ -53,7 +53,7 @@ public class AllEmotesTab : IEmoteBrowserTab {
     private void LoadEmotes() {
         var baseEmotes = this.emoteRepository.GetBaseEmotes();
         foreach (var emote in baseEmotes) {
-            emote.IsUnlocked = this.playerStateProvider.IsEmoteUnlocked(emote.Id);
+            emote.IsUnlocked = !emote.IsUnlockable || this.playerStateProvider.IsEmoteUnlocked(emote.Id);
             this.emotesCache.Add(emote);
         }
     }

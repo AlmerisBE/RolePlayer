@@ -15,7 +15,8 @@ public class RolePlayerPluginTests {
         var mockCommandManager = Substitute.For<ICommandManager>();
         var mockClientState = Substitute.For<IClientState>();
         var mockLogger = Substitute.For<IPluginLog>();
-        var mockDataManager = Substitute.For<IDataManager>(); // Nouveau mock
+        var mockDataManager = Substitute.For<IDataManager>();
+        var mockObjectTable = Substitute.For<IObjectTable>(); // Nouveau mock
 
         // Act & Assert
         var exception = Record.Exception(() => new RolePlayerPlugin(
@@ -24,7 +25,8 @@ public class RolePlayerPluginTests {
             mockCommandManager,
             mockClientState,
             mockLogger,
-            mockDataManager)); // Ajouté au constructeur
+            mockDataManager,
+            mockObjectTable)); // Ajouté au constructeur
 
         Assert.Null(exception);
     }

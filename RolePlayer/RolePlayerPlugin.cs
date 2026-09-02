@@ -21,7 +21,8 @@ public sealed class RolePlayerPlugin : IDalamudPlugin {
         ICommandManager commandManager,
         IClientState clientState,
         IPluginLog pluginLog,
-        IDataManager dataManager) { // Ajout de IDataManager ici
+        IDataManager dataManager,
+        IObjectTable objectTable) {
 
         this.pluginInterface = pluginInterface;
         this.windowSystem = new WindowSystem("RolePlayer");
@@ -34,7 +35,8 @@ public sealed class RolePlayerPlugin : IDalamudPlugin {
         services.AddSingleton(commandManager);
         services.AddSingleton(clientState);
         services.AddSingleton(pluginLog);
-        services.AddSingleton(dataManager); // Enregistrement dans le conteneur DI
+        services.AddSingleton(dataManager);
+        services.AddSingleton(objectTable);
 
         // 2. Discover and register all features automatically
         services.AddPluginFeatures();
