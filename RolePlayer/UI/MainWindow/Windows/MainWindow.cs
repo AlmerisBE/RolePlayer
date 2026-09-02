@@ -53,23 +53,19 @@ public class MainWindow : Window, IDisposable {
             this.lastPanelState = isPanelOpen;
         }
 
-        if (isPanelOpen) {
-            if (ImGui.BeginTable("MainWindowLayout", 2, ImGuiTableFlags.Resizable | ImGuiTableFlags.BordersInnerV)) {
-                ImGui.TableSetupColumn("MainContent", ImGuiTableColumnFlags.WidthStretch, 0.65f);
-                ImGui.TableSetupColumn("SidePanel", ImGuiTableColumnFlags.WidthFixed, SidePanelWidth);
-                ImGui.TableNextRow();
+        var contentWidth = isPanelOpen ? -(SidePanelWidth + ImGui.GetStyle().ItemSpacing.X) : 0;
 
-                ImGui.TableNextColumn();
-                this.DrawTabs();
-
-                ImGui.TableNextColumn();
-                this.detailsPanel.Draw();
-
-                ImGui.EndTable();
-            }
-        }
-        else {
+        if (ImGui.BeginChild("MainContent", new Vector2(contentWidth, 0), false)) {
             this.DrawTabs();
+        }
+        ImGui.EndChild();
+
+        if (isPanelOpen) {
+            ImGui.SameLine();
+            if (ImGui.BeginChild("SidePanel", new Vector2(SidePanelWidth, 0), true)) {
+                this.detailsPanel.Draw();
+            }
+            ImGui.EndChild();
         }
     }
 
@@ -85,7 +81,6 @@ public class MainWindow : Window, IDisposable {
         }
     }
 
-    // Restauration de la signature exacte attendue par l'API Dalamud
     private void OnLogout(int type, int code) {
         this.selectionState.SelectedEmote = null;
     }

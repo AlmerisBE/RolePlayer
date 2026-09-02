@@ -1,7 +1,9 @@
 ﻿namespace RolePlayer.UI.EmoteBrowser.Components;
 
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface;
 using RolePlayer.UI.EmoteBrowser.Contracts;
+using System.Linq;
 using System.Numerics;
 
 public class EmoteDetailsPanel {
@@ -36,18 +38,28 @@ public class EmoteDetailsPanel {
             return;
         }
 
-        var closeBtnSize = new Vector2(20, 20);
-        var alignX = ImGui.GetContentRegionAvail().X - closeBtnSize.X;
+        ImGui.AlignTextToFramePadding();
+        ImGui.Text($"Name: {emote.Name}");
+
+        // Récupération de l'icône et calcul de sa largeur avec le padding
+        string closeIcon = FontAwesomeIcon.Times.ToIconString();
+        ImGui.PushFont(UiBuilder.IconFont);
+        var closeBtnWidth = ImGui.CalcTextSize(closeIcon).X + ImGui.GetStyle().FramePadding.X * 2;
+        ImGui.PopFont();
+
+        // Alignement strict à droite
+        var alignX = ImGui.GetWindowContentRegionMax().X - closeBtnWidth;
         if (alignX > ImGui.GetCursorPosX()) {
             ImGui.SameLine(alignX);
         }
 
-        if (ImGui.Button("X##CloseDetails", closeBtnSize)) {
+        ImGui.PushFont(UiBuilder.IconFont);
+        if (ImGui.Button($"{closeIcon}##CloseDetails")) {
             this.selectionState.SelectedEmote = null;
+            ImGui.PopFont();
             return;
         }
-
-        ImGui.Text($"Name: {emote.Name}");
+        ImGui.PopFont();
 
         if (!string.IsNullOrEmpty(emote.Category)) {
             ImGui.Text($"Category: {emote.Category}");
@@ -85,22 +97,13 @@ public class EmoteDetailsPanel {
     private void DrawTagManagement(uint emoteId) {
         ImGui.Text("Custom Tags:");
 
-        // Suppression du .ToList() pour éviter de surcharger le Garbage Collector à chaque frame
-        var currentTags = this.tagManagementService.GetTagsForEmote(emoteId);
-
-        // Déclaration correcte en tant que type nullable pour résoudre l'avertissement CS8600
-        string? tagToRemove = null;
-
+        var currentTags = this.tagManagementService.GetTagsForEmote(emoteId).ToList();
         foreach (var tag in currentTags) {
             ImGui.BulletText(tag);
             ImGui.SameLine();
             if (ImGui.SmallButton($"Remove##{tag}")) {
-                tagToRemove = tag;
+                this.tagManagementService.RemoveTagFromEmote(emoteId, tag);
             }
-        }
-
-        if (tagToRemove != null) {
-            this.tagManagementService.RemoveTagFromEmote(emoteId, tagToRemove);
         }
 
         ImGui.SetNextItemWidth(150f);
