@@ -12,11 +12,27 @@ public interface IPlayerStateProvider {
 }
 
 public interface IModStateProvider {
-    bool IsEmoteModded(uint emoteId);
+    string GetModNameModifyingEmote(uint emoteId);
 }
 
 public interface ITagManagementService {
+    IEnumerable<string> GetTags();
     IEnumerable<string> GetTagsForEmote(uint emoteId);
-    void AddTag(uint emoteId, string tag);
-    void RemoveTag(uint emoteId, string tag);
+    void AddTagToEmote(uint emoteId, string tag);
+    void RemoveTagFromEmote(uint emoteId, string tag);
+}
+
+public interface IGroupManagementService {
+    IEnumerable<EmoteGroup> GetGroups();
+    void CreateGroup(EmoteGroup group);
+    void DeleteGroup(string groupName);
+}
+
+public interface IUnlockSourceProvider {
+    string GetUnlockSource(uint emoteId);
+}
+
+public interface IEmoteBrowserTab {
+    string TabName { get; }
+    void Draw();
 }
