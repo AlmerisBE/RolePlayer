@@ -2,6 +2,7 @@
 
 using Dalamud.Bindings.ImGui;
 using RolePlayer.UI.EmoteBrowser.Contracts;
+using System.Linq;
 using System.Numerics;
 
 public class EmoteDetailsPanel {
@@ -10,19 +11,24 @@ public class EmoteDetailsPanel {
     private IEmoteSelectionState selectionState;
     private IEmoteDebugService debugService;
     private IEmoteExecutionService executionService;
+    private ITagManagementService tagManagementService;
+
+    private string newTagInput = string.Empty;
 
     public EmoteDetailsPanel(
         IUnlockSourceProvider unlockSourceProvider,
         IModStateProvider modStateProvider,
         IEmoteSelectionState selectionState,
         IEmoteDebugService debugService,
-        IEmoteExecutionService executionService) {
+        IEmoteExecutionService executionService,
+        ITagManagementService tagManagementService) {
 
         this.unlockSourceProvider = unlockSourceProvider;
         this.modStateProvider = modStateProvider;
         this.selectionState = selectionState;
         this.debugService = debugService;
         this.executionService = executionService;
+        this.tagManagementService = tagManagementService;
     }
 
     public void Draw() {
@@ -33,6 +39,12 @@ public class EmoteDetailsPanel {
         }
 
         ImGui.Text($"Name: {emote.Name}");
+
+        // Affichage de la catégorie native du jeu
+        if (!string.IsNullOrEmpty(emote.Category)) {
+            ImGui.Text($"Category: {emote.Category}");
+        }
+
         ImGui.Text($"Unlocked: {(emote.IsUnlocked ? "Yes" : "No")}");
 
         var modName = this.modStateProvider.GetModNameModifyingEmote(emote.Id);
@@ -55,9 +67,33 @@ public class EmoteDetailsPanel {
         }
 
         ImGui.Separator();
+        this.DrawTagManagement(emote.Id);
 
+        ImGui.Separator();
         if (ImGui.Button("Debug to Console")) {
             this.debugService.LogEmoteDetails(emote.Id);
+        }
+    }
+
+    private void DrawTagManagement(uint emoteId) {
+        ImGui.Text("Custom Tags:");
+
+        var currentTags = this.tagManagementService.GetTagsForEmote(emoteId).ToList();
+        foreach (var tag in currentTags) {
+            ImGui.BulletText(tag);
+            ImGui.SameLine();
+            if (ImGui.SmallButton($"Remove##{tag}")) {
+                this.tagManagementService.RemoveTagFromEmote(emoteId, tag);
+            }
+        }
+
+        ImGui.SetNextItemWidth(150f);
+        ImGui.InputText("##newTagInput", ref this.newTagInput, 32);
+        ImGui.SameLine();
+
+        if (ImGui.Button("Add Tag") && !string.IsNullOrWhiteSpace(this.newTagInput)) {
+            this.tagManagementService.AddTagToEmote(emoteId, this.newTagInput.Trim());
+            this.newTagInput = string.Empty;
         }
     }
 }
