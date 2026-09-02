@@ -3,6 +3,7 @@
 using Dalamud.Plugin.Services;
 using Lumina.Excel.Sheets;
 using RolePlayer.API.Penumbra.Contracts;
+using System;
 using System.Collections.Generic;
 
 public class LuminaEmotePathProvider : IEmotePathProvider {
@@ -15,7 +16,7 @@ public class LuminaEmotePathProvider : IEmotePathProvider {
     }
 
     public IEnumerable<string> GetEmoteGamePaths(uint emoteId) {
-        var paths = new HashSet<string>();
+        var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         var emoteSheet = this.dataManager.GetExcelSheet<Emote>();
         if (emoteSheet == null) {
@@ -27,24 +28,47 @@ public class LuminaEmotePathProvider : IEmotePathProvider {
             return paths;
         }
 
-        // Boucle sur TOUTES les timelines associées (intro, boucle de danse, etc.)
         foreach (var actionTimelineRef in emoteRow.Value.ActionTimeline) {
             if (!actionTimelineRef.IsValid) {
                 continue;
             }
 
-            var key = actionTimelineRef.Value.Key.ToString();
-            if (string.IsNullOrEmpty(key)) {
+            var rawKey = actionTimelineRef.Value.Key.ToString();
+            if (string.IsNullOrEmpty(rawKey)) {
                 continue;
             }
 
-            // Fichier Timeline générique
-            paths.Add($"chara/action/{key}.tmb");
+            var baseKey = rawKey;
+            if (baseKey.EndsWith("_start", StringComparison.OrdinalIgnoreCase)) {
+                baseKey = baseKey.Substring(0, baseKey.Length - 6);
+            }
+            else if (baseKey.EndsWith("_loop", StringComparison.OrdinalIgnoreCase)) {
+                baseKey = baseKey.Substring(0, baseKey.Length - 5);
+            }
+            else if (baseKey.EndsWith("_end", StringComparison.OrdinalIgnoreCase)) {
+                baseKey = baseKey.Substring(0, baseKey.Length - 4);
+            }
 
-            // Fichier d'animation spécifique à la race/genre
-            var papPath = this.GetPapPathForLocalPlayer(key);
-            if (!string.IsNullOrEmpty(papPath)) {
-                paths.Add(papPath);
+            var suffixes = new[] { "", "_start", "_loop", "_end" };
+
+            foreach (var suffix in suffixes) {
+                var key = $"{baseKey}{suffix}";
+
+                paths.Add($"chara/action/{key}.tmb");
+
+                // 1. Chemin spécifique à la race et au genre du joueur local
+                var specificPapPath = this.GetPapPathForLocalPlayer(key);
+                if (!string.IsNullOrEmpty(specificPapPath)) {
+                    paths.Add(specificPapPath);
+                    paths.Add($"Animation/Animation/{specificPapPath}");
+                    paths.Add($"Animation/{specificPapPath}");
+                }
+
+                // 2. Chemin universel FFXIV de base (Midlander Male - c0101) utilisé par FFXIV comme Fallback
+                var fallbackPapPath = $"chara/human/c0101/animation/a0001/bt_common/{key}.pap";
+                paths.Add(fallbackPapPath);
+                paths.Add($"Animation/Animation/{fallbackPapPath}");
+                paths.Add($"Animation/{fallbackPapPath}");
             }
         }
 
@@ -75,7 +99,6 @@ public class LuminaEmotePathProvider : IEmotePathProvider {
             default: charaCode = 100; break;
         }
 
-        // 0 = Homme (+1), 1 = Femme (+4)
         charaCode += (gender == 0) ? 1 : 4;
 
         return $"chara/human/c{charaCode:D4}/animation/a0001/bt_common/{actionKey}.pap";
