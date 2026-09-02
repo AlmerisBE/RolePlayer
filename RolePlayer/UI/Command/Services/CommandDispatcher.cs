@@ -1,23 +1,23 @@
 ﻿using Dalamud.Game.Command;
 using Dalamud.Plugin.Services;
+using RolePlayer.UI.Command.Contracts;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using RolePlayer.UI.Command.Contracts;
 
 namespace RolePlayer.UI.Command.Services;
 
 public class CommandDispatcher : IDisposable {
     private ICommandManager commandManager;
     private IEnumerable<ICommand> commands;
-    private string mainCommand = "/baseplugin";
+    private string mainCommand = "/roleplayer";
 
     public CommandDispatcher(ICommandManager commandManager, IEnumerable<ICommand> commands) {
         this.commandManager = commandManager;
         this.commands = commands;
 
         this.commandManager.AddHandler(this.mainCommand, new CommandInfo(this.OnCommand) {
-            HelpMessage = "Type '/baseplugin help' for more information."
+            HelpMessage = "Type '/roleplayer help' for more information."
         });
     }
 

@@ -1,11 +1,11 @@
-﻿using Dalamud.Plugin;
+﻿namespace RolePlayer.Tests;
+
+using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using NSubstitute;
 using Xunit;
 
-namespace RolePlayer.Tests;
-
-public class PluginTests {
+public class RolePlayerPluginTests {
 
     [Fact]
     public void Plugin_OnInitialization_BuildsDependencyInjectionWithoutErrors() {
@@ -15,10 +15,16 @@ public class PluginTests {
         var mockCommandManager = Substitute.For<ICommandManager>();
         var mockClientState = Substitute.For<IClientState>();
         var mockLogger = Substitute.For<IPluginLog>();
+        var mockDataManager = Substitute.For<IDataManager>(); // Nouveau mock
 
         // Act & Assert
-        // We verify that building the plugin (and its DI container) throws no exceptions
-        var exception = Record.Exception(() => new RolePlayerPlugin(mockPluginInterface, mockChatGui, mockCommandManager, mockClientState, mockLogger));
+        var exception = Record.Exception(() => new RolePlayerPlugin(
+            mockPluginInterface,
+            mockChatGui,
+            mockCommandManager,
+            mockClientState,
+            mockLogger,
+            mockDataManager)); // Ajouté au constructeur
 
         Assert.Null(exception);
     }

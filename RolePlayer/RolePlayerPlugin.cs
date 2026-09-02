@@ -1,12 +1,12 @@
-﻿using Dalamud.Interface.Windowing;
+﻿namespace RolePlayer;
+
+using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using Microsoft.Extensions.DependencyInjection;
-using RolePlayer.UI.Command.Services;
 using RolePlayer.Core.Configuration.UI;
 using RolePlayer.Core.Framework;
-
-namespace RolePlayer;
+using RolePlayer.UI.Command.Services;
 
 public sealed class RolePlayerPlugin : IDalamudPlugin {
     public string Name => "RolePlayer";
@@ -20,7 +20,9 @@ public sealed class RolePlayerPlugin : IDalamudPlugin {
         IChatGui chatGui,
         ICommandManager commandManager,
         IClientState clientState,
-        IPluginLog pluginLog) {
+        IPluginLog pluginLog,
+        IDataManager dataManager) { // Ajout de IDataManager ici
+
         this.pluginInterface = pluginInterface;
         this.windowSystem = new WindowSystem("RolePlayer");
 
@@ -32,6 +34,7 @@ public sealed class RolePlayerPlugin : IDalamudPlugin {
         services.AddSingleton(commandManager);
         services.AddSingleton(clientState);
         services.AddSingleton(pluginLog);
+        services.AddSingleton(dataManager); // Enregistrement dans le conteneur DI
 
         // 2. Discover and register all features automatically
         services.AddPluginFeatures();
