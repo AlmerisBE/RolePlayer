@@ -3,6 +3,7 @@
 using Dalamud.Bindings.ImGui;
 using Dalamud.Game;
 using Dalamud.Interface.Textures;
+using Dalamud.Interface.Textures.Internal;
 using Dalamud.Plugin.Services;
 using RolePlayer.UI.EmoteBrowser.Contracts;
 using RolePlayer.UI.EmoteBrowser.Models;
@@ -72,7 +73,7 @@ public class AllEmotesTab : IEmoteBrowserTab {
                     hasCustomColor = true;
                 }
 
-                // Colonne 1 : Icône + Selectable global
+                // Column 1: Icon + Global selectable
                 ImGui.TableNextColumn();
                 if (ImGui.Selectable($"##select_{emote.Id}", isSelected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowItemOverlap)) {
                     this.selectionState.SelectedEmote = emote;
@@ -80,21 +81,31 @@ public class AllEmotesTab : IEmoteBrowserTab {
 
                 ImGui.SameLine();
 
-                // Utilisation de la structure fusionnée GameIconLookup dans Dalamud.Interface.Textures
-                var iconWrap = this.textureProvider.GetFromGameIcon(new GameIconLookup(emote.IconId)).GetWrapOrDefault();
+                if (emote.IconId > 0) {
+                    try {
+                        // Explicitly disable HiRes lookup to prevent IconNotFoundException on standard emote icons
+                        var lookup = new GameIconLookup {
+                            IconId = emote.IconId,
+                            HiRes = false
+                        };
 
-                // Accès direct à Handle (propriété standard de IDalamudTextureWrap dans l'API 15)
-                if (iconWrap != null) {
-                    ImGui.Image(iconWrap.Handle, new Vector2(24, 24));
+                        var iconWrap = this.textureProvider.GetFromGameIcon(lookup).GetWrapOrDefault();
+                        if (iconWrap != null) {
+                            ImGui.Image(iconWrap.Handle, new Vector2(24, 24));
+                        }
+                    }
+                    catch (IconNotFoundException) {
+                        // Gracefully ignore missing textures to maintain UI stability
+                    }
                 }
 
-                // Colonne 2 : Nom
+                // Column 2: Name
                 ImGui.TableNextColumn();
                 var displayName = emote.IsModded ? $"★ {emote.Name}" : emote.Name;
                 ImGui.AlignTextToFramePadding();
                 ImGui.Text(displayName);
 
-                // Colonne 3 : Commande(s)
+                // Column 3: Command(s)
                 ImGui.TableNextColumn();
                 ImGui.AlignTextToFramePadding();
                 var commandText = emote.LocalizedCommand;
@@ -105,7 +116,7 @@ public class AllEmotesTab : IEmoteBrowserTab {
 
                 ImGui.Text(commandText);
 
-                // Colonne 4 : Action rapide
+                // Column 4: Quick Play
                 ImGui.TableNextColumn();
                 if (emote.IsUnlocked) {
                     if (ImGui.Button($"Play##{emote.Id}", new Vector2(-1, 24))) {
