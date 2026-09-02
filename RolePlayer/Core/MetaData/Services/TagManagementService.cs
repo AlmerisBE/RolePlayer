@@ -12,9 +12,38 @@ public class TagManagementService : ITagManagementService {
         this.configurationService = configurationService;
     }
 
-    public IEnumerable<string> GetTags() {
+    public IEnumerable<string> GetAvailableTags() {
+        return this.configurationService.GetConfig().AvailableTags;
+    }
+
+    public void CreateGlobalTag(string tag) {
+        if (string.IsNullOrWhiteSpace(tag)) {
+            return;
+        }
+
         var config = this.configurationService.GetConfig();
-        return config.EmoteTags.Values.SelectMany(tags => tags).Distinct();
+        if (config.AvailableTags.Add(tag.Trim())) {
+            this.configurationService.Save();
+        }
+    }
+
+    public void DeleteGlobalTag(string tag) {
+        var config = this.configurationService.GetConfig();
+        var changed = false;
+
+        if (config.AvailableTags.Remove(tag)) {
+            changed = true;
+        }
+
+        foreach (var kvp in config.EmoteTags) {
+            if (kvp.Value.Remove(tag)) {
+                changed = true;
+            }
+        }
+
+        if (changed) {
+            this.configurationService.Save();
+        }
     }
 
     public IEnumerable<string> GetTagsForEmote(uint emoteId) {
@@ -44,21 +73,6 @@ public class TagManagementService : ITagManagementService {
     public void RemoveTagFromEmote(uint emoteId, string tag) {
         var config = this.configurationService.GetConfig();
         if (config.EmoteTags.TryGetValue(emoteId, out var tags) && tags.Remove(tag)) {
-            this.configurationService.Save();
-        }
-    }
-
-    public void DeleteTag(string tag) {
-        var config = this.configurationService.GetConfig();
-        var changed = false;
-
-        foreach (var kvp in config.EmoteTags) {
-            if (kvp.Value.Remove(tag)) {
-                changed = true;
-            }
-        }
-
-        if (changed) {
             this.configurationService.Save();
         }
     }

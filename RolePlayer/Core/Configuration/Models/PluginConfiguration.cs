@@ -11,7 +11,8 @@ public class PluginConfiguration : IPluginConfiguration {
 
     public List<EmoteGroup> EmoteGroups { get; set; } = new();
     public Dictionary<uint, HashSet<string>> EmoteTags { get; set; } = new();
-
-    // Mapping entre l'ID d'une emote et le nom de son groupe assigné
     public Dictionary<uint, string> EmoteToGroupMap { get; set; } = new();
+
+    // Liste globale des tags créés par l'utilisateur
+    public HashSet<string> AvailableTags { get; set; } = new();
 }

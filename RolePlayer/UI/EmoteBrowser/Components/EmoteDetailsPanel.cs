@@ -3,6 +3,7 @@
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using RolePlayer.UI.EmoteBrowser.Contracts;
+using System.Linq;
 using System.Numerics;
 
 public class EmoteDetailsPanel {
@@ -13,8 +14,6 @@ public class EmoteDetailsPanel {
     private IEmoteExecutionService executionService;
     private ITagManagementService tagManagementService;
     private IGroupManagementService groupManagementService;
-
-    private string newTagInput = string.Empty;
 
     public EmoteDetailsPanel(
         IUnlockSourceProvider unlockSourceProvider,
@@ -121,9 +120,9 @@ public class EmoteDetailsPanel {
     }
 
     private void DrawTagManagement(uint emoteId) {
-        ImGui.Text("Custom Tags:");
+        ImGui.Text("Assigned Tags:");
 
-        var currentTags = this.tagManagementService.GetTagsForEmote(emoteId);
+        var currentTags = this.tagManagementService.GetTagsForEmote(emoteId).ToList();
         string? tagToRemove = null;
 
         foreach (var tag in currentTags) {
@@ -138,13 +137,22 @@ public class EmoteDetailsPanel {
             this.tagManagementService.RemoveTagFromEmote(emoteId, tagToRemove);
         }
 
-        ImGui.SetNextItemWidth(150f);
-        ImGui.InputText("##newTagInput", ref this.newTagInput, 32);
-        ImGui.SameLine();
+        // On détermine les tags qui n'ont pas encore été assignés à l'emote
+        var availableTags = this.tagManagementService.GetAvailableTags().Except(currentTags).ToList();
 
-        if (ImGui.Button("Add Tag") && !string.IsNullOrWhiteSpace(this.newTagInput)) {
-            this.tagManagementService.AddTagToEmote(emoteId, this.newTagInput.Trim());
-            this.newTagInput = string.Empty;
+        if (availableTags.Count > 0) {
+            ImGui.SetNextItemWidth(150f);
+            if (ImGui.BeginCombo("##addTagCombo", "Select a tag...")) {
+                foreach (var tag in availableTags) {
+                    if (ImGui.Selectable(tag)) {
+                        this.tagManagementService.AddTagToEmote(emoteId, tag);
+                    }
+                }
+                ImGui.EndCombo();
+            }
+        }
+        else {
+            ImGui.TextDisabled("No more tags available.");
         }
     }
 }

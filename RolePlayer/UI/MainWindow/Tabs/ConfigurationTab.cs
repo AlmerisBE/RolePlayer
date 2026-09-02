@@ -13,6 +13,8 @@ public class ConfigurationTab : IEmoteBrowserTab {
     private string newGroupDesc = string.Empty;
     private int newGroupSort = 0;
 
+    private string newGlobalTagInput = string.Empty;
+
     public string TabName => "Configuration";
 
     public ConfigurationTab(IGroupManagementService groupService, ITagManagementService tagService) {
@@ -81,19 +83,30 @@ public class ConfigurationTab : IEmoteBrowserTab {
 
     private void DrawTagsTab() {
         ImGui.Spacing();
-        ImGui.Text("Existing Tags (Globally Assigned)");
-        ImGui.Separator();
+        ImGui.Text("Create New Tag");
+        ImGui.SetNextItemWidth(200f);
+        ImGui.InputText("##newGlobalTag", ref this.newGlobalTagInput, 32);
+        ImGui.SameLine();
 
-        var tags = this.tagService.GetTags().ToList();
+        if (ImGui.Button("Create Tag") && !string.IsNullOrWhiteSpace(this.newGlobalTagInput)) {
+            this.tagService.CreateGlobalTag(this.newGlobalTagInput);
+            this.newGlobalTagInput = string.Empty;
+        }
+
+        ImGui.Separator();
+        ImGui.Spacing();
+        ImGui.Text("Available Tags");
+
+        var tags = this.tagService.GetAvailableTags().ToList();
         if (tags.Count == 0) {
-            ImGui.TextDisabled("No custom tags currently assigned to any emote.");
+            ImGui.TextDisabled("No tags have been created yet.");
         }
 
         foreach (var tag in tags) {
             ImGui.BulletText(tag);
             ImGui.SameLine(ImGui.GetWindowContentRegionMax().X - 60f);
             if (ImGui.Button($"Delete##{tag}")) {
-                this.tagService.DeleteTag(tag);
+                this.tagService.DeleteGlobalTag(tag);
             }
         }
     }
