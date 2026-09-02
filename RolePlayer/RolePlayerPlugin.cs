@@ -23,7 +23,7 @@ public sealed class RolePlayerPlugin : IDalamudPlugin {
         IPluginLog pluginLog,
         IDataManager dataManager,
         IObjectTable objectTable,
-        IGameInteropProvider interopProvider) { // Ajout du fournisseur d'interopérabilité
+        IGameInteropProvider interopProvider) { // Ajout du fournisseur d'interop
 
         this.pluginInterface = pluginInterface;
         this.windowSystem = new WindowSystem("RolePlayer");

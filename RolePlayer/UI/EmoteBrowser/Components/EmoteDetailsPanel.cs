@@ -16,7 +16,7 @@ public class EmoteDetailsPanel {
         IModStateProvider modStateProvider,
         IEmoteSelectionState selectionState,
         IEmoteDebugService debugService,
-        IEmoteExecutionService executionService) { // Injection du nouveau service
+        IEmoteExecutionService executionService) {
 
         this.unlockSourceProvider = unlockSourceProvider;
         this.modStateProvider = modStateProvider;
@@ -45,7 +45,6 @@ public class EmoteDetailsPanel {
 
         ImGui.Separator();
 
-        // Ajout du bouton d'exécution conditionnel
         if (emote.IsUnlocked) {
             if (ImGui.Button("Execute Emote", new Vector2(-1, 30))) {
                 this.executionService.ExecuteEmote(emote.Id);
@@ -57,7 +56,6 @@ public class EmoteDetailsPanel {
 
         ImGui.Separator();
 
-        // Bouton de débogage existant
         if (ImGui.Button("Debug to Console")) {
             this.debugService.LogEmoteDetails(emote.Id);
         }

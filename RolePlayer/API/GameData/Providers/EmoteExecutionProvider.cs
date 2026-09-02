@@ -11,15 +11,18 @@ using System;
 public class EmoteExecutionProvider : IEmoteExecutionService {
     private IDataManager dataManager;
     private IGameInteropProvider interopProvider;
+    private IPlayerStateProvider playerStateProvider;
 
     private delegate void ProcessChatBoxDelegate(IntPtr uiModule, IntPtr message, IntPtr unused, byte a4);
 
+    // Signature mémoire standard de Dalamud pour l'injection native de chat
     [Signature("48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC 20 48 8B F2 48 8B F9 45 84 C9 74 08 41 8B C0")]
     private ProcessChatBoxDelegate? processChatBox = null;
 
-    public EmoteExecutionProvider(IDataManager dataManager, IGameInteropProvider interopProvider) {
+    public EmoteExecutionProvider(IDataManager dataManager, IGameInteropProvider interopProvider, IPlayerStateProvider playerStateProvider) {
         this.dataManager = dataManager;
         this.interopProvider = interopProvider;
+        this.playerStateProvider = playerStateProvider;
 
         this.interopProvider.InitializeFromAttributes(this);
     }
@@ -35,6 +38,10 @@ public class EmoteExecutionProvider : IEmoteExecutionService {
             return;
         }
 
+        if (emoteRow.Value.UnlockLink != 0 && !this.playerStateProvider.IsEmoteUnlocked(emoteId)) {
+            return;
+        }
+
         var textCommandRef = emoteRow.Value.TextCommand;
         if (!textCommandRef.IsValid) {
             return;
@@ -45,8 +52,6 @@ public class EmoteExecutionProvider : IEmoteExecutionService {
             return;
         }
 
-        var finalCommand = $"{command} motion";
-
         var uiModule = (IntPtr)UIModule.Instance();
         if (uiModule == IntPtr.Zero || this.processChatBox == null) {
             return;
@@ -54,7 +59,8 @@ public class EmoteExecutionProvider : IEmoteExecutionService {
 
         var message = new Utf8String();
         message.Ctor();
-        message.SetString(finalCommand);
+
+        message.SetString(command);
 
         this.processChatBox.Invoke(uiModule, (IntPtr)(&message), IntPtr.Zero, 0);
 
