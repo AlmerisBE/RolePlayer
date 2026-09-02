@@ -1,4 +1,4 @@
-﻿namespace RolePlayer.UI.EmoteBrowser.Models;
+﻿namespace RolePlayer.Core.MetaData.Models;
 
 public class EmoteGroup {
     public string Name { get; set; } = string.Empty;

@@ -9,9 +9,11 @@ using System.Linq;
 
 public class LuminaEmoteProvider : IEmoteRepository {
     private IDataManager dataManager;
+    private IUnlockSourceProvider unlockSourceProvider;
 
-    public LuminaEmoteProvider(IDataManager dataManager) {
+    public LuminaEmoteProvider(IDataManager dataManager, IUnlockSourceProvider unlockSourceProvider) {
         this.dataManager = dataManager;
+        this.unlockSourceProvider = unlockSourceProvider;
     }
 
     public IEnumerable<EmoteDisplayData> GetBaseEmotes() {
@@ -27,7 +29,7 @@ public class LuminaEmoteProvider : IEmoteRepository {
                 Name = e.Name.ToString(),
                 IconId = e.Icon,
                 IsUnlockable = e.UnlockLink != 0,
-                UnlockRequirement = string.Empty, // Will be implemented later with another Excel sheet
+                UnlockRequirement = this.unlockSourceProvider.GetUnlockSource(e.RowId),
                 Category = e.EmoteCategory.IsValid ? e.EmoteCategory.Value.Name.ToString() : string.Empty
             });
     }

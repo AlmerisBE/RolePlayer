@@ -3,6 +3,7 @@
 using Dalamud.Plugin.Services;
 using NSubstitute;
 using RolePlayer.API.GameData.Providers;
+using RolePlayer.UI.EmoteBrowser.Contracts;
 using Xunit;
 
 public class LuminaEmoteProviderTests {
@@ -10,12 +11,10 @@ public class LuminaEmoteProviderTests {
     public void GetBaseEmotes_FiltersOutEmptyNamesAndMapsCorrectly() {
         // Arrange
         var mockDataManager = Substitute.For<IDataManager>();
+        var mockUnlockSourceProvider = Substitute.For<IUnlockSourceProvider>();
 
-        // Note : En situation réelle, mocker GetExcelSheet<T> de Lumina requiert de 
-        // fausses données, ce test valide la structure et la logique d'injection.
-        // L'implémentation TDD nous force à concevoir un code faiblement couplé.
-
-        var provider = new LuminaEmoteProvider(mockDataManager);
+        // Injection des deux dépendances requises
+        var provider = new LuminaEmoteProvider(mockDataManager, mockUnlockSourceProvider);
 
         // Act
         var result = provider.GetBaseEmotes();

@@ -17,22 +17,33 @@ public class LuminaUnlockSourceProvider : IUnlockSourceProvider {
     }
 
     private void BuildCache() {
+        var emoteSheet = this.dataManager.GetExcelSheet<Emote>();
         var itemSheet = this.dataManager.GetExcelSheet<Item>();
-        if (itemSheet == null) {
+
+        if (emoteSheet == null || itemSheet == null) {
             return;
         }
 
-        // FFXIV architecture: ItemAction type 26 is used to unlock Mounts, Minions, Hairstyles, and Emotes.
-        // Data[0] contains the UnlockLink ID which correlates to Emote.UnlockLink.
+        // 1. Collecter tous les UnlockLinks d'emotes valides
+        var emoteUnlockLinks = new HashSet<uint>();
+        foreach (var emote in emoteSheet) {
+            if (emote.UnlockLink != 0) {
+                emoteUnlockLinks.Add(emote.UnlockLink);
+            }
+        }
+
+        // 2. Chercher les objets correspondants en croisant les données
         foreach (var item in itemSheet) {
             var itemAction = item.ItemAction.ValueNullable;
             if (!itemAction.HasValue) {
                 continue;
             }
 
-            if (itemAction.Value.Type == 26) {
-                var unlockId = itemAction.Value.Data[0];
-                if (unlockId != 0 && !this.itemUnlockCache.ContainsKey(unlockId)) {
+            var unlockId = itemAction.Value.Data[0];
+
+            if (unlockId != 0 && emoteUnlockLinks.Contains(unlockId)) {
+                // ItemUICategory 63 = Miscellany (Catégorie des manuels en jeu)
+                if (item.ItemUICategory.RowId == 63) {
                     var itemName = item.Name.ToString();
                     if (!string.IsNullOrEmpty(itemName)) {
                         this.itemUnlockCache[unlockId] = $"Item: {itemName}";
@@ -53,18 +64,15 @@ public class LuminaUnlockSourceProvider : IUnlockSourceProvider {
             return "Unknown";
         }
 
-        // If the emote has no unlock requirement, it is available from the start
         if (emote.Value.UnlockLink == 0) {
             return "Default Emote / No Unlock Required";
         }
 
-        // Check if our cache found an item that triggers this UnlockLink
         var unlockLink = emote.Value.UnlockLink;
         if (this.itemUnlockCache.TryGetValue(unlockLink, out var source)) {
             return source;
         }
 
-        // If no item is found, it's typically tied to a Quest, Achievement, or Mog Station purchase
         return "Quest, Achievement, or Mog Station";
     }
 }

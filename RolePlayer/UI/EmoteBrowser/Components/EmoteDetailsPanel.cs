@@ -40,7 +40,6 @@ public class EmoteDetailsPanel {
 
         ImGui.Text($"Name: {emote.Name}");
 
-        // Affichage de la catégorie native du jeu
         if (!string.IsNullOrEmpty(emote.Category)) {
             ImGui.Text($"Category: {emote.Category}");
         }
@@ -52,8 +51,8 @@ public class EmoteDetailsPanel {
             ImGui.TextColored(new Vector4(0.2f, 0.8f, 0.2f, 1.0f), $"Modified by: {modName}");
         }
 
-        var unlockSource = this.unlockSourceProvider.GetUnlockSource(emote.Id);
-        ImGui.TextWrapped($"Source: {unlockSource}");
+        // Le texte descriptif est désormais renseigné grâce à notre nouveau provider
+        ImGui.TextWrapped($"Source: {emote.UnlockRequirement}");
 
         ImGui.Separator();
 
