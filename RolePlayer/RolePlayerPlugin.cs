@@ -23,7 +23,8 @@ public sealed class RolePlayerPlugin : IDalamudPlugin {
         IPluginLog pluginLog,
         IDataManager dataManager,
         IObjectTable objectTable,
-        IGameInteropProvider interopProvider) { // Ajout du fournisseur d'interop
+        IGameInteropProvider interopProvider,
+        ITextureProvider textureProvider) {
 
         this.pluginInterface = pluginInterface;
         this.windowSystem = new WindowSystem("RolePlayer");
@@ -38,6 +39,7 @@ public sealed class RolePlayerPlugin : IDalamudPlugin {
         services.AddSingleton(dataManager);
         services.AddSingleton(objectTable);
         services.AddSingleton(interopProvider);
+        services.AddSingleton(textureProvider);
 
         services.AddPluginFeatures();
 

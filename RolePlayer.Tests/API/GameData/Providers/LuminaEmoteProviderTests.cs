@@ -11,8 +11,9 @@ public class LuminaEmoteProviderTests {
     public void GetBaseEmotes_FiltersOutEmptyNamesAndMapsCorrectly() {
         var mockDataManager = Substitute.For<IDataManager>();
         var mockUnlockSourceProvider = Substitute.For<IUnlockSourceProvider>();
+        var mockClientState = Substitute.For<IClientState>();
 
-        var provider = new LuminaEmoteProvider(mockDataManager, mockUnlockSourceProvider);
+        var provider = new LuminaEmoteProvider(mockDataManager, mockUnlockSourceProvider, mockClientState);
         var result = provider.GetBaseEmotes();
 
         Assert.NotNull(result);

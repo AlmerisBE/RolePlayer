@@ -17,6 +17,7 @@ public class RolePlayerPluginTests {
         var mockDataManager = Substitute.For<IDataManager>();
         var mockObjectTable = Substitute.For<IObjectTable>();
         var mockInteropProvider = Substitute.For<IGameInteropProvider>();
+        var mockTextureProvider = Substitute.For<ITextureProvider>();
 
         var exception = Record.Exception(() => new RolePlayerPlugin(
             mockPluginInterface,
@@ -26,7 +27,8 @@ public class RolePlayerPluginTests {
             mockLogger,
             mockDataManager,
             mockObjectTable,
-            mockInteropProvider));
+            mockInteropProvider,
+            mockTextureProvider));
 
         Assert.Null(exception);
     }
