@@ -36,7 +36,38 @@ public class GroupManagementService : IGroupManagementService {
         var config = this.configurationService.GetConfig();
         var removed = config.EmoteGroups.RemoveAll(g => g.Name.Equals(groupName, StringComparison.OrdinalIgnoreCase));
 
-        if (removed > 0) {
+        var keysToRemove = config.EmoteToGroupMap
+            .Where(kvp => kvp.Value.Equals(groupName, StringComparison.OrdinalIgnoreCase))
+            .Select(kvp => kvp.Key)
+            .ToList();
+
+        foreach (var key in keysToRemove) {
+            config.EmoteToGroupMap.Remove(key);
+        }
+
+        if (removed > 0 || keysToRemove.Count > 0) {
+            this.configurationService.Save();
+        }
+    }
+
+    public string? GetGroupForEmote(uint emoteId) {
+        var config = this.configurationService.GetConfig();
+        if (config.EmoteToGroupMap.TryGetValue(emoteId, out var groupName)) {
+            return groupName;
+        }
+
+        return null;
+    }
+
+    public void AssignEmoteToGroup(uint emoteId, string groupName) {
+        var config = this.configurationService.GetConfig();
+        config.EmoteToGroupMap[emoteId] = groupName;
+        this.configurationService.Save();
+    }
+
+    public void RemoveEmoteFromGroup(uint emoteId) {
+        var config = this.configurationService.GetConfig();
+        if (config.EmoteToGroupMap.Remove(emoteId)) {
             this.configurationService.Save();
         }
     }

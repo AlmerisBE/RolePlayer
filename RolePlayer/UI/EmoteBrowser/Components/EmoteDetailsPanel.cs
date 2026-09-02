@@ -3,7 +3,6 @@
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using RolePlayer.UI.EmoteBrowser.Contracts;
-using System.Linq;
 using System.Numerics;
 
 public class EmoteDetailsPanel {
@@ -13,6 +12,7 @@ public class EmoteDetailsPanel {
     private IEmoteDebugService debugService;
     private IEmoteExecutionService executionService;
     private ITagManagementService tagManagementService;
+    private IGroupManagementService groupManagementService;
 
     private string newTagInput = string.Empty;
 
@@ -22,7 +22,8 @@ public class EmoteDetailsPanel {
         IEmoteSelectionState selectionState,
         IEmoteDebugService debugService,
         IEmoteExecutionService executionService,
-        ITagManagementService tagManagementService) {
+        ITagManagementService tagManagementService,
+        IGroupManagementService groupManagementService) {
 
         this.unlockSourceProvider = unlockSourceProvider;
         this.modStateProvider = modStateProvider;
@@ -30,6 +31,7 @@ public class EmoteDetailsPanel {
         this.debugService = debugService;
         this.executionService = executionService;
         this.tagManagementService = tagManagementService;
+        this.groupManagementService = groupManagementService;
     }
 
     public void Draw() {
@@ -41,13 +43,11 @@ public class EmoteDetailsPanel {
         ImGui.AlignTextToFramePadding();
         ImGui.Text($"Name: {emote.Name}");
 
-        // Récupération de l'icône et calcul de sa largeur avec le padding
         string closeIcon = FontAwesomeIcon.Times.ToIconString();
         ImGui.PushFont(UiBuilder.IconFont);
         var closeBtnWidth = ImGui.CalcTextSize(closeIcon).X + ImGui.GetStyle().FramePadding.X * 2;
         ImGui.PopFont();
 
-        // Alignement strict à droite
         var alignX = ImGui.GetWindowContentRegionMax().X - closeBtnWidth;
         if (alignX > ImGui.GetCursorPosX()) {
             ImGui.SameLine(alignX);
@@ -86,6 +86,9 @@ public class EmoteDetailsPanel {
         }
 
         ImGui.Separator();
+        this.DrawGroupManagement(emote.Id);
+
+        ImGui.Separator();
         this.DrawTagManagement(emote.Id);
 
         ImGui.Separator();
@@ -94,16 +97,45 @@ public class EmoteDetailsPanel {
         }
     }
 
+    private void DrawGroupManagement(uint emoteId) {
+        var currentGroup = this.groupManagementService.GetGroupForEmote(emoteId);
+        var previewValue = string.IsNullOrEmpty(currentGroup) ? "None" : currentGroup;
+
+        if (ImGui.BeginCombo("Group", previewValue)) {
+            if (ImGui.Selectable("None", string.IsNullOrEmpty(currentGroup))) {
+                this.groupManagementService.RemoveEmoteFromGroup(emoteId);
+            }
+
+            foreach (var group in this.groupManagementService.GetGroups()) {
+                var isSelected = group.Name == currentGroup;
+                if (ImGui.Selectable(group.Name, isSelected)) {
+                    this.groupManagementService.AssignEmoteToGroup(emoteId, group.Name);
+                }
+
+                if (isSelected) {
+                    ImGui.SetItemDefaultFocus();
+                }
+            }
+            ImGui.EndCombo();
+        }
+    }
+
     private void DrawTagManagement(uint emoteId) {
         ImGui.Text("Custom Tags:");
 
-        var currentTags = this.tagManagementService.GetTagsForEmote(emoteId).ToList();
+        var currentTags = this.tagManagementService.GetTagsForEmote(emoteId);
+        string? tagToRemove = null;
+
         foreach (var tag in currentTags) {
             ImGui.BulletText(tag);
             ImGui.SameLine();
             if (ImGui.SmallButton($"Remove##{tag}")) {
-                this.tagManagementService.RemoveTagFromEmote(emoteId, tag);
+                tagToRemove = tag;
             }
+        }
+
+        if (tagToRemove != null) {
+            this.tagManagementService.RemoveTagFromEmote(emoteId, tagToRemove);
         }
 
         ImGui.SetNextItemWidth(150f);

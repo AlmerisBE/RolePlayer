@@ -7,4 +7,5 @@ public interface ITagManagementService {
     IEnumerable<string> GetTagsForEmote(uint emoteId);
     void AddTagToEmote(uint emoteId, string tag);
     void RemoveTagFromEmote(uint emoteId, string tag);
+    void DeleteTag(string tag);
 }

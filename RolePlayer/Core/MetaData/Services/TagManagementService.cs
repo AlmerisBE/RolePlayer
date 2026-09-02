@@ -47,4 +47,19 @@ public class TagManagementService : ITagManagementService {
             this.configurationService.Save();
         }
     }
+
+    public void DeleteTag(string tag) {
+        var config = this.configurationService.GetConfig();
+        var changed = false;
+
+        foreach (var kvp in config.EmoteTags) {
+            if (kvp.Value.Remove(tag)) {
+                changed = true;
+            }
+        }
+
+        if (changed) {
+            this.configurationService.Save();
+        }
+    }
 }
