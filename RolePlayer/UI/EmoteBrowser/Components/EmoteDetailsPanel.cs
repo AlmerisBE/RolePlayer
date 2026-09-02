@@ -2,7 +2,6 @@
 
 using Dalamud.Bindings.ImGui;
 using RolePlayer.UI.EmoteBrowser.Contracts;
-using System.Linq;
 using System.Numerics;
 
 public class EmoteDetailsPanel {
@@ -37,7 +36,6 @@ public class EmoteDetailsPanel {
             return;
         }
 
-        // Bouton de fermeture "X" aligné à droite
         var closeBtnSize = new Vector2(20, 20);
         var alignX = ImGui.GetContentRegionAvail().X - closeBtnSize.X;
         if (alignX > ImGui.GetCursorPosX()) {
@@ -87,13 +85,22 @@ public class EmoteDetailsPanel {
     private void DrawTagManagement(uint emoteId) {
         ImGui.Text("Custom Tags:");
 
-        var currentTags = this.tagManagementService.GetTagsForEmote(emoteId).ToList();
+        // Suppression du .ToList() pour éviter de surcharger le Garbage Collector à chaque frame
+        var currentTags = this.tagManagementService.GetTagsForEmote(emoteId);
+
+        // Déclaration correcte en tant que type nullable pour résoudre l'avertissement CS8600
+        string? tagToRemove = null;
+
         foreach (var tag in currentTags) {
             ImGui.BulletText(tag);
             ImGui.SameLine();
             if (ImGui.SmallButton($"Remove##{tag}")) {
-                this.tagManagementService.RemoveTagFromEmote(emoteId, tag);
+                tagToRemove = tag;
             }
+        }
+
+        if (tagToRemove != null) {
+            this.tagManagementService.RemoveTagFromEmote(emoteId, tagToRemove);
         }
 
         ImGui.SetNextItemWidth(150f);

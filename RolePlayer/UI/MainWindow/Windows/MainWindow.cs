@@ -15,7 +15,7 @@ public class MainWindow : Window, IDisposable {
     private IEmoteSelectionState selectionState;
     private IClientState clientState;
 
-    private const float BaseWidth = 550f;
+    private const float BaseWidth = 350f;
     private const float SidePanelWidth = 300f;
     private bool lastPanelState = false;
 
@@ -24,7 +24,7 @@ public class MainWindow : Window, IDisposable {
         EmoteDetailsPanel detailsPanel,
         IEmoteSelectionState selectionState,
         IClientState clientState)
-        : base("RolePlayer - Emotes", ImGuiWindowFlags.None) {
+        : base("RolePlayer", ImGuiWindowFlags.None) {
 
         this.tabs = tabs;
         this.detailsPanel = detailsPanel;
@@ -34,7 +34,7 @@ public class MainWindow : Window, IDisposable {
         this.clientState.Logout += this.OnLogout;
 
         this.SizeConstraints = new WindowSizeConstraints {
-            MinimumSize = new Vector2(BaseWidth, 400),
+            MinimumSize = new Vector2(BaseWidth, 350),
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
         };
     }
@@ -85,6 +85,7 @@ public class MainWindow : Window, IDisposable {
         }
     }
 
+    // Restauration de la signature exacte attendue par l'API Dalamud
     private void OnLogout(int type, int code) {
         this.selectionState.SelectedEmote = null;
     }
