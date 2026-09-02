@@ -17,20 +17,23 @@ public class PenumbraIpcProvider : IModStateProvider {
     }
 
     public string GetModNameModifyingEmote(uint emoteId) {
-        var gamePath = this.emotePathProvider.GetEmoteGamePath(emoteId);
-        if (string.IsNullOrEmpty(gamePath)) {
-            return string.Empty;
-        }
+        var gamePaths = this.emotePathProvider.GetEmoteGamePaths(emoteId);
 
-        try {
-            var resolvedPath = this.resolvePlayerPath.InvokeFunc(gamePath);
-
-            if (resolvedPath != null && !resolvedPath.Equals(gamePath, StringComparison.OrdinalIgnoreCase)) {
-                return this.ExtractModNameFromPath(resolvedPath);
+        foreach (var gamePath in gamePaths) {
+            if (string.IsNullOrEmpty(gamePath)) {
+                continue;
             }
-        }
-        catch (Exception) {
-            return string.Empty;
+
+            try {
+                var resolvedPath = this.resolvePlayerPath.InvokeFunc(gamePath);
+
+                if (resolvedPath != null && !resolvedPath.Equals(gamePath, StringComparison.OrdinalIgnoreCase)) {
+                    return this.ExtractModNameFromPath(resolvedPath);
+                }
+            }
+            catch (Exception) {
+                // IPC échoue silencieusement si Penumbra n'est pas lancé
+            }
         }
 
         return string.Empty;

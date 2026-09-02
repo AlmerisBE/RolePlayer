@@ -1,5 +1,7 @@
 ﻿namespace RolePlayer.API.Penumbra.Contracts;
 
+using System.Collections.Generic;
+
 public interface IEmotePathProvider {
-    string GetEmoteGamePath(uint emoteId);
+    IEnumerable<string> GetEmoteGamePaths(uint emoteId);
 }
