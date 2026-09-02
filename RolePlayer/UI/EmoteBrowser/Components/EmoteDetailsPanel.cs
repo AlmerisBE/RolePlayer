@@ -34,7 +34,18 @@ public class EmoteDetailsPanel {
     public void Draw() {
         var emote = this.selectionState.SelectedEmote;
         if (emote == null) {
-            ImGui.TextDisabled("Select an emote to view details.");
+            return;
+        }
+
+        // Bouton de fermeture "X" aligné à droite
+        var closeBtnSize = new Vector2(20, 20);
+        var alignX = ImGui.GetContentRegionAvail().X - closeBtnSize.X;
+        if (alignX > ImGui.GetCursorPosX()) {
+            ImGui.SameLine(alignX);
+        }
+
+        if (ImGui.Button("X##CloseDetails", closeBtnSize)) {
+            this.selectionState.SelectedEmote = null;
             return;
         }
 
@@ -51,7 +62,6 @@ public class EmoteDetailsPanel {
             ImGui.TextColored(new Vector4(0.2f, 0.8f, 0.2f, 1.0f), $"Modified by: {modName}");
         }
 
-        // Le texte descriptif est désormais renseigné grâce à notre nouveau provider
         ImGui.TextWrapped($"Source: {emote.UnlockRequirement}");
 
         ImGui.Separator();

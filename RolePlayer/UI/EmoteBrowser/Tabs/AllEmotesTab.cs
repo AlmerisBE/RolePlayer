@@ -76,7 +76,7 @@ public class AllEmotesTab : IEmoteBrowserTab {
                 // Column 1: Icon + Global selectable
                 ImGui.TableNextColumn();
                 if (ImGui.Selectable($"##select_{emote.Id}", isSelected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowItemOverlap)) {
-                    this.selectionState.SelectedEmote = emote;
+                    this.selectionState.SelectedEmote = isSelected ? null : emote;
                 }
 
                 ImGui.SameLine();
