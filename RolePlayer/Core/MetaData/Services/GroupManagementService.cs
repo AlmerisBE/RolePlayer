@@ -8,25 +8,27 @@ using System.Collections.Generic;
 using System.Linq;
 
 public class GroupManagementService : IGroupManagementService {
+    private IContextManagementService contextService;
     private IConfigurationService configurationService;
 
-    public GroupManagementService(IConfigurationService configurationService) {
+    public GroupManagementService(IContextManagementService contextService, IConfigurationService configurationService) {
+        this.contextService = contextService;
         this.configurationService = configurationService;
     }
 
-    public IEnumerable<EmoteGroup> GetGroups() => this.configurationService.GetCurrentProfile().EmoteGroups;
+    public IEnumerable<EmoteGroup> GetGroups() => this.contextService.GetCurrentContext().EmoteGroups;
 
     public void CreateGroup(EmoteGroup group) {
         if (group == null || string.IsNullOrWhiteSpace(group.Name)) {
             return;
         }
 
-        var profile = this.configurationService.GetCurrentProfile();
-        if (profile.EmoteGroups.Any(g => g.Name.Equals(group.Name, StringComparison.OrdinalIgnoreCase))) {
+        var context = this.contextService.GetCurrentContext();
+        if (context.EmoteGroups.Any(g => g.Name.Equals(group.Name, StringComparison.OrdinalIgnoreCase))) {
             return;
         }
 
-        profile.EmoteGroups.Add(group);
+        context.EmoteGroups.Add(group);
         this.configurationService.Save();
     }
 
@@ -35,14 +37,14 @@ public class GroupManagementService : IGroupManagementService {
             return;
         }
 
-        var profile = this.configurationService.GetCurrentProfile();
-        var group = profile.EmoteGroups.FirstOrDefault(g => g.Name.Equals(oldName, StringComparison.OrdinalIgnoreCase));
+        var context = this.contextService.GetCurrentContext();
+        var group = context.EmoteGroups.FirstOrDefault(g => g.Name.Equals(oldName, StringComparison.OrdinalIgnoreCase));
         if (group == null) {
             return;
         }
 
         bool nameChanged = !oldName.Equals(newName, StringComparison.OrdinalIgnoreCase);
-        if (nameChanged && profile.EmoteGroups.Any(g => g.Name.Equals(newName, StringComparison.OrdinalIgnoreCase))) {
+        if (nameChanged && context.EmoteGroups.Any(g => g.Name.Equals(newName, StringComparison.OrdinalIgnoreCase))) {
             return;
         }
 
@@ -50,9 +52,9 @@ public class GroupManagementService : IGroupManagementService {
         group.Description = description;
 
         if (nameChanged) {
-            var keysToUpdate = profile.EmoteToGroupMap.Where(kvp => kvp.Value.Equals(oldName, StringComparison.OrdinalIgnoreCase)).Select(kvp => kvp.Key).ToList();
+            var keysToUpdate = context.EmoteToGroupMap.Where(kvp => kvp.Value.Equals(oldName, StringComparison.OrdinalIgnoreCase)).Select(kvp => kvp.Key).ToList();
             foreach (var key in keysToUpdate) {
-                profile.EmoteToGroupMap[key] = newName;
+                context.EmoteToGroupMap[key] = newName;
             }
         }
 
@@ -60,12 +62,12 @@ public class GroupManagementService : IGroupManagementService {
     }
 
     public void DeleteGroup(string groupName) {
-        var profile = this.configurationService.GetCurrentProfile();
-        var removed = profile.EmoteGroups.RemoveAll(g => g.Name.Equals(groupName, StringComparison.OrdinalIgnoreCase));
+        var context = this.contextService.GetCurrentContext();
+        var removed = context.EmoteGroups.RemoveAll(g => g.Name.Equals(groupName, StringComparison.OrdinalIgnoreCase));
 
-        var keysToRemove = profile.EmoteToGroupMap.Where(kvp => kvp.Value.Equals(groupName, StringComparison.OrdinalIgnoreCase)).Select(kvp => kvp.Key).ToList();
+        var keysToRemove = context.EmoteToGroupMap.Where(kvp => kvp.Value.Equals(groupName, StringComparison.OrdinalIgnoreCase)).Select(kvp => kvp.Key).ToList();
         foreach (var key in keysToRemove) {
-            profile.EmoteToGroupMap.Remove(key);
+            context.EmoteToGroupMap.Remove(key);
         }
 
         if (removed > 0 || keysToRemove.Count > 0) {
@@ -74,8 +76,8 @@ public class GroupManagementService : IGroupManagementService {
     }
 
     public string? GetGroupForEmote(uint emoteId) {
-        var profile = this.configurationService.GetCurrentProfile();
-        if (profile.EmoteToGroupMap.TryGetValue(emoteId, out var groupName)) {
+        var context = this.contextService.GetCurrentContext();
+        if (context.EmoteToGroupMap.TryGetValue(emoteId, out var groupName)) {
             return groupName;
         }
 
@@ -83,19 +85,19 @@ public class GroupManagementService : IGroupManagementService {
     }
 
     public void AssignEmoteToGroup(uint emoteId, string groupName) {
-        var profile = this.configurationService.GetCurrentProfile();
-        profile.EmoteToGroupMap[emoteId] = groupName;
+        var context = this.contextService.GetCurrentContext();
+        context.EmoteToGroupMap[emoteId] = groupName;
         this.configurationService.Save();
     }
 
     public void RemoveEmoteFromGroup(uint emoteId) {
-        var profile = this.configurationService.GetCurrentProfile();
-        if (profile.EmoteToGroupMap.Remove(emoteId)) {
+        var context = this.contextService.GetCurrentContext();
+        if (context.EmoteToGroupMap.Remove(emoteId)) {
             this.configurationService.Save();
         }
     }
 
     public int GetGroupEmoteCount(string groupName) {
-        return this.configurationService.GetCurrentProfile().EmoteToGroupMap.Values.Count(v => v.Equals(groupName, StringComparison.OrdinalIgnoreCase));
+        return this.contextService.GetCurrentContext().EmoteToGroupMap.Values.Count(v => v.Equals(groupName, StringComparison.OrdinalIgnoreCase));
     }
 }

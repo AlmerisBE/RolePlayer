@@ -3,6 +3,7 @@
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Plugin.Services;
+using RolePlayer.Core.Configuration.Contracts;
 using RolePlayer.UI.EmoteBrowser.Contracts;
 using System;
 using System.Linq;
@@ -14,6 +15,7 @@ public class StatusBarComponent : IDisposable {
     private IEmoteRepository emoteRepository;
     private IPlayerStateProvider playerStateProvider;
     private IClientState clientState;
+    private IContextManagementService contextService;
 
     private int unlockedEmotesCount = 0;
     private int totalEmotesCount = 0;
@@ -22,12 +24,14 @@ public class StatusBarComponent : IDisposable {
         IEmoteExecutionService executionService,
         IEmoteRepository emoteRepository,
         IPlayerStateProvider playerStateProvider,
-        IClientState clientState) {
+        IClientState clientState,
+        IContextManagementService contextService) {
 
         this.executionService = executionService;
         this.emoteRepository = emoteRepository;
         this.playerStateProvider = playerStateProvider;
         this.clientState = clientState;
+        this.contextService = contextService;
 
         this.clientState.Login += this.OnLogin;
         this.CalculateEmoteStatsAsync();
@@ -51,13 +55,27 @@ public class StatusBarComponent : IDisposable {
             ImGui.PopFont();
 
             if (ImGui.IsItemHovered()) {
-                ImGui.SetTooltip("Ouvrir la fenêtre des emotes du jeu");
+                ImGui.SetTooltip("Open native Emote window");
             }
 
-            var statsText = $"{this.unlockedEmotesCount} / {this.totalEmotesCount} débloquées";
-            var textSize = ImGui.CalcTextSize(statsText).X + 30f;
+            var statsText = $"{this.unlockedEmotesCount} / {this.totalEmotesCount} unlocked";
 
-            ImGui.SameLine(ImGui.GetWindowContentRegionMax().X - textSize);
+            var currentContext = this.contextService.GetCurrentContext();
+            var totalWidth = ImGui.CalcTextSize(statsText).X + 30f + 150f + ImGui.GetStyle().ItemSpacing.X;
+
+            ImGui.SameLine(ImGui.GetWindowContentRegionMax().X - totalWidth);
+
+            ImGui.SetNextItemWidth(150f);
+            if (ImGui.BeginCombo("##QuickContextSwitch", currentContext.Name)) {
+                foreach (var ctx in this.contextService.GetAllContexts()) {
+                    if (ImGui.Selectable(ctx.Name, ctx.Id == currentContext.Id)) {
+                        this.contextService.SwitchContext(ctx.Id);
+                    }
+                }
+                ImGui.EndCombo();
+            }
+
+            ImGui.SameLine();
             ImGui.AlignTextToFramePadding();
             ImGui.Text(statsText);
         }
