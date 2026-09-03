@@ -16,6 +16,7 @@ public class ConfigurationTab : IEmoteBrowserTab {
     private string newGlobalTagInput = string.Empty;
 
     public string TabName => "Configuration";
+    public int SortOrder => 100; // Toujours en dernier
 
     public ConfigurationTab(IGroupManagementService groupService, ITagManagementService tagService) {
         this.groupService = groupService;

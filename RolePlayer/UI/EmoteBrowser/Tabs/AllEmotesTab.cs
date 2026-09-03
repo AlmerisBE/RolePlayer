@@ -23,6 +23,7 @@ public class AllEmotesTab : IEmoteBrowserTab {
     private List<EmoteDisplayData> emotesCache;
 
     public string TabName => "All Emotes";
+    public int SortOrder => 0; // Toujours en premier
 
     public AllEmotesTab(
         IEmoteRepository emoteRepository,
@@ -73,7 +74,6 @@ public class AllEmotesTab : IEmoteBrowserTab {
                     hasCustomColor = true;
                 }
 
-                // Application d'une hauteur forcée de 24px pour remplir parfaitement la cellule
                 ImGui.TableNextColumn();
                 if (ImGui.Selectable($"##select_{emote.Id}", isSelected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowItemOverlap, new Vector2(0, 24))) {
                     this.selectionState.SelectedEmote = isSelected ? null : emote;
@@ -94,7 +94,7 @@ public class AllEmotesTab : IEmoteBrowserTab {
                         }
                     }
                     catch (IconNotFoundException) {
-                        // Ignore silencieusement les textures manquantes
+                        // Ignorer silencieusement
                     }
                 }
 

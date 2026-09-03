@@ -7,6 +7,7 @@ using RolePlayer.UI.EmoteBrowser.Components;
 using RolePlayer.UI.EmoteBrowser.Contracts;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 
 public class MainWindow : Window, IDisposable {
@@ -26,7 +27,9 @@ public class MainWindow : Window, IDisposable {
         IClientState clientState)
         : base("RolePlayer", ImGuiWindowFlags.None) {
 
-        this.tabs = tabs;
+        // Tri explicite des onglets selon leur SortOrder
+        this.tabs = tabs.OrderBy(t => t.SortOrder).ToList();
+
         this.detailsPanel = detailsPanel;
         this.selectionState = selectionState;
         this.clientState = clientState;
