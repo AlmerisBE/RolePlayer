@@ -22,6 +22,7 @@ public class MainWindowFeature : IFeatureModule {
         services.AddSingleton<HotbarConfigSubTab>();
         services.AddSingleton<GroupsConfigSubTab>();
         services.AddSingleton<TagsConfigSubTab>();
+        services.AddSingleton<ContextsConfigSubTab>();
 
         services.AddSingleton<Window>(provider => provider.GetRequiredService<MainWindow>());
         services.AddSingleton<ICommand, OpenMainWindowCommand>();

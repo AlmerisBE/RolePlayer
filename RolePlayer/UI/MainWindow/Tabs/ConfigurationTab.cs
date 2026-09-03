@@ -14,21 +14,30 @@ public class ConfigurationTab : IEmoteBrowserTab, IDisposable {
     private HotbarConfigSubTab hotbarConfigSubTab;
     private GroupsConfigSubTab groupsConfigSubTab;
     private TagsConfigSubTab tagsConfigSubTab;
+    private ContextsConfigSubTab contextsConfigSubTab;
 
     private bool isHotbarTabActive = true;
 
     public ConfigurationTab(
         HotbarConfigSubTab hotbarConfigSubTab,
         GroupsConfigSubTab groupsConfigSubTab,
-        TagsConfigSubTab tagsConfigSubTab) {
+        TagsConfigSubTab tagsConfigSubTab,
+        ContextsConfigSubTab contextsConfigSubTab) {
 
         this.hotbarConfigSubTab = hotbarConfigSubTab;
         this.groupsConfigSubTab = groupsConfigSubTab;
         this.tagsConfigSubTab = tagsConfigSubTab;
+        this.contextsConfigSubTab = contextsConfigSubTab;
     }
 
     public void Draw() {
         if (ImGui.BeginTabBar("ConfigurationTabBar")) {
+            if (ImGui.BeginTabItem("Contexts")) {
+                this.isHotbarTabActive = false;
+                this.contextsConfigSubTab.Draw();
+                ImGui.EndTabItem();
+            }
+
             if (ImGui.BeginTabItem("Hotbars")) {
                 this.isHotbarTabActive = true;
                 this.hotbarConfigSubTab.Draw();
