@@ -32,6 +32,14 @@ public class EmoteFilterComponent {
         this.configurationService = configurationService;
         this.groupManagementService = groupManagementService;
         this.tagManagementService = tagManagementService;
+
+        // Chargement de l'état persisté au démarrage
+        var config = this.configurationService.GetConfig();
+        this.ShowModdedOnly = config.ShowModdedOnly;
+        this.CurrentGrouping = config.CurrentGrouping;
+        this.SelectedCategories = new HashSet<string>(config.SelectedCategories ?? Enumerable.Empty<string>());
+        this.SelectedGroups = new HashSet<string>(config.SelectedGroups ?? Enumerable.Empty<string>());
+        this.SelectedTags = new HashSet<string>(config.SelectedTags ?? Enumerable.Empty<string>());
     }
 
     public bool Draw(List<string> availableCategories) {
@@ -86,14 +94,31 @@ public class EmoteFilterComponent {
             };
 
             if (ImGui.BeginCombo("##GroupingMode", currentGroupLabel)) {
-                if (ImGui.Selectable("None", this.CurrentGrouping == GroupingMode.None)) { this.CurrentGrouping = GroupingMode.None; filtersChanged = true; }
-                if (ImGui.Selectable("Native Category", this.CurrentGrouping == GroupingMode.NativeCategory)) { this.CurrentGrouping = GroupingMode.NativeCategory; filtersChanged = true; }
-                if (ImGui.Selectable("Custom Group", this.CurrentGrouping == GroupingMode.CustomGroup)) { this.CurrentGrouping = GroupingMode.CustomGroup; filtersChanged = true; }
+                if (ImGui.Selectable("None", this.CurrentGrouping == GroupingMode.None)) {
+                    this.CurrentGrouping = GroupingMode.None;
+                    config.CurrentGrouping = this.CurrentGrouping;
+                    this.configurationService.Save();
+                    filtersChanged = true;
+                }
+                if (ImGui.Selectable("Native Category", this.CurrentGrouping == GroupingMode.NativeCategory)) {
+                    this.CurrentGrouping = GroupingMode.NativeCategory;
+                    config.CurrentGrouping = this.CurrentGrouping;
+                    this.configurationService.Save();
+                    filtersChanged = true;
+                }
+                if (ImGui.Selectable("Custom Group", this.CurrentGrouping == GroupingMode.CustomGroup)) {
+                    this.CurrentGrouping = GroupingMode.CustomGroup;
+                    config.CurrentGrouping = this.CurrentGrouping;
+                    this.configurationService.Save();
+                    filtersChanged = true;
+                }
                 ImGui.EndCombo();
             }
 
             ImGui.SameLine();
             if (ImGui.Checkbox("Show Modded Only", ref this.ShowModdedOnly)) {
+                config.ShowModdedOnly = this.ShowModdedOnly;
+                this.configurationService.Save();
                 filtersChanged = true;
             }
 
@@ -105,16 +130,26 @@ public class EmoteFilterComponent {
                 ImGui.TableSetupColumn("Tags");
                 ImGui.TableNextRow();
 
+                bool multiSelectChanged = false;
+
                 ImGui.TableNextColumn();
-                this.DrawMultiSelectCombo("Categories##Combo", availableCategories, this.SelectedCategories, ref filtersChanged);
+                this.DrawMultiSelectCombo("Categories##Combo", availableCategories, this.SelectedCategories, ref multiSelectChanged);
 
                 ImGui.TableNextColumn();
                 var groups = this.groupManagementService.GetGroups().Select(g => g.Name).ToList();
-                this.DrawMultiSelectCombo("Groups##Combo", groups, this.SelectedGroups, ref filtersChanged);
+                this.DrawMultiSelectCombo("Groups##Combo", groups, this.SelectedGroups, ref multiSelectChanged);
 
                 ImGui.TableNextColumn();
                 var tags = this.tagManagementService.GetAvailableTags().ToList();
-                this.DrawMultiSelectCombo("Tags##Combo", tags, this.SelectedTags, ref filtersChanged);
+                this.DrawMultiSelectCombo("Tags##Combo", tags, this.SelectedTags, ref multiSelectChanged);
+
+                if (multiSelectChanged) {
+                    config.SelectedCategories = new HashSet<string>(this.SelectedCategories);
+                    config.SelectedGroups = new HashSet<string>(this.SelectedGroups);
+                    config.SelectedTags = new HashSet<string>(this.SelectedTags);
+                    this.configurationService.Save();
+                    filtersChanged = true;
+                }
 
                 ImGui.EndTable();
             }
@@ -144,10 +179,10 @@ public class EmoteFilterComponent {
                 bool isSelected = selectedItems.Contains(item);
                 if (ImGui.Checkbox(item, ref isSelected)) {
                     if (isSelected) {
-                        this.SelectedCategories.Add(item);
+                        selectedItems.Add(item);
                     }
                     else {
-                        this.SelectedCategories.Remove(item);
+                        selectedItems.Remove(item);
                     }
 
                     changed = true;
