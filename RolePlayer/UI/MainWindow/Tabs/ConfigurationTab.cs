@@ -1,115 +1,135 @@
 ﻿namespace RolePlayer.UI.MainWindow.Tabs;
 
 using Dalamud.Bindings.ImGui;
-using RolePlayer.Core.MetaData.Models;
+using RolePlayer.Core.Configuration.Contracts;
 using RolePlayer.UI.EmoteBrowser.Contracts;
-using System.Linq;
+using RolePlayer.UI.Hotbar.Components;
+using RolePlayer.UI.Hotbar.Models;
+using System;
+using System.Numerics;
 
-public class ConfigurationTab : IEmoteBrowserTab {
-    private IGroupManagementService groupService;
-    private ITagManagementService tagService;
-
-    private string newGroupName = string.Empty;
-    private string newGroupDesc = string.Empty;
-    private int newGroupSort = 0;
-
-    private string newGlobalTagInput = string.Empty;
-
+public class ConfigurationTab : IEmoteBrowserTab, IDisposable {
     public string TabName => "Configuration";
-    public int SortOrder => 100; // Toujours en dernier
-    public bool SupportsSidePanel => false;
+    public int SortOrder => 99;
 
-    public ConfigurationTab(IGroupManagementService groupService, ITagManagementService tagService) {
-        this.groupService = groupService;
-        this.tagService = tagService;
+    public bool IsSidePanelOpen => this.selectedHotbar != null;
+
+    private IConfigurationService configService;
+    private HotbarManagerComponent hotbarManager;
+    private HotbarConfig? selectedHotbar;
+
+    public ConfigurationTab(IConfigurationService configService, HotbarManagerComponent hotbarManager) {
+        this.configService = configService;
+        this.hotbarManager = hotbarManager;
     }
 
     public void Draw() {
-        if (ImGui.BeginTabBar("ConfigTabBar")) {
-            if (ImGui.BeginTabItem("Groups")) {
-                this.DrawGroupsTab();
-                ImGui.EndTabItem();
+        var config = this.configService.GetConfig();
+
+        ImGui.Text("Hotbar Management");
+        ImGui.Separator();
+        ImGui.Spacing();
+
+        if (ImGui.Button("Create New Hotbar", new Vector2(-1, 0))) {
+            var newHotbar = new HotbarConfig { Name = $"Hotbar {config.Hotbars.Count + 1}" };
+            config.Hotbars.Add(newHotbar);
+            this.selectedHotbar = newHotbar;
+            this.configService.Save();
+            this.hotbarManager.RefreshWindows();
+        }
+
+        ImGui.Spacing();
+
+        foreach (var hotbar in config.Hotbars) {
+            bool isSelected = this.selectedHotbar?.Id == hotbar.Id;
+            if (ImGui.Selectable(hotbar.Name, isSelected)) {
+                this.selectedHotbar = hotbar;
             }
-            if (ImGui.BeginTabItem("Tags")) {
-                this.DrawTagsTab();
-                ImGui.EndTabItem();
-            }
-            ImGui.EndTabBar();
         }
     }
 
-    private void DrawGroupsTab() {
-        ImGui.Spacing();
-        ImGui.Text("Add New Group");
-        ImGui.InputText("Name##newGroup", ref this.newGroupName, 64);
-        ImGui.InputText("Description##newGroup", ref this.newGroupDesc, 128);
-        ImGui.InputInt("Sort Order##newGroup", ref this.newGroupSort);
-
-        if (ImGui.Button("Create Group") && !string.IsNullOrWhiteSpace(this.newGroupName)) {
-            this.groupService.CreateGroup(new EmoteGroup {
-                Name = this.newGroupName.Trim(),
-                Description = this.newGroupDesc.Trim(),
-                SortOrder = this.newGroupSort
-            });
-            this.newGroupName = string.Empty;
-            this.newGroupDesc = string.Empty;
-            this.newGroupSort = 0;
+    public void DrawSidePanel() {
+        if (this.selectedHotbar == null) {
+            return;
         }
 
+        var config = this.configService.GetConfig();
+        bool configChanged = false;
+
+        ImGui.Text("Hotbar Settings");
         ImGui.Separator();
         ImGui.Spacing();
-        ImGui.Text("Existing Groups");
 
-        var tableFlags = ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.ScrollY;
-        if (ImGui.BeginTable("GroupsTable", 4, tableFlags)) {
-            ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch, 0.4f);
-            ImGui.TableSetupColumn("Description", ImGuiTableColumnFlags.WidthStretch, 0.6f);
-            ImGui.TableSetupColumn("Sort", ImGuiTableColumnFlags.WidthFixed, 50f);
-            ImGui.TableSetupColumn("Action", ImGuiTableColumnFlags.WidthFixed, 60f);
-            ImGui.TableHeadersRow();
+        string name = this.selectedHotbar.Name;
+        if (ImGui.InputText("Name", ref name, 64)) {
+            this.selectedHotbar.Name = name;
+            configChanged = true;
+        }
 
-            foreach (var group in this.groupService.GetGroups().ToList()) {
-                ImGui.TableNextRow();
-                ImGui.TableNextColumn(); ImGui.Text(group.Name);
-                ImGui.TableNextColumn(); ImGui.Text(group.Description);
-                ImGui.TableNextColumn(); ImGui.Text(group.SortOrder.ToString());
+        bool isVisible = this.selectedHotbar.IsVisible;
+        if (ImGui.Checkbox("Visible", ref isVisible)) {
+            this.selectedHotbar.IsVisible = isVisible;
+            configChanged = true;
+        }
 
-                ImGui.TableNextColumn();
-                if (ImGui.Button($"Delete##{group.Name}")) {
-                    this.groupService.DeleteGroup(group.Name);
+        if (ImGui.BeginCombo("Layout", this.selectedHotbar.Layout.ToString())) {
+            foreach (HotbarLayout layout in Enum.GetValues(typeof(HotbarLayout))) {
+                if (ImGui.Selectable(layout.ToString(), this.selectedHotbar.Layout == layout)) {
+                    this.selectedHotbar.Layout = layout;
+                    configChanged = true;
                 }
             }
-            ImGui.EndTable();
+            ImGui.EndCombo();
         }
-    }
 
-    private void DrawTagsTab() {
+        if (ImGui.BeginCombo("Population Mode", this.selectedHotbar.PopulationMode.ToString())) {
+            foreach (HotbarPopulationMode mode in Enum.GetValues(typeof(HotbarPopulationMode))) {
+                if (ImGui.Selectable(mode.ToString(), this.selectedHotbar.PopulationMode == mode)) {
+                    this.selectedHotbar.PopulationMode = mode;
+                    configChanged = true;
+                }
+            }
+            ImGui.EndCombo();
+        }
+
         ImGui.Spacing();
-        ImGui.Text("Create New Tag");
-        ImGui.SetNextItemWidth(200f);
-        ImGui.InputText("##newGlobalTag", ref this.newGlobalTagInput, 32);
-        ImGui.SameLine();
-
-        if (ImGui.Button("Create Tag") && !string.IsNullOrWhiteSpace(this.newGlobalTagInput)) {
-            this.tagService.CreateGlobalTag(this.newGlobalTagInput);
-            this.newGlobalTagInput = string.Empty;
-        }
-
         ImGui.Separator();
-        ImGui.Spacing();
-        ImGui.Text("Available Tags");
 
-        var tags = this.tagService.GetAvailableTags().ToList();
-        if (tags.Count == 0) {
-            ImGui.TextDisabled("No tags have been created yet.");
-        }
+        if (this.selectedHotbar.PopulationMode == HotbarPopulationMode.Dynamic) {
+            ImGui.Text("Dynamic Filters");
+            string searchQuery = this.selectedHotbar.SearchQuery;
+            if (ImGui.InputTextWithHint("##HotbarSearch", "Search emotes...", ref searchQuery, 128)) {
+                this.selectedHotbar.SearchQuery = searchQuery;
+                configChanged = true;
+            }
 
-        foreach (var tag in tags) {
-            ImGui.BulletText(tag);
-            ImGui.SameLine(ImGui.GetWindowContentRegionMax().X - 60f);
-            if (ImGui.Button($"Delete##{tag}")) {
-                this.tagService.DeleteGlobalTag(tag);
+            bool moddedOnly = this.selectedHotbar.ShowModdedOnly;
+            if (ImGui.Checkbox("Modded Only", ref moddedOnly)) {
+                this.selectedHotbar.ShowModdedOnly = moddedOnly;
+                configChanged = true;
             }
         }
+        else {
+            ImGui.Text("Manual Population (Select emotes from the browser)");
+        }
+
+        ImGui.Spacing();
+        ImGui.Separator();
+        ImGui.Spacing();
+
+        ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
+        if (ImGui.Button("Delete Hotbar", new Vector2(-1, 0))) {
+            config.Hotbars.Remove(this.selectedHotbar);
+            this.selectedHotbar = null;
+            configChanged = true;
+        }
+        ImGui.PopStyleColor();
+
+        if (configChanged) {
+            this.configService.Save();
+            this.hotbarManager.RefreshWindows();
+        }
     }
+
+    public void Dispose() { }
 }

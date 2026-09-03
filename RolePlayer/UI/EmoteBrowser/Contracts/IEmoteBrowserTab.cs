@@ -3,6 +3,7 @@
 public interface IEmoteBrowserTab {
     string TabName { get; }
     int SortOrder { get; }
-    bool SupportsSidePanel { get; }
+    bool IsSidePanelOpen { get; }
     void Draw();
+    void DrawSidePanel();
 }

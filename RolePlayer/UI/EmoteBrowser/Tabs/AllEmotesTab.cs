@@ -27,6 +27,7 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
     private ILoggerService logger;
 
     private EmoteFilterComponent filterComponent;
+    private EmoteDetailsPanel detailsPanel;
 
     private List<EmoteDisplayData> emotesCache = new();
     private List<string> availableCategories = new();
@@ -38,7 +39,7 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
 
     public string TabName => "All Emotes";
     public int SortOrder => 0;
-    public bool SupportsSidePanel => true;
+    public bool IsSidePanelOpen => this.selectionState.SelectedEmote != null;
 
     public AllEmotesTab(
         IEmoteRepository emoteRepository,
@@ -49,7 +50,8 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
         ITextureProvider textureProvider,
         IClientState clientState,
         ILoggerService logger,
-        EmoteFilterComponent filterComponent) {
+        EmoteFilterComponent filterComponent,
+        EmoteDetailsPanel detailsPanel) {
 
         this.emoteRepository = emoteRepository;
         this.playerStateProvider = playerStateProvider;
@@ -60,6 +62,7 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
         this.clientState = clientState;
         this.logger = logger;
         this.filterComponent = filterComponent;
+        this.detailsPanel = detailsPanel;
 
         this.modStateProvider.ModStateChanged += this.OnModStateChanged;
     }
@@ -210,6 +213,10 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
                 this.isRefreshing = false;
             }
         });
+    }
+
+    public void DrawSidePanel() {
+        this.detailsPanel.Draw();
     }
 
     public void Dispose() => this.modStateProvider.ModStateChanged -= this.OnModStateChanged;
