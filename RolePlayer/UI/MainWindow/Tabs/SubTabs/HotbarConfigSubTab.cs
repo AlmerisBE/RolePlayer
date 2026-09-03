@@ -58,7 +58,8 @@ public class HotbarConfigSubTab {
             return;
         }
 
-        if (ImGui.BeginTable("HotbarsListTable", 3, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.Selectable | ImGuiTableFlags.SizingFixedFit)) {
+        // Retrait du flag invalide 'Selectable'
+        if (ImGui.BeginTable("HotbarsListTable", 3, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit)) {
             ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch);
             ImGui.TableSetupColumn("Type", ImGuiTableColumnFlags.WidthFixed, 100f);
             ImGui.TableSetupColumn("Emotes", ImGuiTableColumnFlags.WidthFixed, 60f);
@@ -78,7 +79,6 @@ public class HotbarConfigSubTab {
                 ImGui.Text(hotbar.PopulationMode.ToString());
 
                 ImGui.TableNextColumn();
-                // Utilisation du resolver pour obtenir le compte exact en direct
                 int count = this.hotbarResolver.ResolveEmotesForHotbar(hotbar, this.hotbarManager.GetEmoteCache()).Count;
                 ImGui.Text(count.ToString());
             }
