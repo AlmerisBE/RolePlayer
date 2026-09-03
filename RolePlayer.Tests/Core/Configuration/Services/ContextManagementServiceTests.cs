@@ -4,7 +4,6 @@ using NSubstitute;
 using RolePlayer.Core.Configuration.Contracts;
 using RolePlayer.Core.Configuration.Models;
 using RolePlayer.Core.Configuration.Services;
-using System.Linq;
 using Xunit;
 
 public class ContextManagementServiceTests {
@@ -29,6 +28,12 @@ public class ContextManagementServiceTests {
     public void CreateContext_AddsNewContextAndSaves() {
         var mockConfigService = Substitute.For<IConfigurationService>();
         var profile = new CharacterProfile();
+
+        // Arrange : Initialisation manuelle du contexte par défaut
+        var defaultContext = new EmoteContext { Name = "Default" };
+        profile.Contexts.Add(defaultContext.Id, defaultContext);
+        profile.ActiveContextId = defaultContext.Id;
+
         mockConfigService.GetCurrentProfile().Returns(profile);
 
         var service = new ContextManagementService(mockConfigService);
@@ -43,9 +48,13 @@ public class ContextManagementServiceTests {
     public void SwitchContext_ChangesActiveIdAndTriggersEvent() {
         var mockConfigService = Substitute.For<IConfigurationService>();
         var profile = new CharacterProfile();
-        var context1 = profile.Contexts.Values.First();
+
+        // Arrange : Création de deux contextes distincts
+        var context1 = new EmoteContext { Name = "First Context" };
         var context2 = new EmoteContext { Name = "Second Context" };
+        profile.Contexts.Add(context1.Id, context1);
         profile.Contexts.Add(context2.Id, context2);
+        profile.ActiveContextId = context1.Id;
 
         mockConfigService.GetCurrentProfile().Returns(profile);
 
@@ -64,10 +73,13 @@ public class ContextManagementServiceTests {
     public void DeleteContext_RemovesContextAndSwitchesIfActive() {
         var mockConfigService = Substitute.For<IConfigurationService>();
         var profile = new CharacterProfile();
-        var context1 = profile.Contexts.Values.First();
+
+        // Arrange : Création de deux contextes distincts
+        var context1 = new EmoteContext { Name = "First Context" };
         var context2 = new EmoteContext { Name = "To Delete" };
+        profile.Contexts.Add(context1.Id, context1);
         profile.Contexts.Add(context2.Id, context2);
-        profile.ActiveContextId = context2.Id;
+        profile.ActiveContextId = context2.Id; // On simule que le contexte à supprimer est celui actif
 
         mockConfigService.GetCurrentProfile().Returns(profile);
 
