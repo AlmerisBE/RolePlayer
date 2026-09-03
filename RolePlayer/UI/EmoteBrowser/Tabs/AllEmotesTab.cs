@@ -11,6 +11,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 
+public enum GroupingMode {
+    None,
+    NativeCategory,
+    CustomGroup
+}
+
 public class AllEmotesTab : IEmoteBrowserTab {
     private IEmoteRepository emoteRepository;
     private IPlayerStateProvider playerStateProvider;
@@ -23,11 +29,14 @@ public class AllEmotesTab : IEmoteBrowserTab {
     private ITagManagementService tagManagementService;
 
     private List<EmoteDisplayData> emotesCache;
-    private List<EmoteDisplayData> filteredEmotes;
     private List<string> availableCategories;
+    private Dictionary<string, List<EmoteDisplayData>> groupedEmotes;
 
     private string searchQuery = string.Empty;
     private bool showFilters = false;
+    private bool showModdedOnly = false;
+    private GroupingMode currentGrouping = GroupingMode.None;
+
     private HashSet<string> selectedCategories = new();
     private HashSet<string> selectedGroups = new();
     private HashSet<string> selectedTags = new();
@@ -57,8 +66,8 @@ public class AllEmotesTab : IEmoteBrowserTab {
         this.tagManagementService = tagManagementService;
 
         this.emotesCache = new List<EmoteDisplayData>();
-        this.filteredEmotes = new List<EmoteDisplayData>();
         this.availableCategories = new List<string>();
+        this.groupedEmotes = new Dictionary<string, List<EmoteDisplayData>>();
     }
 
     public void Draw() {
@@ -101,6 +110,33 @@ public class AllEmotesTab : IEmoteBrowserTab {
 
                 ImGui.EndTable();
             }
+
+            ImGui.Spacing();
+
+            if (ImGui.Checkbox("Show Modded Only", ref this.showModdedOnly)) {
+                filtersChanged = true;
+            }
+
+            ImGui.SameLine();
+            ImGui.Spacing();
+            ImGui.SameLine();
+            ImGui.Text("Group By:");
+            ImGui.SameLine();
+            ImGui.SetNextItemWidth(150f);
+
+            string currentGroupLabel = this.currentGrouping switch {
+                GroupingMode.NativeCategory => "Native Category",
+                GroupingMode.CustomGroup => "Custom Group",
+                _ => "None"
+            };
+
+            if (ImGui.BeginCombo("##GroupingMode", currentGroupLabel)) {
+                if (ImGui.Selectable("None", this.currentGrouping == GroupingMode.None)) { this.currentGrouping = GroupingMode.None; filtersChanged = true; }
+                if (ImGui.Selectable("Native Category", this.currentGrouping == GroupingMode.NativeCategory)) { this.currentGrouping = GroupingMode.NativeCategory; filtersChanged = true; }
+                if (ImGui.Selectable("Custom Group", this.currentGrouping == GroupingMode.CustomGroup)) { this.currentGrouping = GroupingMode.CustomGroup; filtersChanged = true; }
+                ImGui.EndCombo();
+            }
+
             ImGui.Spacing();
         }
 
@@ -117,69 +153,79 @@ public class AllEmotesTab : IEmoteBrowserTab {
             ImGui.TableSetupColumn("Action", ImGuiTableColumnFlags.WidthFixed, 60f);
             ImGui.TableHeadersRow();
 
-            foreach (var emote in this.filteredEmotes) {
-                ImGui.TableNextRow();
-
-                var isSelected = this.selectionState.SelectedEmote?.Id == emote.Id;
-                var hasCustomColor = false;
-
-                if (!emote.IsUnlocked) {
-                    ImGui.PushStyleColor(ImGuiCol.Text, 0xFF808080);
-                    hasCustomColor = true;
-                }
-                else if (emote.IsModded) {
-                    ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.2f, 0.8f, 0.2f, 1.0f));
-                    hasCustomColor = true;
+            foreach (var groupKvp in this.groupedEmotes.OrderBy(k => k.Key)) {
+                if (this.currentGrouping != GroupingMode.None) {
+                    ImGui.TableNextRow();
+                    ImGui.TableSetBgColor(ImGuiTableBgTarget.RowBg0, ImGui.GetColorU32(new Vector4(0.15f, 0.15f, 0.15f, 1.0f)));
+                    ImGui.TableNextColumn();
+                    ImGui.AlignTextToFramePadding();
+                    ImGui.TextColored(new Vector4(0.5f, 0.8f, 1.0f, 1.0f), groupKvp.Key);
                 }
 
-                ImGui.TableNextColumn();
-                if (ImGui.Selectable($"##select_{emote.Id}", isSelected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowItemOverlap, new Vector2(0, 24))) {
-                    this.selectionState.SelectedEmote = isSelected ? null : emote;
-                }
+                foreach (var emote in groupKvp.Value) {
+                    ImGui.TableNextRow();
 
-                ImGui.SameLine();
+                    var isSelected = this.selectionState.SelectedEmote?.Id == emote.Id;
+                    var hasCustomColor = false;
 
-                if (emote.IconId > 0) {
-                    try {
-                        var lookup = new GameIconLookup {
-                            IconId = emote.IconId,
-                            HiRes = false
-                        };
+                    if (!emote.IsUnlocked) {
+                        ImGui.PushStyleColor(ImGuiCol.Text, 0xFF808080);
+                        hasCustomColor = true;
+                    }
+                    else if (emote.IsModded) {
+                        ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.2f, 0.8f, 0.2f, 1.0f));
+                        hasCustomColor = true;
+                    }
 
-                        var iconWrap = this.textureProvider.GetFromGameIcon(lookup).GetWrapOrDefault();
-                        if (iconWrap != null) {
-                            ImGui.Image(iconWrap.Handle, new Vector2(24, 24));
+                    ImGui.TableNextColumn();
+                    if (ImGui.Selectable($"##select_{emote.Id}", isSelected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowItemOverlap, new Vector2(0, 24))) {
+                        this.selectionState.SelectedEmote = isSelected ? null : emote;
+                    }
+
+                    ImGui.SameLine();
+
+                    if (emote.IconId > 0) {
+                        try {
+                            var lookup = new GameIconLookup {
+                                IconId = emote.IconId,
+                                HiRes = false
+                            };
+
+                            var iconWrap = this.textureProvider.GetFromGameIcon(lookup).GetWrapOrDefault();
+                            if (iconWrap != null) {
+                                ImGui.Image(iconWrap.Handle, new Vector2(24, 24));
+                            }
+                        }
+                        catch (IconNotFoundException) {
+                            // Silently ignore missing textures
                         }
                     }
-                    catch (IconNotFoundException) {
-                        // Silently ignore missing textures
+
+                    ImGui.TableNextColumn();
+                    var displayName = emote.IsModded ? $"★ {emote.Name}" : emote.Name;
+                    ImGui.AlignTextToFramePadding();
+                    ImGui.Text(displayName);
+
+                    ImGui.TableNextColumn();
+                    ImGui.AlignTextToFramePadding();
+                    var commandText = emote.LocalizedCommand;
+
+                    if (this.clientState.ClientLanguage != ClientLanguage.English && !string.IsNullOrEmpty(emote.EnglishCommand) && emote.EnglishCommand != emote.LocalizedCommand) {
+                        commandText += $" / {emote.EnglishCommand}";
                     }
-                }
 
-                ImGui.TableNextColumn();
-                var displayName = emote.IsModded ? $"★ {emote.Name}" : emote.Name;
-                ImGui.AlignTextToFramePadding();
-                ImGui.Text(displayName);
+                    ImGui.Text(commandText);
 
-                ImGui.TableNextColumn();
-                ImGui.AlignTextToFramePadding();
-                var commandText = emote.LocalizedCommand;
-
-                if (this.clientState.ClientLanguage != ClientLanguage.English && !string.IsNullOrEmpty(emote.EnglishCommand) && emote.EnglishCommand != emote.LocalizedCommand) {
-                    commandText += $" / {emote.EnglishCommand}";
-                }
-
-                ImGui.Text(commandText);
-
-                ImGui.TableNextColumn();
-                if (emote.IsUnlocked) {
-                    if (ImGui.Button($"Play##{emote.Id}", new Vector2(-1, 24))) {
-                        this.executionService.ExecuteEmote(emote.Id);
+                    ImGui.TableNextColumn();
+                    if (emote.IsUnlocked) {
+                        if (ImGui.Button($"Play##{emote.Id}", new Vector2(-1, 24))) {
+                            this.executionService.ExecuteEmote(emote.Id);
+                        }
                     }
-                }
 
-                if (hasCustomColor) {
-                    ImGui.PopStyleColor();
+                    if (hasCustomColor) {
+                        ImGui.PopStyleColor();
+                    }
                 }
             }
             ImGui.EndTable();
@@ -217,7 +263,7 @@ public class AllEmotesTab : IEmoteBrowserTab {
     }
 
     private void ApplyFilters() {
-        this.filteredEmotes.Clear();
+        this.groupedEmotes.Clear();
 
         var query = this.searchQuery.Trim().ToLowerInvariant();
         bool hasSearch = !string.IsNullOrEmpty(query);
@@ -226,6 +272,10 @@ public class AllEmotesTab : IEmoteBrowserTab {
         bool hasTagFilter = this.selectedTags.Count > 0;
 
         foreach (var emote in this.emotesCache) {
+            if (this.showModdedOnly && !emote.IsModded) {
+                continue;
+            }
+
             if (hasSearch) {
                 bool matchesName = emote.Name.ToLowerInvariant().Contains(query);
                 bool matchesCmd = emote.LocalizedCommand.ToLowerInvariant().Contains(query);
@@ -240,11 +290,9 @@ public class AllEmotesTab : IEmoteBrowserTab {
                 continue;
             }
 
-            if (hasGroupFilter) {
-                var group = this.groupManagementService.GetGroupForEmote(emote.Id);
-                if (group == null || !this.selectedGroups.Contains(group)) {
-                    continue;
-                }
+            var customGroup = this.groupManagementService.GetGroupForEmote(emote.Id);
+            if (hasGroupFilter && (string.IsNullOrEmpty(customGroup) || !this.selectedGroups.Contains(customGroup))) {
+                continue;
             }
 
             if (hasTagFilter) {
@@ -254,7 +302,19 @@ public class AllEmotesTab : IEmoteBrowserTab {
                 }
             }
 
-            this.filteredEmotes.Add(emote);
+            string groupKey = "All";
+            if (this.currentGrouping == GroupingMode.NativeCategory) {
+                groupKey = string.IsNullOrEmpty(emote.Category) ? "Uncategorized" : emote.Category;
+            }
+            else if (this.currentGrouping == GroupingMode.CustomGroup) {
+                groupKey = string.IsNullOrEmpty(customGroup) ? "Ungrouped" : customGroup;
+            }
+
+            if (!this.groupedEmotes.ContainsKey(groupKey)) {
+                this.groupedEmotes[groupKey] = new List<EmoteDisplayData>();
+            }
+
+            this.groupedEmotes[groupKey].Add(emote);
         }
     }
 
