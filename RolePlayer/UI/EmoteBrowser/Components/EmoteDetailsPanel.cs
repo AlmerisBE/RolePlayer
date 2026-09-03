@@ -151,8 +151,8 @@ public class EmoteDetailsPanel {
     private void DrawStaticHotbarAssignment(uint emoteId) {
         ImGui.TextDisabled("Static Hotbars:");
 
-        var config = this.configurationService.GetConfig();
-        var manualHotbars = config.Hotbars.Where(h => h.PopulationMode == HotbarPopulationMode.Manual).ToList();
+        var profile = this.configurationService.GetCurrentProfile();
+        var manualHotbars = profile.Hotbars.Where(h => h.PopulationMode == HotbarPopulationMode.Manual).ToList();
 
         if (!manualHotbars.Any()) {
             ImGui.TextDisabled("No manual hotbars available.");

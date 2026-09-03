@@ -23,6 +23,7 @@ public class HotbarManagerComponent : IDisposable {
     private IPlayerStateProvider playerStateProvider;
     private IModStateProvider modStateProvider;
     private ICondition condition;
+    private IClientState clientState;
 
     private WindowSystem windowSystem;
     private List<EmoteDisplayData> sharedCache = new();
@@ -36,7 +37,8 @@ public class HotbarManagerComponent : IDisposable {
         IEmoteRepository emoteRepository,
         IPlayerStateProvider playerStateProvider,
         IModStateProvider modStateProvider,
-        ICondition condition) {
+        ICondition condition,
+        IClientState clientState) {
 
         this.pluginInterface = pluginInterface;
         this.configService = configService;
@@ -47,17 +49,24 @@ public class HotbarManagerComponent : IDisposable {
         this.playerStateProvider = playerStateProvider;
         this.modStateProvider = modStateProvider;
         this.condition = condition;
+        this.clientState = clientState;
 
         this.windowSystem = new WindowSystem("RolePlayer_Hotbars");
         this.pluginInterface.UiBuilder.Draw += this.windowSystem.Draw;
         this.modStateProvider.ModStateChanged += this.RebuildCache;
+        this.clientState.Login += this.OnLogin;
 
         this.RebuildCache();
         this.RefreshWindows();
     }
 
+    private void OnLogin() => this.RefreshWindows();
+
     private bool ShouldHideHotbars() {
-        return this.condition[ConditionFlag.InCombat] || this.condition[ConditionFlag.BoundByDuty] || this.condition[ConditionFlag.BoundByDuty56] || this.condition[ConditionFlag.WatchingCutscene];
+        return this.condition[ConditionFlag.InCombat] ||
+               this.condition[ConditionFlag.BoundByDuty] ||
+               this.condition[ConditionFlag.BoundByDuty56] ||
+               this.condition[ConditionFlag.WatchingCutscene];
     }
 
     private void RebuildCache() {
@@ -79,9 +88,9 @@ public class HotbarManagerComponent : IDisposable {
 
     public void RefreshWindows() {
         this.windowSystem.RemoveAllWindows();
-        var config = this.configService.GetConfig();
+        var profile = this.configService.GetCurrentProfile();
 
-        foreach (var hotbarConfig in config.Hotbars) {
+        foreach (var hotbarConfig in profile.Hotbars) {
             if (!hotbarConfig.IsVisible) {
                 continue;
             }
@@ -101,6 +110,7 @@ public class HotbarManagerComponent : IDisposable {
     public void Dispose() {
         this.pluginInterface.UiBuilder.Draw -= this.windowSystem.Draw;
         this.modStateProvider.ModStateChanged -= this.RebuildCache;
+        this.clientState.Login -= this.OnLogin;
         this.windowSystem.RemoveAllWindows();
     }
 }

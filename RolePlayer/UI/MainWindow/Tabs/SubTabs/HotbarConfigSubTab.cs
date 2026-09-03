@@ -37,15 +37,15 @@ public class HotbarConfigSubTab {
     }
 
     public void Draw() {
-        var config = this.configService.GetConfig();
+        var profile = this.configService.GetCurrentProfile();
 
         ImGui.Text("Hotbar Management");
         ImGui.Separator();
         ImGui.Spacing();
 
         if (ImGui.Button("Create New Hotbar", new Vector2(-1, 0))) {
-            var newHotbar = new HotbarConfig { Name = $"Hotbar {config.Hotbars.Count + 1}" };
-            config.Hotbars.Add(newHotbar);
+            var newHotbar = new HotbarConfig { Name = $"Hotbar {profile.Hotbars.Count + 1}" };
+            profile.Hotbars.Add(newHotbar);
             this.selectedHotbar = newHotbar;
             this.configService.Save();
             this.hotbarManager.RefreshWindows();
@@ -53,27 +53,24 @@ public class HotbarConfigSubTab {
 
         ImGui.Spacing();
 
-        if (config.Hotbars.Count == 0) {
+        if (profile.Hotbars.Count == 0) {
             ImGui.TextDisabled("No hotbars created yet.");
             return;
         }
 
-        // Retrait du flag invalide 'Selectable'
         if (ImGui.BeginTable("HotbarsListTable", 3, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit)) {
             ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch);
             ImGui.TableSetupColumn("Type", ImGuiTableColumnFlags.WidthFixed, 100f);
             ImGui.TableSetupColumn("Emotes", ImGuiTableColumnFlags.WidthFixed, 60f);
             ImGui.TableHeadersRow();
 
-            foreach (var hotbar in config.Hotbars) {
+            foreach (var hotbar in profile.Hotbars) {
                 ImGui.TableNextRow();
 
                 bool isSelected = this.selectedHotbar?.Id == hotbar.Id;
 
                 ImGui.TableNextColumn();
-                if (ImGui.Selectable($"{hotbar.Name}##sel_{hotbar.Id}", isSelected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowItemOverlap)) {
-                    this.selectedHotbar = hotbar;
-                }
+                if (ImGui.Selectable($"{hotbar.Name}##sel_{hotbar.Id}", isSelected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowItemOverlap)) this.selectedHotbar = hotbar;
 
                 ImGui.TableNextColumn();
                 ImGui.Text(hotbar.PopulationMode.ToString());
@@ -87,11 +84,9 @@ public class HotbarConfigSubTab {
     }
 
     public void DrawSidePanel() {
-        if (this.selectedHotbar == null) {
-            return;
-        }
+        if (this.selectedHotbar == null) return;
 
-        var config = this.configService.GetConfig();
+        var profile = this.configService.GetCurrentProfile();
         bool configChanged = false;
 
         string closeIcon = FontAwesomeIcon.Times.ToIconString();
@@ -135,9 +130,7 @@ public class HotbarConfigSubTab {
             this.selectedHotbar.IsVisible = !this.selectedHotbar.IsVisible;
             configChanged = true;
         }
-        if (ImGui.IsItemHovered()) {
-            ImGui.SetTooltip("Toggle Visibility");
-        }
+        if (ImGui.IsItemHovered()) ImGui.SetTooltip("Toggle Visibility");
 
         ImGui.SameLine();
 
@@ -150,9 +143,7 @@ public class HotbarConfigSubTab {
             this.selectedHotbar.IsLocked = !this.selectedHotbar.IsLocked;
             configChanged = true;
         }
-        if (ImGui.IsItemHovered()) {
-            ImGui.SetTooltip("Toggle Position Lock");
-        }
+        if (ImGui.IsItemHovered()) ImGui.SetTooltip("Toggle Position Lock");
 
         ImGui.SameLine();
         ImGui.SetCursorPosX(ImGui.GetWindowContentRegionMax().X - 30f);
@@ -164,19 +155,15 @@ public class HotbarConfigSubTab {
         ImGui.PopStyleColor();
 
         if (doDelete) {
-            config.Hotbars.Remove(this.selectedHotbar);
+            profile.Hotbars.Remove(this.selectedHotbar);
             this.selectedHotbar = null;
             configChanged = true;
         }
-        if (ImGui.IsItemHovered()) {
-            ImGui.SetTooltip("Delete Hotbar");
-        }
+        if (ImGui.IsItemHovered()) ImGui.SetTooltip("Delete Hotbar");
 
         ImGui.Spacing();
 
-        if (this.selectedHotbar == null) {
-            return;
-        }
+        if (this.selectedHotbar == null) return;
 
         string name = this.selectedHotbar.Name;
         if (ImGui.InputText("Name", ref name, 64)) {
@@ -227,10 +214,10 @@ public class HotbarConfigSubTab {
             var categories = this.hotbarManager.GetEmoteCache().Select(e => e.Category).Where(c => !string.IsNullOrEmpty(c)).Distinct().ToList();
             this.DrawMultiSelectCombo("Categories", categories, this.selectedHotbar.SelectedCategories, ref configChanged);
 
-            var groups = config.EmoteGroups.Select(g => g.Name).ToList();
+            var groups = profile.EmoteGroups.Select(g => g.Name).ToList();
             this.DrawMultiSelectCombo("Groups", groups, this.selectedHotbar.SelectedGroups, ref configChanged);
 
-            var tags = config.AvailableTags.ToList();
+            var tags = profile.AvailableTags.ToList();
             this.DrawMultiSelectCombo("Tags", tags, this.selectedHotbar.SelectedTags, ref configChanged);
         }
         else {
@@ -256,18 +243,13 @@ public class HotbarConfigSubTab {
         ImGui.TextColored(new Vector4(0.7f, 0.7f, 0.7f, 1.0f), $"Preview: {resolvedEmotes.Count} emotes");
         ImGui.Spacing();
 
-        if (resolvedEmotes.Count == 0) {
-            return;
-        }
+        if (resolvedEmotes.Count == 0) return;
 
         int maxPreview = Math.Min(16, resolvedEmotes.Count);
 
         if (ImGui.BeginTable("PreviewGrid", 4, ImGuiTableFlags.SizingFixedFit)) {
             for (int i = 0; i < maxPreview; i++) {
-                if (i % 4 == 0) {
-                    ImGui.TableNextRow();
-                }
-
+                if (i % 4 == 0) ImGui.TableNextRow();
                 ImGui.TableNextColumn();
 
                 var emote = resolvedEmotes[i];
@@ -278,9 +260,7 @@ public class HotbarConfigSubTab {
 
                         if (iconWrap != null) {
                             ImGui.Image(iconWrap.Handle, new Vector2(32, 32));
-                            if (ImGui.IsItemHovered()) {
-                                ImGui.SetTooltip(emote.Name);
-                            }
+                            if (ImGui.IsItemHovered()) ImGui.SetTooltip(emote.Name);
                         }
                     }
                     catch (IconNotFoundException) { }
@@ -305,13 +285,8 @@ public class HotbarConfigSubTab {
             foreach (var item in items) {
                 bool isSelected = selectedItems.Contains(item);
                 if (ImGui.Checkbox(item, ref isSelected)) {
-                    if (isSelected) {
-                        selectedItems.Add(item);
-                    }
-                    else {
-                        selectedItems.Remove(item);
-                    }
-
+                    if (isSelected) selectedItems.Add(item);
+                    else selectedItems.Remove(item);
                     changed = true;
                 }
             }

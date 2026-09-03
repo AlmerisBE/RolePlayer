@@ -7,6 +7,7 @@ using Dalamud.Interface.Textures;
 using Dalamud.Interface.Textures.Internal;
 using Dalamud.Plugin.Services;
 using RolePlayer.Core.Configuration.Contracts;
+using RolePlayer.Core.Configuration.Models;
 using RolePlayer.Core.Logging.Contracts;
 using RolePlayer.UI.EmoteBrowser.Components;
 using RolePlayer.UI.EmoteBrowser.Contracts;
@@ -103,12 +104,12 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
 
         if (ImGui.BeginChild("EmoteListScrollArea", new Vector2(0, 0), false, ImGuiWindowFlags.None)) {
             var tableFlags = ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.Sortable | ImGuiTableFlags.SizingFixedFit;
-            var config = this.configurationService.GetConfig();
+            var profile = this.configurationService.GetCurrentProfile();
 
             foreach (var groupKvp in this.groupedEmotes.OrderBy(k => k.Key)) {
                 bool isNodeOpen = true;
 
-                if (this.filterComponent.CurrentGrouping != GroupingMode.None) {
+                if (profile.CurrentGrouping != GroupingMode.None) {
                     isNodeOpen = ImGui.CollapsingHeader($"{groupKvp.Key} ({groupKvp.Value.Count})###Header_{groupKvp.Key}", ImGuiTreeNodeFlags.DefaultOpen);
                 }
 
@@ -147,7 +148,7 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
                                 this.selectionState.SelectedEmote = isSelected ? null : emote;
                             }
 
-                            this.DrawContextMenu(emote, config);
+                            this.DrawContextMenu(emote, profile);
 
                             ImGui.SameLine();
 
@@ -203,7 +204,7 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
         ImGui.EndChild();
     }
 
-    private void DrawContextMenu(EmoteDisplayData emote, Core.Configuration.Models.PluginConfiguration config) {
+    private void DrawContextMenu(EmoteDisplayData emote, CharacterProfile profile) {
         if (ImGui.BeginPopupContextItem($"EmoteContextMenu_{emote.Id}")) {
             if (ImGui.MenuItem("Copy Command")) {
                 ImGui.SetClipboardText(emote.LocalizedCommand);
@@ -216,7 +217,7 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
             ImGui.Separator();
 
             if (ImGui.BeginMenu("Assign to Hotbar")) {
-                var manualHotbars = config.Hotbars.Where(h => h.PopulationMode == HotbarPopulationMode.Manual).ToList();
+                var manualHotbars = profile.Hotbars.Where(h => h.PopulationMode == HotbarPopulationMode.Manual).ToList();
                 if (!manualHotbars.Any()) {
                     ImGui.MenuItem("No static hotbars available", "", false, false);
                 }
@@ -252,7 +253,7 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
                     groupChanged = true;
                 }
 
-                foreach (var group in config.EmoteGroups) {
+                foreach (var group in profile.EmoteGroups) {
                     bool isInGroup = currentGroup == group.Name;
                     if (ImGui.MenuItem(group.Name, "", isInGroup)) {
                         this.groupManagementService.AssignEmoteToGroup(emote.Id, group.Name);
@@ -271,11 +272,11 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
                 bool tagChanged = false;
                 var currentTags = this.tagManagementService.GetTagsForEmote(emote.Id).ToList();
 
-                if (!config.AvailableTags.Any()) {
+                if (!profile.AvailableTags.Any()) {
                     ImGui.MenuItem("No tags available", "", false, false);
                 }
 
-                foreach (var tag in config.AvailableTags) {
+                foreach (var tag in profile.AvailableTags) {
                     bool hasTag = currentTags.Contains(tag);
                     if (ImGui.MenuItem(tag, "", hasTag)) {
                         if (hasTag) {

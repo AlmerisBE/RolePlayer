@@ -25,7 +25,8 @@ public sealed class RolePlayerPlugin : IDalamudPlugin {
         IObjectTable objectTable,
         IGameInteropProvider interopProvider,
         ITextureProvider textureProvider,
-        IFramework framework) {
+        IFramework framework,
+        ICondition condition) {
 
         this.pluginInterface = pluginInterface;
         this.windowSystem = new WindowSystem("RolePlayer");
@@ -42,6 +43,7 @@ public sealed class RolePlayerPlugin : IDalamudPlugin {
         services.AddSingleton(interopProvider);
         services.AddSingleton(textureProvider);
         services.AddSingleton(framework);
+        services.AddSingleton(condition);
 
         services.AddPluginFeatures();
 

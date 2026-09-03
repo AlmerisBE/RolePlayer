@@ -14,8 +14,8 @@ public class TagManagementService : ITagManagementService {
     }
 
     public IEnumerable<string> GetAvailableTags() {
-        var config = this.configurationService.GetConfig();
-        return config.AvailableTags ?? Enumerable.Empty<string>();
+        var profile = this.configurationService.GetCurrentProfile();
+        return profile.AvailableTags ?? Enumerable.Empty<string>();
     }
 
     public void CreateGlobalTag(string tag) {
@@ -23,8 +23,8 @@ public class TagManagementService : ITagManagementService {
             return;
         }
 
-        var config = this.configurationService.GetConfig();
-        if (config.AvailableTags.Add(tag.Trim())) {
+        var profile = this.configurationService.GetCurrentProfile();
+        if (profile.AvailableTags.Add(tag.Trim())) {
             this.configurationService.Save();
         }
     }
@@ -34,16 +34,16 @@ public class TagManagementService : ITagManagementService {
             return;
         }
 
-        var config = this.configurationService.GetConfig();
-        if (config.AvailableTags.Contains(newTag)) {
+        var profile = this.configurationService.GetCurrentProfile();
+        if (profile.AvailableTags.Contains(newTag)) {
             return;
         }
 
-        if (config.AvailableTags.Remove(oldTag)) {
-            config.AvailableTags.Add(newTag.Trim());
+        if (profile.AvailableTags.Remove(oldTag)) {
+            profile.AvailableTags.Add(newTag.Trim());
         }
 
-        foreach (var kvp in config.EmoteTags) {
+        foreach (var kvp in profile.EmoteTags) {
             if (kvp.Value.Remove(oldTag)) {
                 kvp.Value.Add(newTag.Trim());
             }
@@ -53,10 +53,10 @@ public class TagManagementService : ITagManagementService {
     }
 
     public void DeleteGlobalTag(string tag) {
-        var config = this.configurationService.GetConfig();
-        bool changed = config.AvailableTags.Remove(tag);
+        var profile = this.configurationService.GetCurrentProfile();
+        bool changed = profile.AvailableTags.Remove(tag);
 
-        foreach (var kvp in config.EmoteTags) {
+        foreach (var kvp in profile.EmoteTags) {
             if (kvp.Value.Remove(tag)) {
                 changed = true;
             }
@@ -68,8 +68,8 @@ public class TagManagementService : ITagManagementService {
     }
 
     public IEnumerable<string> GetTagsForEmote(uint emoteId) {
-        var config = this.configurationService.GetConfig();
-        if (config.EmoteTags.TryGetValue(emoteId, out var tags)) {
+        var profile = this.configurationService.GetCurrentProfile();
+        if (profile.EmoteTags.TryGetValue(emoteId, out var tags)) {
             return tags;
         }
 
@@ -81,24 +81,24 @@ public class TagManagementService : ITagManagementService {
             return;
         }
 
-        var config = this.configurationService.GetConfig();
-        if (!config.EmoteTags.ContainsKey(emoteId)) {
-            config.EmoteTags[emoteId] = new HashSet<string>();
+        var profile = this.configurationService.GetCurrentProfile();
+        if (!profile.EmoteTags.ContainsKey(emoteId)) {
+            profile.EmoteTags[emoteId] = new HashSet<string>();
         }
 
-        if (config.EmoteTags[emoteId].Add(tag)) {
+        if (profile.EmoteTags[emoteId].Add(tag)) {
             this.configurationService.Save();
         }
     }
 
     public void RemoveTagFromEmote(uint emoteId, string tag) {
-        var config = this.configurationService.GetConfig();
-        if (config.EmoteTags.TryGetValue(emoteId, out var tags) && tags.Remove(tag)) {
+        var profile = this.configurationService.GetCurrentProfile();
+        if (profile.EmoteTags.TryGetValue(emoteId, out var tags) && tags.Remove(tag)) {
             this.configurationService.Save();
         }
     }
 
     public int GetTagEmoteCount(string tag) {
-        return this.configurationService.GetConfig().EmoteTags.Values.Count(tags => tags.Contains(tag));
+        return this.configurationService.GetCurrentProfile().EmoteTags.Values.Count(tags => tags.Contains(tag));
     }
 }
