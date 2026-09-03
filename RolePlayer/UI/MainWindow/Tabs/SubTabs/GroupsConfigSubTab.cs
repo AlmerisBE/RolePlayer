@@ -16,20 +16,33 @@ public class GroupsConfigSubTab {
     private string editName = string.Empty;
     private string editDesc = string.Empty;
 
+    private string groupToDelete = string.Empty;
+    private bool isDeleteDialogOpen = false;
+
     public GroupsConfigSubTab(IGroupManagementService groupService) {
         this.groupService = groupService;
     }
 
     public void Draw() {
         ImGui.Text("Create New Group");
-        ImGui.SetNextItemWidth(200f);
+
+        float availableWidth = ImGui.GetContentRegionAvail().X;
+        float buttonWidth = 100f;
+        float spacing = ImGui.GetStyle().ItemSpacing.X;
+        float remainingWidth = availableWidth - buttonWidth - (spacing * 2);
+
+        float nameWidth = remainingWidth * 0.35f;
+        float descWidth = remainingWidth * 0.65f;
+
+        ImGui.SetNextItemWidth(nameWidth);
         ImGui.InputTextWithHint("##NewGroup", "Group Name", ref this.newGroupName, 64);
         ImGui.SameLine();
-        ImGui.SetNextItemWidth(300f);
+
+        ImGui.SetNextItemWidth(descWidth);
         ImGui.InputTextWithHint("##NewDesc", "Description", ref this.newGroupDesc, 256);
         ImGui.SameLine();
 
-        if (ImGui.Button("Add Group") && !string.IsNullOrWhiteSpace(this.newGroupName)) {
+        if (ImGui.Button("Add Group", new Vector2(buttonWidth, 0)) && !string.IsNullOrWhiteSpace(this.newGroupName)) {
             this.groupService.CreateGroup(new EmoteGroup { Name = this.newGroupName.Trim(), Description = this.newGroupDesc.Trim() });
             this.newGroupName = string.Empty;
             this.newGroupDesc = string.Empty;
@@ -45,7 +58,7 @@ public class GroupsConfigSubTab {
         }
 
         if (ImGui.BeginTable("GroupsTable", 4, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit)) {
-            ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthFixed, 200f);
+            ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthFixed, 150f);
             ImGui.TableSetupColumn("Description", ImGuiTableColumnFlags.WidthStretch);
             ImGui.TableSetupColumn("Emotes", ImGuiTableColumnFlags.WidthFixed, 60f);
             ImGui.TableSetupColumn("Actions", ImGuiTableColumnFlags.WidthFixed, 120f);
@@ -99,13 +112,41 @@ public class GroupsConfigSubTab {
                     ImGui.SameLine();
                     ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
                     if (ImGui.Button($"Delete##{group.Name}")) {
-                        this.groupService.DeleteGroup(group.Name);
+                        this.groupToDelete = group.Name;
+                        this.isDeleteDialogOpen = true;
                     }
-
                     ImGui.PopStyleColor();
                 }
             }
             ImGui.EndTable();
+        }
+
+        this.DrawDeleteConfirmationModal();
+    }
+
+    private void DrawDeleteConfirmationModal() {
+        if (this.isDeleteDialogOpen) {
+            ImGui.OpenPopup("Delete Group Confirmation");
+            this.isDeleteDialogOpen = false;
+        }
+
+        if (ImGui.BeginPopupModal("Delete Group Confirmation", ref this.isDeleteDialogOpen, ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoSavedSettings)) {
+            ImGui.Text($"Are you sure you want to delete the group '{this.groupToDelete}'?");
+            ImGui.TextColored(new Vector4(0.8f, 0.2f, 0.2f, 1.0f), "This will remove the group assignment from all associated emotes.");
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
+
+            if (ImGui.Button("Yes, Delete", new Vector2(120, 0))) {
+                this.groupService.DeleteGroup(this.groupToDelete);
+                ImGui.CloseCurrentPopup();
+            }
+            ImGui.SameLine();
+            if (ImGui.Button("Cancel", new Vector2(120, 0))) {
+                ImGui.CloseCurrentPopup();
+            }
+
+            ImGui.EndPopup();
         }
     }
 }

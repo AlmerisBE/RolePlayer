@@ -53,11 +53,36 @@ public class HotbarConfigSubTab {
 
         ImGui.Spacing();
 
-        foreach (var hotbar in config.Hotbars) {
-            bool isSelected = this.selectedHotbar?.Id == hotbar.Id;
-            if (ImGui.Selectable(hotbar.Name, isSelected)) {
-                this.selectedHotbar = hotbar;
+        if (config.Hotbars.Count == 0) {
+            ImGui.TextDisabled("No hotbars created yet.");
+            return;
+        }
+
+        if (ImGui.BeginTable("HotbarsListTable", 3, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.Selectable | ImGuiTableFlags.SizingFixedFit)) {
+            ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch);
+            ImGui.TableSetupColumn("Type", ImGuiTableColumnFlags.WidthFixed, 100f);
+            ImGui.TableSetupColumn("Emotes", ImGuiTableColumnFlags.WidthFixed, 60f);
+            ImGui.TableHeadersRow();
+
+            foreach (var hotbar in config.Hotbars) {
+                ImGui.TableNextRow();
+
+                bool isSelected = this.selectedHotbar?.Id == hotbar.Id;
+
+                ImGui.TableNextColumn();
+                if (ImGui.Selectable($"{hotbar.Name}##sel_{hotbar.Id}", isSelected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowItemOverlap)) {
+                    this.selectedHotbar = hotbar;
+                }
+
+                ImGui.TableNextColumn();
+                ImGui.Text(hotbar.PopulationMode.ToString());
+
+                ImGui.TableNextColumn();
+                // Utilisation du resolver pour obtenir le compte exact en direct
+                int count = this.hotbarResolver.ResolveEmotesForHotbar(hotbar, this.hotbarManager.GetEmoteCache()).Count;
+                ImGui.Text(count.ToString());
             }
+            ImGui.EndTable();
         }
     }
 

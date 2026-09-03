@@ -1,5 +1,6 @@
 ﻿namespace RolePlayer.UI.Hotbar.Components;
 
+using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
@@ -21,6 +22,7 @@ public class HotbarManagerComponent : IDisposable {
     private IEmoteRepository emoteRepository;
     private IPlayerStateProvider playerStateProvider;
     private IModStateProvider modStateProvider;
+    private ICondition condition;
 
     private WindowSystem windowSystem;
     private List<EmoteDisplayData> sharedCache = new();
@@ -33,7 +35,8 @@ public class HotbarManagerComponent : IDisposable {
         ITextureProvider textureProvider,
         IEmoteRepository emoteRepository,
         IPlayerStateProvider playerStateProvider,
-        IModStateProvider modStateProvider) {
+        IModStateProvider modStateProvider,
+        ICondition condition) {
 
         this.pluginInterface = pluginInterface;
         this.configService = configService;
@@ -43,6 +46,7 @@ public class HotbarManagerComponent : IDisposable {
         this.emoteRepository = emoteRepository;
         this.playerStateProvider = playerStateProvider;
         this.modStateProvider = modStateProvider;
+        this.condition = condition;
 
         this.windowSystem = new WindowSystem("RolePlayer_Hotbars");
         this.pluginInterface.UiBuilder.Draw += this.windowSystem.Draw;
@@ -52,17 +56,19 @@ public class HotbarManagerComponent : IDisposable {
         this.RefreshWindows();
     }
 
+    private bool ShouldHideHotbars() {
+        return this.condition[ConditionFlag.InCombat] || this.condition[ConditionFlag.BoundByDuty] || this.condition[ConditionFlag.BoundByDuty56] || this.condition[ConditionFlag.WatchingCutscene];
+    }
+
     private void RebuildCache() {
         var baseEmotes = this.emoteRepository.GetBaseEmotes().ToList();
         var newCache = new List<EmoteDisplayData>();
 
         foreach (var emote in baseEmotes) {
             emote.IsUnlocked = !emote.IsUnlockable || this.playerStateProvider.IsEmoteUnlocked(emote.Id);
-
             var modName = this.modStateProvider.GetModNameModifyingEmote(emote.Id);
             emote.IsModded = !string.IsNullOrEmpty(modName);
             emote.ModName = modName;
-
             newCache.Add(emote);
         }
 
@@ -85,7 +91,8 @@ public class HotbarManagerComponent : IDisposable {
                 this.resolverService,
                 this.executionService,
                 this.textureProvider,
-                () => this.sharedCache
+                () => this.sharedCache,
+                this.ShouldHideHotbars
             );
             this.windowSystem.AddWindow(window);
         }

@@ -21,7 +21,7 @@ public class HotbarWindow : Window {
     private IEmoteExecutionService executionService;
     private ITextureProvider textureProvider;
     private Func<IEnumerable<EmoteDisplayData>> emoteCacheProvider;
-
+    private Func<bool> shouldHideHotbars;
     private int currentPage = 0;
     private const int MaxItemsPerPage = 16;
     private const float IconSize = 40f;
@@ -31,7 +31,8 @@ public class HotbarWindow : Window {
         IHotbarResolverService resolverService,
         IEmoteExecutionService executionService,
         ITextureProvider textureProvider,
-        Func<IEnumerable<EmoteDisplayData>> emoteCacheProvider)
+        Func<IEnumerable<EmoteDisplayData>> emoteCacheProvider,
+        Func<bool> shouldHideHotbars)
         : base($"RolePlayer_Hotbar_{config.Id}", ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.AlwaysAutoResize) {
 
         this.config = config;
@@ -39,6 +40,7 @@ public class HotbarWindow : Window {
         this.executionService = executionService;
         this.textureProvider = textureProvider;
         this.emoteCacheProvider = emoteCacheProvider;
+        this.shouldHideHotbars = shouldHideHotbars;
 
         this.SizeCondition = ImGuiCond.Always;
         this.BgAlpha = 0.7f;
@@ -61,6 +63,10 @@ public class HotbarWindow : Window {
 
     public override void Draw() {
         if (!this.config.IsVisible) {
+            return;
+        }
+
+        if (this.shouldHideHotbars()) {
             return;
         }
 
