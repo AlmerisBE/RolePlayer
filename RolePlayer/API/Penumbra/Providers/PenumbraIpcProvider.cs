@@ -13,8 +13,8 @@ public class PenumbraIpcProvider : IModStateProvider, IDisposable {
 
     private ICallGateSubscriber<Action>? initialized;
     private ICallGateSubscriber<Action>? disposed;
-    private ICallGateSubscriber<Action<int, Guid, string, bool>>? modSettingChanged;
 
+    // Déclaration explicite du délégué pour garantir la stabilité de l'abonnement/désabonnement
     private Action onPenumbraStateChanged;
 
     public event Action? ModStateChanged;
@@ -23,10 +23,10 @@ public class PenumbraIpcProvider : IModStateProvider, IDisposable {
         this.resolvePlayerPath = pluginInterface.GetIpcSubscriber<string, string>("Penumbra.ResolvePlayerPath");
         this.emotePathProvider = emotePathProvider;
 
-        // Instanciation unique de l'action pour garantir un désabonnement parfait (prévention des fuites mémoire)
         this.onPenumbraStateChanged = () => this.ModStateChanged?.Invoke();
 
         try {
+            // Nous nous abonnons uniquement aux événements globaux sans paramètres propriétaires
             this.initialized = pluginInterface.GetIpcSubscriber<Action>("Penumbra.Initialized");
             if (this.initialized != null) {
                 this.initialized.Subscribe(this.onPenumbraStateChanged);
@@ -36,15 +36,9 @@ public class PenumbraIpcProvider : IModStateProvider, IDisposable {
             if (this.disposed != null) {
                 this.disposed.Subscribe(this.onPenumbraStateChanged);
             }
-
-            this.modSettingChanged = pluginInterface.GetIpcSubscriber<Action<int, Guid, string, bool>>("Penumbra.ModSettingChanged");
-            // Le compilateur attend explicitement une Action sans paramètre sur l'interface de base de Dalamud v15
-            if (this.modSettingChanged != null) {
-                this.modSettingChanged.Subscribe(this.onPenumbraStateChanged);
-            }
         }
         catch {
-            // Ignorer silencieusement si l'IPC de Penumbra n'est pas disponible ou si sa signature évolue
+            // Ignorer silencieusement si l'IPC de Penumbra n'est pas disponible
         }
     }
 
@@ -96,13 +90,9 @@ public class PenumbraIpcProvider : IModStateProvider, IDisposable {
             if (this.disposed != null) {
                 this.disposed.Unsubscribe(this.onPenumbraStateChanged);
             }
-
-            if (this.modSettingChanged != null) {
-                this.modSettingChanged.Unsubscribe(this.onPenumbraStateChanged);
-            }
         }
         catch {
-            // Évite de faire crasher le déchargement du plugin si l'IPC de Penumbra est corrompu
+            // Évite de faire crasher le déchargement du plugin si l'IPC est corrompu
         }
     }
 }
