@@ -2,6 +2,7 @@
 
 using Dalamud.Bindings.ImGui;
 using Dalamud.Game;
+using Dalamud.Interface;
 using Dalamud.Interface.Textures;
 using Dalamud.Interface.Textures.Internal;
 using Dalamud.Plugin.Services;
@@ -96,7 +97,8 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
                     ImGui.TableSetupColumn("Icon", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoSort, 32f);
                     ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch, 0.4f);
                     ImGui.TableSetupColumn("Command", ImGuiTableColumnFlags.WidthStretch, 0.4f);
-                    ImGui.TableSetupColumn("Action", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoSort, 60f);
+                    // Réduction de la largeur de la colonne d'action pour s'ajuster à l'icône
+                    ImGui.TableSetupColumn("Action", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoSort, 40f);
                     ImGui.TableHeadersRow();
 
                     var sortSpecs = ImGui.TableGetSortSpecs();
@@ -156,8 +158,15 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
 
                         ImGui.TableNextColumn();
                         if (emote.IsUnlocked) {
-                            if (ImGui.Button($"Play##{emote.Id}", new Vector2(-1, 24))) {
+                            ImGui.PushFont(UiBuilder.IconFont);
+                            if (ImGui.Button($"{FontAwesomeIcon.Play.ToIconString()}##{emote.Id}", new Vector2(-1, 24))) {
                                 this.executionService.ExecuteEmote(emote.Id);
+                            }
+
+                            ImGui.PopFont();
+
+                            if (ImGui.IsItemHovered()) {
+                                ImGui.SetTooltip("Execute Emote");
                             }
                         }
 
