@@ -48,7 +48,15 @@ public class HotbarConfigSubTab {
         ImGui.Separator();
         ImGui.Spacing();
 
-        if (ImGui.Button("Create New Hotbar", new Vector2(-1, 0))) {
+        ImGui.PushFont(UiBuilder.IconFont);
+        bool addClicked = ImGui.Button(FontAwesomeIcon.Plus.ToIconString());
+        ImGui.PopFont();
+
+        ImGui.SameLine();
+        ImGui.AlignTextToFramePadding();
+        ImGui.Text("Create New Hotbar");
+
+        if (addClicked) {
             var newHotbar = new HotbarConfig { Name = $"Hotbar {context.Hotbars.Count + 1}" };
             context.Hotbars.Add(newHotbar);
             this.selectedHotbar = newHotbar;
@@ -111,7 +119,9 @@ public class HotbarConfigSubTab {
             ImGui.TableNextColumn();
             ImGui.AlignTextToFramePadding();
             ImGui.SetWindowFontScale(1.3f);
-            ImGui.TextUnformatted("Hotbar Settings");
+
+            string title = string.IsNullOrWhiteSpace(this.selectedHotbar.Name) ? "Hotbar Settings" : this.selectedHotbar.Name;
+            ImGui.TextUnformatted(title);
             ImGui.SetWindowFontScale(1.0f);
 
             ImGui.TableNextColumn();
@@ -292,15 +302,21 @@ public class HotbarConfigSubTab {
         ImGui.TextColored(new Vector4(0.7f, 0.7f, 0.7f, 1.0f), $"Preview: {resolvedEmotes.Count} emotes");
         ImGui.Spacing();
 
-        if (resolvedEmotes.Count == 0) {
+        int totalEmotes = resolvedEmotes.Count;
+        if (totalEmotes == 0) {
             return;
         }
 
-        int maxPreview = Math.Min(16, resolvedEmotes.Count);
+        // Calcul dynamique des colonnes pour utiliser toute la largeur
+        float availWidth = ImGui.GetContentRegionAvail().X;
+        int cols = (int)(availWidth / 36f); // 32f image + 4f padding
+        if (cols < 1) {
+            cols = 1;
+        }
 
-        if (ImGui.BeginTable("PreviewGrid", 4, ImGuiTableFlags.SizingFixedFit)) {
-            for (int i = 0; i < maxPreview; i++) {
-                if (i % 4 == 0) {
+        if (ImGui.BeginTable("PreviewGrid", cols, ImGuiTableFlags.SizingFixedFit)) {
+            for (int i = 0; i < totalEmotes; i++) {
+                if (i % cols == 0) {
                     ImGui.TableNextRow();
                 }
 

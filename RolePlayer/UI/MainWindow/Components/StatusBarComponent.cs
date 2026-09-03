@@ -46,7 +46,9 @@ public class StatusBarComponent : IDisposable {
     }
 
     public void Draw() {
-        if (ImGui.BeginChild("StatusBar", new Vector2(0, 0), false, ImGuiWindowFlags.NoScrollbar)) {
+        var height = ImGui.GetFrameHeight() + (ImGui.GetStyle().WindowPadding.Y * 0.5f);
+
+        if (ImGui.BeginChild("StatusBar", new Vector2(0, height), false, ImGuiWindowFlags.NoScrollbar)) {
             ImGui.PushFont(UiBuilder.IconFont);
             if (ImGui.Button(FontAwesomeIcon.UserFriends.ToIconString())) {
                 this.executionService.OpenNativeEmoteWindow();
@@ -58,13 +60,9 @@ public class StatusBarComponent : IDisposable {
                 ImGui.SetTooltip("Open native Emote window");
             }
 
-            var statsText = $"{this.unlockedEmotesCount} / {this.totalEmotesCount} unlocked";
+            ImGui.SameLine();
 
             var currentContext = this.contextService.GetCurrentContext();
-            var totalWidth = ImGui.CalcTextSize(statsText).X + 30f + 150f + ImGui.GetStyle().ItemSpacing.X;
-
-            ImGui.SameLine(ImGui.GetWindowContentRegionMax().X - totalWidth);
-
             ImGui.SetNextItemWidth(150f);
             if (ImGui.BeginCombo("##QuickContextSwitch", currentContext.Name)) {
                 foreach (var ctx in this.contextService.GetAllContexts()) {
@@ -75,7 +73,14 @@ public class StatusBarComponent : IDisposable {
                 ImGui.EndCombo();
             }
 
-            ImGui.SameLine();
+            if (ImGui.IsItemHovered()) {
+                ImGui.SetTooltip("Switch Active Context");
+            }
+
+            var statsText = $"{this.unlockedEmotesCount} / {this.totalEmotesCount} unlocked";
+            var textSize = ImGui.CalcTextSize(statsText).X + ImGui.GetStyle().WindowPadding.X;
+
+            ImGui.SameLine(ImGui.GetWindowContentRegionMax().X - textSize);
             ImGui.AlignTextToFramePadding();
             ImGui.Text(statsText);
         }

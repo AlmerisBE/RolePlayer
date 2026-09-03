@@ -1,6 +1,7 @@
 ﻿namespace RolePlayer.UI.MainWindow.Tabs.SubTabs;
 
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface;
 using RolePlayer.Core.MetaData.Models;
 using RolePlayer.UI.EmoteBrowser.Contracts;
 using System.Linq;
@@ -27,7 +28,7 @@ public class GroupsConfigSubTab {
         ImGui.Text("Create New Group");
 
         float availableWidth = ImGui.GetContentRegionAvail().X;
-        float buttonWidth = 100f;
+        float buttonWidth = 32f;
         float spacing = ImGui.GetStyle().ItemSpacing.X;
         float remainingWidth = availableWidth - buttonWidth - (spacing * 2);
 
@@ -42,10 +43,15 @@ public class GroupsConfigSubTab {
         ImGui.InputTextWithHint("##NewDesc", "Description", ref this.newGroupDesc, 256);
         ImGui.SameLine();
 
-        if (ImGui.Button("Add Group", new Vector2(buttonWidth, 0)) && !string.IsNullOrWhiteSpace(this.newGroupName)) {
+        ImGui.PushFont(UiBuilder.IconFont);
+        if (ImGui.Button($"{FontAwesomeIcon.Plus.ToIconString()}##AddGroup", new Vector2(buttonWidth, 0)) && !string.IsNullOrWhiteSpace(this.newGroupName)) {
             this.groupService.CreateGroup(new EmoteGroup { Name = this.newGroupName.Trim(), Description = this.newGroupDesc.Trim() });
             this.newGroupName = string.Empty;
             this.newGroupDesc = string.Empty;
+        }
+        ImGui.PopFont();
+        if (ImGui.IsItemHovered()) {
+            ImGui.SetTooltip("Add Group");
         }
 
         ImGui.Spacing();
@@ -60,8 +66,8 @@ public class GroupsConfigSubTab {
         if (ImGui.BeginTable("GroupsTable", 4, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit)) {
             ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthFixed, 150f);
             ImGui.TableSetupColumn("Description", ImGuiTableColumnFlags.WidthStretch);
-            ImGui.TableSetupColumn("Emotes", ImGuiTableColumnFlags.WidthFixed, 60f);
-            ImGui.TableSetupColumn("Actions", ImGuiTableColumnFlags.WidthFixed, 120f);
+            ImGui.TableSetupColumn("Emotes", ImGuiTableColumnFlags.WidthFixed, 50f);
+            ImGui.TableSetupColumn("Actions", ImGuiTableColumnFlags.WidthFixed, 75f);
             ImGui.TableHeadersRow();
 
             foreach (var group in groups) {
@@ -81,14 +87,17 @@ public class GroupsConfigSubTab {
                     ImGui.Text(this.groupService.GetGroupEmoteCount(group.Name).ToString());
 
                     ImGui.TableNextColumn();
-                    if (ImGui.Button($"Save##{group.Name}")) {
+                    ImGui.PushFont(UiBuilder.IconFont);
+                    if (ImGui.Button($"{FontAwesomeIcon.Save.ToIconString()}##Save_{group.Name}")) {
                         this.groupService.UpdateGroup(group.Name, this.editName.Trim(), this.editDesc.Trim());
                         this.editingGroup = string.Empty;
                     }
                     ImGui.SameLine();
-                    if (ImGui.Button($"Cancel##{group.Name}")) {
+                    if (ImGui.Button($"{FontAwesomeIcon.Times.ToIconString()}##Cancel_{group.Name}")) {
                         this.editingGroup = string.Empty;
                     }
+
+                    ImGui.PopFont();
                 }
                 else {
                     ImGui.TableNextColumn();
@@ -104,18 +113,20 @@ public class GroupsConfigSubTab {
                     ImGui.Text(this.groupService.GetGroupEmoteCount(group.Name).ToString());
 
                     ImGui.TableNextColumn();
-                    if (ImGui.Button($"Edit##{group.Name}")) {
+                    ImGui.PushFont(UiBuilder.IconFont);
+                    if (ImGui.Button($"{FontAwesomeIcon.Edit.ToIconString()}##Edit_{group.Name}")) {
                         this.editingGroup = group.Name;
                         this.editName = group.Name;
                         this.editDesc = group.Description;
                     }
                     ImGui.SameLine();
                     ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
-                    if (ImGui.Button($"Delete##{group.Name}")) {
+                    if (ImGui.Button($"{FontAwesomeIcon.Trash.ToIconString()}##Del_{group.Name}")) {
                         this.groupToDelete = group.Name;
                         this.isDeleteDialogOpen = true;
                     }
                     ImGui.PopStyleColor();
+                    ImGui.PopFont();
                 }
             }
             ImGui.EndTable();

@@ -1,6 +1,7 @@
 ﻿namespace RolePlayer.UI.MainWindow.Tabs.SubTabs;
 
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface;
 using RolePlayer.UI.EmoteBrowser.Contracts;
 using System.Linq;
 using System.Numerics;
@@ -22,13 +23,23 @@ public class TagsConfigSubTab {
 
     public void Draw() {
         ImGui.Text("Create New Tag");
-        ImGui.SetNextItemWidth(200f);
+
+        float availableWidth = ImGui.GetContentRegionAvail().X;
+        float btnWidth = 32f;
+        float spacing = ImGui.GetStyle().ItemSpacing.X;
+
+        ImGui.SetNextItemWidth(availableWidth - btnWidth - spacing);
         ImGui.InputTextWithHint("##NewTag", "Tag Name", ref this.newTagName, 32);
         ImGui.SameLine();
 
-        if (ImGui.Button("Add Tag") && !string.IsNullOrWhiteSpace(this.newTagName)) {
+        ImGui.PushFont(UiBuilder.IconFont);
+        if (ImGui.Button($"{FontAwesomeIcon.Plus.ToIconString()}##AddTag", new Vector2(btnWidth, 0)) && !string.IsNullOrWhiteSpace(this.newTagName)) {
             this.tagService.CreateGlobalTag(this.newTagName.Trim());
             this.newTagName = string.Empty;
+        }
+        ImGui.PopFont();
+        if (ImGui.IsItemHovered()) {
+            ImGui.SetTooltip("Add Tag");
         }
 
         ImGui.Spacing();
@@ -42,8 +53,8 @@ public class TagsConfigSubTab {
 
         if (ImGui.BeginTable("TagsTable", 3, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit)) {
             ImGui.TableSetupColumn("Tag Name", ImGuiTableColumnFlags.WidthStretch);
-            ImGui.TableSetupColumn("Emotes", ImGuiTableColumnFlags.WidthFixed, 60f);
-            ImGui.TableSetupColumn("Actions", ImGuiTableColumnFlags.WidthFixed, 120f);
+            ImGui.TableSetupColumn("Emotes", ImGuiTableColumnFlags.WidthFixed, 50f);
+            ImGui.TableSetupColumn("Actions", ImGuiTableColumnFlags.WidthFixed, 75f);
             ImGui.TableHeadersRow();
 
             foreach (var tag in tags) {
@@ -59,14 +70,17 @@ public class TagsConfigSubTab {
                     ImGui.Text(this.tagService.GetTagEmoteCount(tag).ToString());
 
                     ImGui.TableNextColumn();
-                    if (ImGui.Button($"Save##{tag}")) {
+                    ImGui.PushFont(UiBuilder.IconFont);
+                    if (ImGui.Button($"{FontAwesomeIcon.Save.ToIconString()}##Save_{tag}")) {
                         this.tagService.RenameGlobalTag(tag, this.editName.Trim());
                         this.editingTag = string.Empty;
                     }
                     ImGui.SameLine();
-                    if (ImGui.Button($"Cancel##{tag}")) {
+                    if (ImGui.Button($"{FontAwesomeIcon.Times.ToIconString()}##Cancel_{tag}")) {
                         this.editingTag = string.Empty;
                     }
+
+                    ImGui.PopFont();
                 }
                 else {
                     ImGui.TableNextColumn();
@@ -78,17 +92,19 @@ public class TagsConfigSubTab {
                     ImGui.Text(this.tagService.GetTagEmoteCount(tag).ToString());
 
                     ImGui.TableNextColumn();
-                    if (ImGui.Button($"Edit##{tag}")) {
+                    ImGui.PushFont(UiBuilder.IconFont);
+                    if (ImGui.Button($"{FontAwesomeIcon.Edit.ToIconString()}##Edit_{tag}")) {
                         this.editingTag = tag;
                         this.editName = tag;
                     }
                     ImGui.SameLine();
                     ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
-                    if (ImGui.Button($"Delete##{tag}")) {
+                    if (ImGui.Button($"{FontAwesomeIcon.Trash.ToIconString()}##Del_{tag}")) {
                         this.tagToDelete = tag;
                         this.isDeleteDialogOpen = true;
                     }
                     ImGui.PopStyleColor();
+                    ImGui.PopFont();
                 }
             }
             ImGui.EndTable();

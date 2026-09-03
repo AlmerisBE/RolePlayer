@@ -1,6 +1,7 @@
 ﻿namespace RolePlayer.UI.MainWindow.Tabs.SubTabs;
 
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface;
 using RolePlayer.Core.Configuration.Contracts;
 using System;
 using System.Linq;
@@ -23,11 +24,16 @@ public class ContextsConfigSubTab {
     public void Draw() {
         ImGui.Text("Create New Context");
 
-        ImGui.SetNextItemWidth(200f);
+        float availableWidth = ImGui.GetContentRegionAvail().X;
+        float btnWidth = 32f;
+        float spacing = ImGui.GetStyle().ItemSpacing.X;
+        float remainingWidth = availableWidth - btnWidth - (spacing * 2);
+
+        ImGui.SetNextItemWidth(remainingWidth * 0.5f);
         ImGui.InputTextWithHint("##NewContextName", "Context Name", ref this.newContextName, 64);
         ImGui.SameLine();
 
-        ImGui.SetNextItemWidth(200f);
+        ImGui.SetNextItemWidth(remainingWidth * 0.5f);
         if (ImGui.BeginCombo("##CloneSource", this.cloneSourceId == Guid.Empty ? "Clone from (None)" : this.contextService.GetAllContexts().First(c => c.Id == this.cloneSourceId).Name)) {
             if (ImGui.Selectable("None (Empty Context)", this.cloneSourceId == Guid.Empty)) {
                 this.cloneSourceId = Guid.Empty;
@@ -43,10 +49,15 @@ public class ContextsConfigSubTab {
         }
         ImGui.SameLine();
 
-        if (ImGui.Button("Create Context") && !string.IsNullOrWhiteSpace(this.newContextName)) {
+        ImGui.PushFont(UiBuilder.IconFont);
+        if (ImGui.Button($"{FontAwesomeIcon.Plus.ToIconString()}##CreateCtx", new Vector2(btnWidth, 0)) && !string.IsNullOrWhiteSpace(this.newContextName)) {
             this.contextService.CreateContext(this.newContextName, this.cloneSourceId == Guid.Empty ? null : this.cloneSourceId);
             this.newContextName = string.Empty;
             this.cloneSourceId = Guid.Empty;
+        }
+        ImGui.PopFont();
+        if (ImGui.IsItemHovered()) {
+            ImGui.SetTooltip("Add Context");
         }
 
         ImGui.Spacing();
@@ -59,14 +70,15 @@ public class ContextsConfigSubTab {
         if (ImGui.BeginTable("ContextsTable", 3, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit)) {
             ImGui.TableSetupColumn("Active", ImGuiTableColumnFlags.WidthFixed, 40f);
             ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch);
-            ImGui.TableSetupColumn("Actions", ImGuiTableColumnFlags.WidthFixed, 140f);
+            ImGui.TableSetupColumn("Actions", ImGuiTableColumnFlags.WidthFixed, 75f);
             ImGui.TableHeadersRow();
 
             foreach (var ctx in contexts) {
                 ImGui.TableNextRow();
 
                 ImGui.TableNextColumn();
-                if (ImGui.RadioButton($"Select##{ctx.Id}", currentId == ctx.Id)) {
+                // Suppression du texte, seul le bouton radio est affiché
+                if (ImGui.RadioButton($"##SelCtx_{ctx.Id}", currentId == ctx.Id)) {
                     this.contextService.SwitchContext(ctx.Id);
                 }
 
@@ -76,14 +88,17 @@ public class ContextsConfigSubTab {
                     ImGui.InputText($"##EditCtxName_{ctx.Id}", ref this.editName, 64);
 
                     ImGui.TableNextColumn();
-                    if (ImGui.Button($"Save##{ctx.Id}")) {
+                    ImGui.PushFont(UiBuilder.IconFont);
+                    if (ImGui.Button($"{FontAwesomeIcon.Save.ToIconString()}##Save_{ctx.Id}")) {
                         this.contextService.RenameContext(ctx.Id, this.editName);
                         this.editingContext = string.Empty;
                     }
                     ImGui.SameLine();
-                    if (ImGui.Button($"Cancel##{ctx.Id}")) {
+                    if (ImGui.Button($"{FontAwesomeIcon.Times.ToIconString()}##Cancel_{ctx.Id}")) {
                         this.editingContext = string.Empty;
                     }
+
+                    ImGui.PopFont();
                 }
                 else {
                     ImGui.TableNextColumn();
@@ -96,7 +111,8 @@ public class ContextsConfigSubTab {
                     }
 
                     ImGui.TableNextColumn();
-                    if (ImGui.Button($"Edit##{ctx.Id}")) {
+                    ImGui.PushFont(UiBuilder.IconFont);
+                    if (ImGui.Button($"{FontAwesomeIcon.Edit.ToIconString()}##Edit_{ctx.Id}")) {
                         this.editingContext = ctx.Id.ToString();
                         this.editName = ctx.Name;
                     }
@@ -104,12 +120,13 @@ public class ContextsConfigSubTab {
 
                     if (contexts.Count > 1) {
                         ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
-                        if (ImGui.Button($"Delete##{ctx.Id}")) {
+                        if (ImGui.Button($"{FontAwesomeIcon.Trash.ToIconString()}##Del_{ctx.Id}")) {
                             this.contextToDelete = ctx.Id;
                             this.isDeleteDialogOpen = true;
                         }
                         ImGui.PopStyleColor();
                     }
+                    ImGui.PopFont();
                 }
             }
             ImGui.EndTable();
