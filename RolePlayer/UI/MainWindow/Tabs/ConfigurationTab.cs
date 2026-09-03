@@ -166,14 +166,45 @@ public class ConfigurationTab : IEmoteBrowserTab, IDisposable {
         var config = this.configService.GetConfig();
         bool configChanged = false;
 
-        ImGui.Text("Hotbar Settings");
+        string closeIcon = FontAwesomeIcon.Times.ToIconString();
+        ImGui.PushFont(UiBuilder.IconFont);
+        var closeBtnWidth = ImGui.CalcTextSize(closeIcon).X + ImGui.GetStyle().FramePadding.X * 2;
+        ImGui.PopFont();
+
+        if (ImGui.BeginTable("HotbarSettingsHeaderTable", 2)) {
+            ImGui.TableSetupColumn("Title", ImGuiTableColumnFlags.WidthStretch);
+            ImGui.TableSetupColumn("CloseBtn", ImGuiTableColumnFlags.WidthFixed, closeBtnWidth);
+
+            ImGui.TableNextRow();
+            ImGui.TableNextColumn();
+            ImGui.AlignTextToFramePadding();
+            ImGui.SetWindowFontScale(1.3f);
+            ImGui.TextUnformatted("Hotbar Settings");
+            ImGui.SetWindowFontScale(1.0f);
+
+            ImGui.TableNextColumn();
+            ImGui.PushFont(UiBuilder.IconFont);
+            if (ImGui.Button($"{closeIcon}##CloseHotbarDetails")) {
+                this.selectedHotbar = null;
+                ImGui.PopFont();
+                ImGui.EndTable();
+                return;
+            }
+            ImGui.PopFont();
+
+            ImGui.EndTable();
+        }
+
         ImGui.Separator();
         ImGui.Spacing();
 
-        ImGui.PushFont(UiBuilder.IconFont);
-
+        // Toolbar
         var eyeIcon = this.selectedHotbar.IsVisible ? FontAwesomeIcon.Eye.ToIconString() : FontAwesomeIcon.EyeSlash.ToIconString();
-        if (ImGui.Button(eyeIcon)) {
+        ImGui.PushFont(UiBuilder.IconFont);
+        bool toggleVis = ImGui.Button(eyeIcon);
+        ImGui.PopFont();
+
+        if (toggleVis) {
             this.selectedHotbar.IsVisible = !this.selectedHotbar.IsVisible;
             configChanged = true;
         }
@@ -184,7 +215,11 @@ public class ConfigurationTab : IEmoteBrowserTab, IDisposable {
         ImGui.SameLine();
 
         var lockIcon = this.selectedHotbar.IsLocked ? FontAwesomeIcon.Lock.ToIconString() : FontAwesomeIcon.Unlock.ToIconString();
-        if (ImGui.Button(lockIcon)) {
+        ImGui.PushFont(UiBuilder.IconFont);
+        bool toggleLock = ImGui.Button(lockIcon);
+        ImGui.PopFont();
+
+        if (toggleLock) {
             this.selectedHotbar.IsLocked = !this.selectedHotbar.IsLocked;
             configChanged = true;
         }
@@ -196,17 +231,20 @@ public class ConfigurationTab : IEmoteBrowserTab, IDisposable {
         ImGui.SetCursorPosX(ImGui.GetWindowContentRegionMax().X - 30f);
 
         ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
-        if (ImGui.Button(FontAwesomeIcon.Trash.ToIconString())) {
+        ImGui.PushFont(UiBuilder.IconFont);
+        bool doDelete = ImGui.Button(FontAwesomeIcon.Trash.ToIconString());
+        ImGui.PopFont();
+        ImGui.PopStyleColor();
+
+        if (doDelete) {
             config.Hotbars.Remove(this.selectedHotbar);
             this.selectedHotbar = null;
             configChanged = true;
         }
-        ImGui.PopStyleColor();
         if (ImGui.IsItemHovered()) {
             ImGui.SetTooltip("Delete Hotbar");
         }
 
-        ImGui.PopFont();
         ImGui.Spacing();
 
         if (this.selectedHotbar == null) {
@@ -275,7 +313,6 @@ public class ConfigurationTab : IEmoteBrowserTab, IDisposable {
 
         ImGui.Spacing();
 
-        // La prévisualisation est désormais appelée quel que soit le mode de population
         this.DrawEmotePreview();
 
         if (configChanged) {
