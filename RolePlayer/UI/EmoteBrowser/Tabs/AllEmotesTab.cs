@@ -142,55 +142,56 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
 
         if (config.ShowFilters) {
             ImGui.Spacing();
-            // Correction : Utilisation de bool border = true et ImGuiWindowFlags.AlwaysAutoResize
-            if (ImGui.BeginChild("FiltersPanel", new Vector2(0, 0), true, ImGuiWindowFlags.AlwaysAutoResize)) {
+            ImGui.Separator();
+            ImGui.Spacing();
 
-                ImGui.AlignTextToFramePadding();
-                ImGui.Text("Group By:");
-                ImGui.SameLine();
-                ImGui.SetNextItemWidth(150f);
+            ImGui.AlignTextToFramePadding();
+            ImGui.Text("Group By:");
+            ImGui.SameLine();
+            ImGui.SetNextItemWidth(150f);
 
-                string currentGroupLabel = this.currentGrouping switch {
-                    GroupingMode.NativeCategory => "Native Category",
-                    GroupingMode.CustomGroup => "Custom Group",
-                    _ => "None"
-                };
+            string currentGroupLabel = this.currentGrouping switch {
+                GroupingMode.NativeCategory => "Native Category",
+                GroupingMode.CustomGroup => "Custom Group",
+                _ => "None"
+            };
 
-                if (ImGui.BeginCombo("##GroupingMode", currentGroupLabel)) {
-                    if (ImGui.Selectable("None", this.currentGrouping == GroupingMode.None)) { this.currentGrouping = GroupingMode.None; filtersChanged = true; }
-                    if (ImGui.Selectable("Native Category", this.currentGrouping == GroupingMode.NativeCategory)) { this.currentGrouping = GroupingMode.NativeCategory; filtersChanged = true; }
-                    if (ImGui.Selectable("Custom Group", this.currentGrouping == GroupingMode.CustomGroup)) { this.currentGrouping = GroupingMode.CustomGroup; filtersChanged = true; }
-                    ImGui.EndCombo();
-                }
-
-                ImGui.SameLine();
-                if (ImGui.Checkbox("Show Modded Only", ref this.showModdedOnly)) {
-                    filtersChanged = true;
-                }
-
-                ImGui.Separator();
-
-                if (ImGui.BeginTable("FiltersLayoutTable", 3)) {
-                    ImGui.TableSetupColumn("Categories");
-                    ImGui.TableSetupColumn("Groups");
-                    ImGui.TableSetupColumn("Tags");
-                    ImGui.TableNextRow();
-
-                    ImGui.TableNextColumn();
-                    this.DrawMultiSelectCombo("Categories##Combo", this.availableCategories, this.selectedCategories, ref filtersChanged);
-
-                    ImGui.TableNextColumn();
-                    var groups = this.groupManagementService.GetGroups().Select(g => g.Name).ToList();
-                    this.DrawMultiSelectCombo("Groups##Combo", groups, this.selectedGroups, ref filtersChanged);
-
-                    ImGui.TableNextColumn();
-                    var tags = this.tagManagementService.GetAvailableTags().ToList();
-                    this.DrawMultiSelectCombo("Tags##Combo", tags, this.selectedTags, ref filtersChanged);
-
-                    ImGui.EndTable();
-                }
+            if (ImGui.BeginCombo("##GroupingMode", currentGroupLabel)) {
+                if (ImGui.Selectable("None", this.currentGrouping == GroupingMode.None)) { this.currentGrouping = GroupingMode.None; filtersChanged = true; }
+                if (ImGui.Selectable("Native Category", this.currentGrouping == GroupingMode.NativeCategory)) { this.currentGrouping = GroupingMode.NativeCategory; filtersChanged = true; }
+                if (ImGui.Selectable("Custom Group", this.currentGrouping == GroupingMode.CustomGroup)) { this.currentGrouping = GroupingMode.CustomGroup; filtersChanged = true; }
+                ImGui.EndCombo();
             }
-            ImGui.EndChild();
+
+            ImGui.SameLine();
+            if (ImGui.Checkbox("Show Modded Only", ref this.showModdedOnly)) {
+                filtersChanged = true;
+            }
+
+            ImGui.Spacing();
+
+            if (ImGui.BeginTable("FiltersLayoutTable", 3)) {
+                ImGui.TableSetupColumn("Categories");
+                ImGui.TableSetupColumn("Groups");
+                ImGui.TableSetupColumn("Tags");
+                ImGui.TableNextRow();
+
+                ImGui.TableNextColumn();
+                this.DrawMultiSelectCombo("Categories##Combo", this.availableCategories, this.selectedCategories, ref filtersChanged);
+
+                ImGui.TableNextColumn();
+                var groups = this.groupManagementService.GetGroups().Select(g => g.Name).ToList();
+                this.DrawMultiSelectCombo("Groups##Combo", groups, this.selectedGroups, ref filtersChanged);
+
+                ImGui.TableNextColumn();
+                var tags = this.tagManagementService.GetAvailableTags().ToList();
+                this.DrawMultiSelectCombo("Tags##Combo", tags, this.selectedTags, ref filtersChanged);
+
+                ImGui.EndTable();
+            }
+
+            ImGui.Spacing();
+            ImGui.Separator();
             ImGui.Spacing();
         }
 
@@ -198,9 +199,7 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
             this.ApplyFilters();
         }
 
-        // Correction : Utilisation de bool border = false
         if (ImGui.BeginChild("EmoteListScrollArea", new Vector2(0, 0), false, ImGuiWindowFlags.None)) {
-
             var tableFlags = ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.Sortable | ImGuiTableFlags.SizingFixedFit;
 
             foreach (var groupKvp in this.groupedEmotes.OrderBy(k => k.Key)) {
