@@ -1,11 +1,11 @@
 ﻿namespace RolePlayer.API.GameData.Providers;
 
 using Dalamud.Plugin.Services;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using RolePlayer.UI.EmoteBrowser.Contracts;
-using System;
 
-public class PlayerStateProvider : IPlayerStateProvider, IDisposable {
+public class PlayerStateProvider : IPlayerStateProvider {
     private IObjectTable objectTable;
     private IFramework framework;
 
@@ -33,6 +33,20 @@ public class PlayerStateProvider : IPlayerStateProvider, IDisposable {
         }
 
         return uiState->IsEmoteUnlocked((ushort)emoteId);
+    }
+
+    public unsafe bool IsEmoteActive(uint emoteId) {
+        var localPlayer = this.objectTable.LocalPlayer;
+        if (localPlayer == null) {
+            return false;
+        }
+
+        var character = (Character*)localPlayer.Address;
+        if (character == null) {
+            return false;
+        }
+
+        return character->EmoteController.EmoteId == emoteId;
     }
 
     public void Dispose() {

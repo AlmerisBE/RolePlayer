@@ -14,5 +14,6 @@ public class EmoteDisplayData {
     public bool IsUnlocked { get; set; }
     public bool IsModded { get; set; }
     public string ModName { get; set; } = string.Empty;
+    public bool HasVariations { get; set; }
     public HashSet<string> CustomTags { get; set; } = new();
 }

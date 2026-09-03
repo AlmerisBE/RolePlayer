@@ -128,13 +128,33 @@ public class HotbarWindow : Window {
 
             if (iconWrap != null) {
                 ImGui.PushID($"emote_{emote.Id}");
+                var cursorPos = ImGui.GetCursorScreenPos();
 
                 if (ImGui.ImageButton(iconWrap.Handle, new Vector2(IconSize, IconSize))) {
                     this.executionService.ExecuteEmote(emote.Id);
                 }
 
+                // Overlay visuel pour indiquer la présence de variations
+                if (emote.HasVariations) {
+                    var drawList = ImGui.GetWindowDrawList();
+                    ImGui.PushFont(UiBuilder.IconFont);
+                    var indicatorText = FontAwesomeIcon.Sync.ToIconString();
+                    var textSize = ImGui.CalcTextSize(indicatorText);
+                    ImGui.PopFont();
+
+                    var indicatorPos = new Vector2(cursorPos.X + IconSize - textSize.X - 2f, cursorPos.Y + IconSize - textSize.Y - 2f);
+
+                    // Ombre portée pour garantir la lisibilité
+                    drawList.AddText(UiBuilder.IconFont, ImGui.GetFontSize(), new Vector2(indicatorPos.X + 1, indicatorPos.Y + 1), 0xFF000000, indicatorText);
+                    drawList.AddText(UiBuilder.IconFont, ImGui.GetFontSize(), indicatorPos, 0xFF40DD40, indicatorText);
+                }
+
                 if (ImGui.IsItemHovered()) {
                     string tooltipText = emote.IsModded ? $"★ {emote.Name}\nMod: {emote.ModName}\n{emote.LocalizedCommand}" : $"{emote.Name}\n{emote.LocalizedCommand}";
+                    if (emote.HasVariations) {
+                        tooltipText += "\n(Click again to change pose)";
+                    }
+
                     ImGui.SetTooltip(tooltipText);
                 }
 

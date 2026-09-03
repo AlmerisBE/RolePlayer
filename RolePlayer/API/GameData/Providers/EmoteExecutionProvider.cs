@@ -9,8 +9,13 @@ using Lumina.Excel.Sheets;
 using RolePlayer.Core.Logging.Contracts;
 using RolePlayer.UI.EmoteBrowser.Contracts;
 using System;
+using System.Collections.Generic;
 
 public class EmoteExecutionProvider : IEmoteExecutionService {
+    private const uint EmoteWindowCommandId = 17;
+
+    private readonly HashSet<uint> emotesWithVariations = new() { 50, 52, 53 };
+
     private IDataManager dataManager;
     private IPlayerStateProvider playerStateProvider;
     private ILoggerService logger;
@@ -39,6 +44,13 @@ public class EmoteExecutionProvider : IEmoteExecutionService {
             return;
         }
 
+        // Logique d'interception pour les variations
+        if (this.emotesWithVariations.Contains(emoteId) && this.playerStateProvider.IsEmoteActive(emoteId)) {
+            this.logger.Debug($"Emote {emoteId} is already active. Injecting /cpose variation command.");
+            this.ExecuteCommand("/cpose");
+            return;
+        }
+
         var textCommandRef = emoteRow.Value.TextCommand;
         if (!textCommandRef.IsValid) {
             return;
@@ -49,9 +61,10 @@ public class EmoteExecutionProvider : IEmoteExecutionService {
             return;
         }
 
-        var finalCommand = $"{command} motion";
-        this.logger.Debug($"Constructed command: '{finalCommand}'");
+        this.ExecuteCommand($"{command} motion");
+    }
 
+    private unsafe void ExecuteCommand(string commandText) {
         var raptureShellModule = RaptureShellModule.Instance();
         if (raptureShellModule == null) {
             return;
@@ -59,7 +72,7 @@ public class EmoteExecutionProvider : IEmoteExecutionService {
 
         var message = new Utf8String();
         message.Ctor();
-        message.SetString(finalCommand);
+        message.SetString(commandText);
 
         var macro = new RaptureMacroModule.Macro();
         macro.Lines[0] = message;
@@ -76,11 +89,10 @@ public class EmoteExecutionProvider : IEmoteExecutionService {
     }
 
     public unsafe void OpenNativeEmoteWindow() {
-        this.logger.Debug("Attempting to open native Emote window via MainCommand.");
         try {
             var uiModule = UIModule.Instance();
             if (uiModule != null) {
-                uiModule->ExecuteMainCommand(17);
+                uiModule->ExecuteMainCommand(EmoteWindowCommandId);
             }
         }
         catch (Exception ex) {
