@@ -129,6 +129,7 @@ public class MainWindow : Window, IDisposable {
             if (ImGui.Button(FontAwesomeIcon.UserFriends.ToIconString())) {
                 this.executionService.OpenNativeEmoteWindow();
             }
+
             ImGui.PopFont();
 
             if (ImGui.IsItemHovered()) {
@@ -136,11 +137,13 @@ public class MainWindow : Window, IDisposable {
             }
 
             var statsText = $"{this.unlockedEmotesCount} / {this.totalEmotesCount} débloquées";
-            var textSize = ImGui.CalcTextSize(statsText).X;
+            // 25f de marge pour éviter l'enchevêtrement avec le grip de redimensionnement de la fenêtre
+            var textSize = ImGui.CalcTextSize(statsText).X + 25f;
 
             ImGui.SameLine(ImGui.GetWindowContentRegionMax().X - textSize);
             ImGui.AlignTextToFramePadding();
-            ImGui.TextDisabled(statsText);
+            // Retrait de TextDisabled pour un affichage blanc standard
+            ImGui.Text(statsText);
         }
         ImGui.EndChild();
     }

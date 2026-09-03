@@ -6,6 +6,7 @@ using Dalamud.Interface;
 using Dalamud.Interface.Textures;
 using Dalamud.Interface.Textures.Internal;
 using Dalamud.Plugin.Services;
+using RolePlayer.Core.Configuration.Contracts;
 using RolePlayer.Core.Logging.Contracts;
 using RolePlayer.UI.EmoteBrowser.Contracts;
 using RolePlayer.UI.EmoteBrowser.Models;
@@ -32,6 +33,7 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
     private IGroupManagementService groupManagementService;
     private ITagManagementService tagManagementService;
     private ILoggerService logger;
+    private IConfigurationService configurationService;
 
     private List<EmoteDisplayData> emotesCache;
     private List<string> availableCategories;
@@ -47,7 +49,6 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
 
     private bool needsRefresh = false;
     private bool needsFilterApply = false;
-    private bool isRefreshing = false;
 
     private int sortColumn = -1;
     private bool sortDescending = false;
@@ -65,7 +66,8 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
         IClientState clientState,
         IGroupManagementService groupManagementService,
         ITagManagementService tagManagementService,
-        ILoggerService logger) {
+        ILoggerService logger,
+        IConfigurationService configurationService) {
 
         this.emoteRepository = emoteRepository;
         this.playerStateProvider = playerStateProvider;
@@ -77,6 +79,7 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
         this.groupManagementService = groupManagementService;
         this.tagManagementService = tagManagementService;
         this.logger = logger;
+        this.configurationService = configurationService;
 
         this.emotesCache = new List<EmoteDisplayData>();
         this.availableCategories = new List<string>();
@@ -90,7 +93,7 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
     }
 
     public void Draw() {
-        if (this.needsRefresh && !this.isRefreshing) {
+        if (this.needsRefresh) {
             this.needsRefresh = false;
             this.LoadEmotesAsync();
         }
@@ -100,132 +103,127 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
             this.needsFilterApply = false;
         }
 
-        if (!this.emotesCache.Any() && !this.isRefreshing) {
+        if (!this.emotesCache.Any()) {
             this.LoadEmotesAsync();
         }
 
         bool filtersChanged = false;
+        var config = this.configurationService.GetConfig();
 
         ImGui.PushFont(UiBuilder.IconFont);
-        var syncIconWidth = ImGui.CalcTextSize(FontAwesomeIcon.Sync.ToIconString()).X + ImGui.GetStyle().FramePadding.X * 2;
-        var filterIconWidth = ImGui.CalcTextSize(FontAwesomeIcon.Filter.ToIconString()).X + ImGui.GetStyle().FramePadding.X * 2;
+        var filterIconText = FontAwesomeIcon.Filter.ToIconString();
+        var filterIconWidth = ImGui.CalcTextSize(filterIconText).X + ImGui.GetStyle().FramePadding.X * 2;
         ImGui.PopFont();
 
-        ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - syncIconWidth - filterIconWidth - (ImGui.GetStyle().ItemSpacing.X * 2));
+        ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - filterIconWidth - ImGui.GetStyle().ItemSpacing.X);
         if (ImGui.InputTextWithHint("##SearchEmotes", "Search by name or command...", ref this.searchQuery, 128)) {
             filtersChanged = true;
         }
 
         ImGui.SameLine();
 
+        if (config.ShowFilters) {
+            ImGui.PushStyleColor(ImGuiCol.Button, ImGui.GetStyle().Colors[(int)ImGuiCol.ButtonActive]);
+        }
+
         ImGui.PushFont(UiBuilder.IconFont);
-        if (this.isRefreshing) {
-            ImGui.BeginDisabled();
-            ImGui.Button(FontAwesomeIcon.Sync.ToIconString());
-            ImGui.EndDisabled();
+        if (ImGui.Button(filterIconText)) {
+            config.ShowFilters = !config.ShowFilters;
+            this.configurationService.Save();
         }
-        else {
-            if (ImGui.Button(FontAwesomeIcon.Sync.ToIconString())) {
-                this.needsRefresh = true;
-            }
-
-            if (ImGui.IsItemHovered()) {
-                ImGui.SetTooltip("Force synchronization with Penumbra");
-            }
-        }
-
-        ImGui.SameLine();
-        if (ImGui.Button(FontAwesomeIcon.Filter.ToIconString())) {
-            ImGui.OpenPopup("AdvancedFiltersPopup");
-        }
-
         ImGui.PopFont();
-        if (ImGui.IsItemHovered()) {
-            ImGui.SetTooltip("Advanced Filters");
+        if (config.ShowFilters) {
+            ImGui.PopStyleColor();
         }
 
-        if (ImGui.BeginPopup("AdvancedFiltersPopup")) {
-            ImGui.TextDisabled("Filters");
-            ImGui.Separator();
+        if (ImGui.IsItemHovered()) {
+            ImGui.SetTooltip("Toggle Advanced Filters");
+        }
 
-            ImGui.AlignTextToFramePadding();
-            ImGui.Text("Categories:");
-            ImGui.SameLine(80f);
-            this.DrawMultiSelectCombo("##CatCombo", this.availableCategories, this.selectedCategories, ref filtersChanged);
+        if (config.ShowFilters) {
+            ImGui.Spacing();
+            if (ImGui.BeginTable("FiltersLayoutTable", 3)) {
+                ImGui.TableSetupColumn("Categories");
+                ImGui.TableSetupColumn("Groups");
+                ImGui.TableSetupColumn("Tags");
+                ImGui.TableNextRow();
 
-            ImGui.AlignTextToFramePadding();
-            ImGui.Text("Groups:");
-            ImGui.SameLine(80f);
-            var groups = this.groupManagementService.GetGroups().Select(g => g.Name).ToList();
-            this.DrawMultiSelectCombo("##GrpCombo", groups, this.selectedGroups, ref filtersChanged);
+                ImGui.TableNextColumn();
+                this.DrawMultiSelectCombo("Categories##Combo", this.availableCategories, this.selectedCategories, ref filtersChanged);
 
-            ImGui.AlignTextToFramePadding();
-            ImGui.Text("Tags:");
-            ImGui.SameLine(80f);
-            var tags = this.tagManagementService.GetAvailableTags().ToList();
-            this.DrawMultiSelectCombo("##TagCombo", tags, this.selectedTags, ref filtersChanged);
+                ImGui.TableNextColumn();
+                var groups = this.groupManagementService.GetGroups().Select(g => g.Name).ToList();
+                this.DrawMultiSelectCombo("Groups##Combo", groups, this.selectedGroups, ref filtersChanged);
 
-            ImGui.Separator();
+                ImGui.TableNextColumn();
+                var tags = this.tagManagementService.GetAvailableTags().ToList();
+                this.DrawMultiSelectCombo("Tags##Combo", tags, this.selectedTags, ref filtersChanged);
+
+                ImGui.EndTable();
+            }
+
+            ImGui.Spacing();
             if (ImGui.Checkbox("Show Modded Only", ref this.showModdedOnly)) {
                 filtersChanged = true;
             }
 
-            ImGui.EndPopup();
-        }
+            ImGui.SameLine();
+            ImGui.Spacing();
+            ImGui.SameLine();
+            ImGui.AlignTextToFramePadding();
+            ImGui.Text("Group By:");
+            ImGui.SameLine();
+            ImGui.SetNextItemWidth(150f);
 
-        ImGui.Spacing();
-        ImGui.AlignTextToFramePadding();
-        ImGui.Text("Group By:");
-        ImGui.SameLine();
-        ImGui.SetNextItemWidth(150f);
+            string currentGroupLabel = this.currentGrouping switch {
+                GroupingMode.NativeCategory => "Native Category",
+                GroupingMode.CustomGroup => "Custom Group",
+                _ => "None"
+            };
 
-        string currentGroupLabel = this.currentGrouping switch {
-            GroupingMode.NativeCategory => "Native Category",
-            GroupingMode.CustomGroup => "Custom Group",
-            _ => "None"
-        };
+            if (ImGui.BeginCombo("##GroupingMode", currentGroupLabel)) {
+                if (ImGui.Selectable("None", this.currentGrouping == GroupingMode.None)) { this.currentGrouping = GroupingMode.None; filtersChanged = true; }
+                if (ImGui.Selectable("Native Category", this.currentGrouping == GroupingMode.NativeCategory)) { this.currentGrouping = GroupingMode.NativeCategory; filtersChanged = true; }
+                if (ImGui.Selectable("Custom Group", this.currentGrouping == GroupingMode.CustomGroup)) { this.currentGrouping = GroupingMode.CustomGroup; filtersChanged = true; }
+                ImGui.EndCombo();
+            }
 
-        if (ImGui.BeginCombo("##GroupingMode", currentGroupLabel)) {
-            if (ImGui.Selectable("None", this.currentGrouping == GroupingMode.None)) { this.currentGrouping = GroupingMode.None; filtersChanged = true; }
-            if (ImGui.Selectable("Native Category", this.currentGrouping == GroupingMode.NativeCategory)) { this.currentGrouping = GroupingMode.NativeCategory; filtersChanged = true; }
-            if (ImGui.Selectable("Custom Group", this.currentGrouping == GroupingMode.CustomGroup)) { this.currentGrouping = GroupingMode.CustomGroup; filtersChanged = true; }
-            ImGui.EndCombo();
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
         }
 
         if (filtersChanged) {
             this.ApplyFilters();
         }
 
-        // Ajout de ImGuiTableFlags.Borders pour reproduire le style fermé de Befriender et ImGuiTableFlags.Sortable pour les colonnes
-        var tableFlags = ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.ScrollY | ImGuiTableFlags.Sortable | ImGuiTableFlags.SizingFixedFit;
+        // Ajout de ImGuiTableFlags.Borders pour le visuel fermé, retrait de ScrollY pour un scroll global propre
+        var tableFlags = ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.Sortable | ImGuiTableFlags.SizingFixedFit;
 
-        if (ImGui.BeginTable("AllEmotesTable", 4, tableFlags)) {
-            ImGui.TableSetupColumn("Icon", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoSort, 32f);
-            ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch, 0.4f);
-            ImGui.TableSetupColumn("Command", ImGuiTableColumnFlags.WidthStretch, 0.4f);
-            ImGui.TableSetupColumn("Action", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoSort, 60f);
-            ImGui.TableHeadersRow();
+        foreach (var groupKvp in this.groupedEmotes.OrderBy(k => k.Key)) {
+            bool isNodeOpen = true;
 
-            var sortSpecs = ImGui.TableGetSortSpecs();
-            if (sortSpecs.SpecsDirty) {
-                this.sortColumn = sortSpecs.Specs.ColumnIndex;
-                this.sortDescending = sortSpecs.Specs.SortDirection == ImGuiSortDirection.Descending;
-                this.ApplyCurrentSorting();
-                sortSpecs.SpecsDirty = false;
+            if (this.currentGrouping != GroupingMode.None) {
+                var headerLabel = $"{groupKvp.Key} ({groupKvp.Value.Count})";
+                isNodeOpen = ImGui.CollapsingHeader(headerLabel, ImGuiTreeNodeFlags.DefaultOpen);
             }
 
-            foreach (var groupKvp in this.groupedEmotes) {
-                bool isNodeOpen = true;
+            if (isNodeOpen) {
+                if (ImGui.BeginTable($"AllEmotesTable_{groupKvp.Key}", 4, tableFlags)) {
+                    ImGui.TableSetupColumn("Icon", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoSort, 32f);
+                    ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch, 0.4f);
+                    ImGui.TableSetupColumn("Command", ImGuiTableColumnFlags.WidthStretch, 0.4f);
+                    ImGui.TableSetupColumn("Action", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoSort, 60f);
+                    ImGui.TableHeadersRow();
 
-                if (this.currentGrouping != GroupingMode.None) {
-                    ImGui.TableNextRow();
-                    ImGui.TableSetColumnIndex(0);
+                    var sortSpecs = ImGui.TableGetSortSpecs();
+                    if (sortSpecs.SpecsDirty) {
+                        this.sortColumn = sortSpecs.Specs.ColumnIndex;
+                        this.sortDescending = sortSpecs.Specs.SortDirection == ImGuiSortDirection.Descending;
+                        this.ApplyCurrentSorting();
+                        sortSpecs.SpecsDirty = false;
+                    }
 
-                    var headerLabel = $"{groupKvp.Key} ({groupKvp.Value.Count})";
-                    isNodeOpen = ImGui.TreeNodeEx(headerLabel, ImGuiTreeNodeFlags.DefaultOpen | ImGuiTreeNodeFlags.SpanFullWidth);
-                }
-
-                if (isNodeOpen) {
                     foreach (var emote in groupKvp.Value) {
                         ImGui.TableNextRow();
 
@@ -285,19 +283,15 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
                             ImGui.PopStyleColor();
                         }
                     }
-
-                    if (this.currentGrouping != GroupingMode.None) {
-                        ImGui.TreePop();
-                    }
+                    ImGui.EndTable();
                 }
             }
-            ImGui.EndTable();
         }
     }
 
     private void DrawMultiSelectCombo(string label, List<string> items, HashSet<string> selectedItems, ref bool changed) {
         var preview = selectedItems.Count == 0 ? "All" : $"{selectedItems.Count} selected";
-        ImGui.SetNextItemWidth(150f);
+        ImGui.SetNextItemWidth(-1f);
 
         if (ImGui.BeginCombo(label, preview)) {
             bool allSelected = selectedItems.Count == 0;
@@ -402,12 +396,6 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
     }
 
     private void LoadEmotesAsync() {
-        if (this.isRefreshing) {
-            return;
-        }
-
-        this.isRefreshing = true;
-
         Task.Run(() => {
             try {
                 var baseEmotes = this.emoteRepository.GetBaseEmotes().ToList();
@@ -431,9 +419,6 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
             }
             catch (Exception ex) {
                 this.logger.Error(ex, "[AllEmotesTab] Background emote resolution failed unexpectedly.");
-            }
-            finally {
-                this.isRefreshing = false;
             }
         });
     }
