@@ -19,6 +19,7 @@ public class MainWindow : Window, IDisposable {
     private const float BaseWidth = 400f;
     private const float SidePanelWidth = 300f;
     private bool lastPanelState = false;
+    private bool isFirstFrame = true;
 
     public MainWindow(
         IEnumerable<IEmoteBrowserTab> tabs,
@@ -27,7 +28,6 @@ public class MainWindow : Window, IDisposable {
         IClientState clientState)
         : base("RolePlayer", ImGuiWindowFlags.None) {
 
-        // Tri explicite des onglets selon leur SortOrder
         this.tabs = tabs.OrderBy(t => t.SortOrder).ToList();
 
         this.detailsPanel = detailsPanel;
@@ -45,7 +45,17 @@ public class MainWindow : Window, IDisposable {
     public override void Draw() {
         var isPanelOpen = this.selectionState.SelectedEmote != null;
 
-        if (isPanelOpen != this.lastPanelState) {
+        // Auto-correction de la largeur lors du premier rendu suite à un rechargement du plugin
+        if (this.isFirstFrame) {
+            var initialSize = ImGui.GetWindowSize();
+            if (!isPanelOpen && initialSize.X >= BaseWidth + SidePanelWidth - 20f) {
+                ImGui.SetWindowSize(new Vector2(initialSize.X - SidePanelWidth, initialSize.Y));
+            }
+
+            this.isFirstFrame = false;
+            this.lastPanelState = isPanelOpen;
+        }
+        else if (isPanelOpen != this.lastPanelState) {
             var currentSize = ImGui.GetWindowSize();
             var targetWidth = isPanelOpen ? currentSize.X + SidePanelWidth : currentSize.X - SidePanelWidth;
             if (targetWidth < BaseWidth) {
