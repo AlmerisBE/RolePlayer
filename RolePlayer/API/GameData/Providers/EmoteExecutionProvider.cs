@@ -2,6 +2,7 @@
 
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.System.String;
+using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Client.UI.Shell;
 using Lumina.Excel.Sheets;
@@ -14,11 +15,7 @@ public class EmoteExecutionProvider : IEmoteExecutionService {
     private IPlayerStateProvider playerStateProvider;
     private ILoggerService logger;
 
-    public EmoteExecutionProvider(
-        IDataManager dataManager,
-        IPlayerStateProvider playerStateProvider,
-        ILoggerService logger) {
-
+    public EmoteExecutionProvider(IDataManager dataManager, IPlayerStateProvider playerStateProvider, ILoggerService logger) {
         this.dataManager = dataManager;
         this.playerStateProvider = playerStateProvider;
         this.logger = logger;
@@ -37,7 +34,6 @@ public class EmoteExecutionProvider : IEmoteExecutionService {
             return;
         }
 
-        // Security check: ensure the local player actually unlocked the emote
         if (emoteRow.Value.UnlockLink != 0 && !this.playerStateProvider.IsEmoteUnlocked(emoteId)) {
             this.logger.Warning($"Emote {emoteId} is locked. Execution aborted.");
             return;
@@ -58,32 +54,37 @@ public class EmoteExecutionProvider : IEmoteExecutionService {
 
         var raptureShellModule = RaptureShellModule.Instance();
         if (raptureShellModule == null) {
-            this.logger.Error("RaptureShellModule.Instance() returned null.");
             return;
         }
-
-        this.logger.Debug("Allocating Utf8String and Macro struct...");
 
         var message = new Utf8String();
         message.Ctor();
         message.SetString(finalCommand);
 
         var macro = new RaptureMacroModule.Macro();
-
         macro.Lines[0] = message;
 
         try {
-            this.logger.Debug("Invoking native RaptureShellModule->ExecuteMacro...");
-
             raptureShellModule->ExecuteMacro(&macro);
-
-            this.logger.Debug("RaptureShellModule invoked successfully.");
         }
         catch (Exception ex) {
             this.logger.Error(ex, "Exception thrown during RaptureShellModule invocation.");
         }
         finally {
             message.Dtor();
+        }
+    }
+
+    public unsafe void OpenNativeEmoteWindow() {
+        this.logger.Debug("Attempting to open native Emote window via MainCommand.");
+        try {
+            var uiModule = UIModule.Instance();
+            if (uiModule != null) {
+                uiModule->ExecuteMainCommand(43);
+            }
+        }
+        catch (Exception ex) {
+            this.logger.Error(ex, "Failed to open native Emote window.");
         }
     }
 }
