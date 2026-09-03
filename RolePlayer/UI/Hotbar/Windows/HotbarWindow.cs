@@ -48,15 +48,16 @@ public class HotbarWindow : Window {
     }
 
     public override void PreDraw() {
-        // Application du verrouillage de la fenêtre si demandé
         if (this.config.IsLocked) {
             this.Flags |= ImGuiWindowFlags.NoMove;
+            if (this.config.PositionInitialized) {
+                ImGui.SetNextWindowPos(this.config.AnchorPosition, ImGuiCond.Always, this.GetPivot(this.config.Anchor));
+            }
         }
         else {
             this.Flags &= ~ImGuiWindowFlags.NoMove;
         }
 
-        // Réduction drastique des espacements pour un effet "Barre de raccourcis native"
         ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(4f, 4f));
         ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(2f, 2f));
     }
@@ -73,47 +74,71 @@ public class HotbarWindow : Window {
         var allEmotes = this.emoteCacheProvider();
         var resolvedEmotes = this.resolverService.ResolveEmotesForHotbar(this.config, allEmotes);
 
-        if (resolvedEmotes.Count == 0) {
-            return;
-        }
-
-        int totalPages = (int)Math.Ceiling(resolvedEmotes.Count / (double)MaxItemsPerPage);
-        if (this.currentPage >= totalPages && totalPages > 0) {
-            this.currentPage = totalPages - 1;
-        }
-
-        if (totalPages == 0) {
-            this.currentPage = 0;
-        }
-
-        var displayedEmotes = resolvedEmotes.Skip(this.currentPage * MaxItemsPerPage).Take(MaxItemsPerPage).ToList();
-
-        // Taille dynamique : Si nous avons moins d'emotes que de colonnes prévues, nous réduisons le tableau
-        int maxColumns = this.GetColumnsForLayout(this.config.Layout);
-        int actualColumns = Math.Min(maxColumns, displayedEmotes.Count);
-        if (actualColumns <= 0) {
-            actualColumns = 1;
-        }
-
-        if (ImGui.BeginTable($"HotbarGrid_{this.config.Id}", actualColumns, ImGuiTableFlags.SizingFixedFit)) {
-            for (int i = 0; i < displayedEmotes.Count; i++) {
-                if (i % actualColumns == 0) {
-                    ImGui.TableNextRow();
-                }
-
-                ImGui.TableNextColumn();
-                this.DrawEmoteIcon(displayedEmotes[i]);
+        if (resolvedEmotes.Count > 0) {
+            int totalPages = (int)Math.Ceiling(resolvedEmotes.Count / (double)MaxItemsPerPage);
+            if (this.currentPage >= totalPages && totalPages > 0) {
+                this.currentPage = totalPages - 1;
             }
-            ImGui.EndTable();
+
+            if (totalPages == 0) {
+                this.currentPage = 0;
+            }
+
+            var displayedEmotes = resolvedEmotes.Skip(this.currentPage * MaxItemsPerPage).Take(MaxItemsPerPage).ToList();
+
+            int maxColumns = this.GetColumnsForLayout(this.config.Layout);
+            int actualColumns = Math.Min(maxColumns, displayedEmotes.Count);
+            if (actualColumns <= 0) {
+                actualColumns = 1;
+            }
+
+            if (ImGui.BeginTable($"HotbarGrid_{this.config.Id}", actualColumns, ImGuiTableFlags.SizingFixedFit)) {
+                for (int i = 0; i < displayedEmotes.Count; i++) {
+                    if (i % actualColumns == 0) {
+                        ImGui.TableNextRow();
+                    }
+
+                    ImGui.TableNextColumn();
+                    this.DrawEmoteIcon(displayedEmotes[i]);
+                }
+                ImGui.EndTable();
+            }
+
+            if (totalPages > 1) {
+                this.DrawPagination(totalPages);
+            }
         }
 
-        if (totalPages > 1) {
-            this.DrawPagination(totalPages);
+        if (!this.config.IsLocked || !this.config.PositionInitialized) {
+            var pos = ImGui.GetWindowPos();
+            var size = ImGui.GetWindowSize();
+            this.config.AnchorPosition = this.CalculateAnchorPosition(pos, size, this.config.Anchor);
+            this.config.PositionInitialized = true;
         }
     }
 
     public override void PostDraw() {
         ImGui.PopStyleVar(2);
+    }
+
+    private Vector2 GetPivot(HotbarAnchor anchor) {
+        return anchor switch {
+            HotbarAnchor.TopLeft => new Vector2(0, 0),
+            HotbarAnchor.TopRight => new Vector2(1, 0),
+            HotbarAnchor.BottomLeft => new Vector2(0, 1),
+            HotbarAnchor.BottomRight => new Vector2(1, 1),
+            _ => new Vector2(0, 0)
+        };
+    }
+
+    private Vector2 CalculateAnchorPosition(Vector2 pos, Vector2 size, HotbarAnchor anchor) {
+        return anchor switch {
+            HotbarAnchor.TopLeft => pos,
+            HotbarAnchor.TopRight => new Vector2(pos.X + size.X, pos.Y),
+            HotbarAnchor.BottomLeft => new Vector2(pos.X, pos.Y + size.Y),
+            HotbarAnchor.BottomRight => new Vector2(pos.X + size.X, pos.Y + size.Y),
+            _ => pos
+        };
     }
 
     private int GetColumnsForLayout(HotbarLayout layout) {
@@ -140,7 +165,6 @@ public class HotbarWindow : Window {
                     this.executionService.ExecuteEmote(emote.Id);
                 }
 
-                // Overlay visuel pour indiquer la présence de variations
                 if (emote.HasVariations) {
                     var drawList = ImGui.GetWindowDrawList();
                     ImGui.PushFont(UiBuilder.IconFont);
@@ -150,7 +174,6 @@ public class HotbarWindow : Window {
 
                     var indicatorPos = new Vector2(cursorPos.X + IconSize - textSize.X - 2f, cursorPos.Y + IconSize - textSize.Y - 2f);
 
-                    // Ombre portée pour garantir la lisibilité
                     drawList.AddText(UiBuilder.IconFont, ImGui.GetFontSize(), new Vector2(indicatorPos.X + 1, indicatorPos.Y + 1), 0xFF000000, indicatorText);
                     drawList.AddText(UiBuilder.IconFont, ImGui.GetFontSize(), indicatorPos, 0xFF40DD40, indicatorText);
                 }

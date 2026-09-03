@@ -203,6 +203,17 @@ public class HotbarConfigSubTab {
             ImGui.EndCombo();
         }
 
+        if (ImGui.BeginCombo("Anchor", this.selectedHotbar.Anchor.ToString())) {
+            foreach (HotbarAnchor anchor in Enum.GetValues(typeof(HotbarAnchor))) {
+                if (ImGui.Selectable(anchor.ToString(), this.selectedHotbar.Anchor == anchor)) {
+                    this.selectedHotbar.Anchor = anchor;
+                    this.selectedHotbar.PositionInitialized = false;
+                    configChanged = true;
+                }
+            }
+            ImGui.EndCombo();
+        }
+
         if (ImGui.BeginCombo("Population Mode", this.selectedHotbar.PopulationMode.ToString())) {
             foreach (HotbarPopulationMode mode in Enum.GetValues(typeof(HotbarPopulationMode))) {
                 if (ImGui.Selectable(mode.ToString(), this.selectedHotbar.PopulationMode == mode)) {

@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 
 [Serializable]
 public class HotbarConfig {
@@ -12,10 +13,12 @@ public class HotbarConfig {
     public HotbarLayout Layout { get; set; } = HotbarLayout.Grid16x1;
     public HotbarPopulationMode PopulationMode { get; set; } = HotbarPopulationMode.Manual;
 
-    // Manual Population
+    public HotbarAnchor Anchor { get; set; } = HotbarAnchor.TopLeft;
+    public Vector2 AnchorPosition { get; set; } = Vector2.Zero;
+    public bool PositionInitialized { get; set; } = false;
+
     public List<uint> ManualEmoteIds { get; set; } = new();
 
-    // Dynamic Population (Filters)
     public string SearchQuery { get; set; } = string.Empty;
     public HashSet<string> SelectedCategories { get; set; } = new();
     public HashSet<string> SelectedGroups { get; set; } = new();
