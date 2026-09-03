@@ -42,6 +42,9 @@ public class HotbarWindow : Window {
 
         this.SizeCondition = ImGuiCond.Always;
         this.BgAlpha = 0.7f;
+
+        // Force l'ouverture de la fenêtre dans le WindowSystem de Dalamud
+        this.IsOpen = true;
     }
 
     public override void Draw() {
@@ -149,19 +152,17 @@ public class HotbarWindow : Window {
 
     private void DrawPagination(int totalPages) {
         ImGui.PushFont(UiBuilder.IconFont);
-
         if (ImGui.Button(FontAwesomeIcon.ChevronLeft.ToIconString()) && this.currentPage > 0) {
             this.currentPage--;
         }
 
         ImGui.PopFont();
-        ImGui.SameLine();
 
+        ImGui.SameLine();
         ImGui.Text($"{this.currentPage + 1}/{totalPages}");
-
         ImGui.SameLine();
-        ImGui.PushFont(UiBuilder.IconFont);
 
+        ImGui.PushFont(UiBuilder.IconFont);
         if (ImGui.Button(FontAwesomeIcon.ChevronRight.ToIconString()) && this.currentPage < totalPages - 1) {
             this.currentPage++;
         }
