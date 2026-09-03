@@ -130,7 +130,7 @@ public class GroupsConfigSubTab {
             this.isDeleteDialogOpen = false;
         }
 
-        if (ImGui.BeginPopupModal("Delete Group Confirmation", ref this.isDeleteDialogOpen, ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoSavedSettings)) {
+        if (ImGui.BeginPopupModal("Delete Group Confirmation", ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoSavedSettings)) {
             ImGui.Text($"Are you sure you want to delete the group '{this.groupToDelete}'?");
             ImGui.TextColored(new Vector4(0.8f, 0.2f, 0.2f, 1.0f), "This will remove the group assignment from all associated emotes.");
             ImGui.Spacing();

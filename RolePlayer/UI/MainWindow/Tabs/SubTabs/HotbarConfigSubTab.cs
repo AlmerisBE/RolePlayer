@@ -21,6 +21,8 @@ public class HotbarConfigSubTab {
     private ITextureProvider textureProvider;
 
     private HotbarConfig? selectedHotbar;
+    private HotbarConfig? hotbarToDelete;
+    private bool isDeleteDialogOpen = false;
 
     public bool IsSidePanelOpen => this.selectedHotbar != null;
 
@@ -70,7 +72,9 @@ public class HotbarConfigSubTab {
                 bool isSelected = this.selectedHotbar?.Id == hotbar.Id;
 
                 ImGui.TableNextColumn();
-                if (ImGui.Selectable($"{hotbar.Name}##sel_{hotbar.Id}", isSelected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowItemOverlap)) this.selectedHotbar = hotbar;
+                if (ImGui.Selectable($"{hotbar.Name}##sel_{hotbar.Id}", isSelected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowItemOverlap)) {
+                    this.selectedHotbar = hotbar;
+                }
 
                 ImGui.TableNextColumn();
                 ImGui.Text(hotbar.PopulationMode.ToString());
@@ -84,7 +88,9 @@ public class HotbarConfigSubTab {
     }
 
     public void DrawSidePanel() {
-        if (this.selectedHotbar == null) return;
+        if (this.selectedHotbar == null) {
+            return;
+        }
 
         var profile = this.configService.GetCurrentProfile();
         bool configChanged = false;
@@ -130,7 +136,9 @@ public class HotbarConfigSubTab {
             this.selectedHotbar.IsVisible = !this.selectedHotbar.IsVisible;
             configChanged = true;
         }
-        if (ImGui.IsItemHovered()) ImGui.SetTooltip("Toggle Visibility");
+        if (ImGui.IsItemHovered()) {
+            ImGui.SetTooltip("Toggle Visibility");
+        }
 
         ImGui.SameLine();
 
@@ -143,7 +151,9 @@ public class HotbarConfigSubTab {
             this.selectedHotbar.IsLocked = !this.selectedHotbar.IsLocked;
             configChanged = true;
         }
-        if (ImGui.IsItemHovered()) ImGui.SetTooltip("Toggle Position Lock");
+        if (ImGui.IsItemHovered()) {
+            ImGui.SetTooltip("Toggle Position Lock");
+        }
 
         ImGui.SameLine();
         ImGui.SetCursorPosX(ImGui.GetWindowContentRegionMax().X - 30f);
@@ -155,15 +165,14 @@ public class HotbarConfigSubTab {
         ImGui.PopStyleColor();
 
         if (doDelete) {
-            profile.Hotbars.Remove(this.selectedHotbar);
-            this.selectedHotbar = null;
-            configChanged = true;
+            this.hotbarToDelete = this.selectedHotbar;
+            this.isDeleteDialogOpen = true;
         }
-        if (ImGui.IsItemHovered()) ImGui.SetTooltip("Delete Hotbar");
+        if (ImGui.IsItemHovered()) {
+            ImGui.SetTooltip("Delete Hotbar");
+        }
 
         ImGui.Spacing();
-
-        if (this.selectedHotbar == null) return;
 
         string name = this.selectedHotbar.Name;
         if (ImGui.InputText("Name", ref name, 64)) {
@@ -233,6 +242,43 @@ public class HotbarConfigSubTab {
             this.configService.Save();
             this.hotbarManager.RefreshWindows();
         }
+
+        this.DrawDeleteConfirmationModal();
+    }
+
+    private void DrawDeleteConfirmationModal() {
+        if (this.isDeleteDialogOpen) {
+            ImGui.OpenPopup("Delete Hotbar Confirmation");
+            this.isDeleteDialogOpen = false;
+        }
+
+        if (ImGui.BeginPopupModal("Delete Hotbar Confirmation", ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoSavedSettings)) {
+            ImGui.Text($"Are you sure you want to delete the hotbar '{this.hotbarToDelete?.Name}'?");
+            ImGui.TextColored(new Vector4(0.8f, 0.2f, 0.2f, 1.0f), "This action cannot be undone.");
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
+
+            if (ImGui.Button("Yes, Delete", new Vector2(120, 0))) {
+                if (this.hotbarToDelete != null) {
+                    var profile = this.configService.GetCurrentProfile();
+                    profile.Hotbars.Remove(this.hotbarToDelete);
+                    if (this.selectedHotbar == this.hotbarToDelete) {
+                        this.selectedHotbar = null;
+                    }
+
+                    this.configService.Save();
+                    this.hotbarManager.RefreshWindows();
+                }
+                ImGui.CloseCurrentPopup();
+            }
+            ImGui.SameLine();
+            if (ImGui.Button("Cancel", new Vector2(120, 0))) {
+                ImGui.CloseCurrentPopup();
+            }
+
+            ImGui.EndPopup();
+        }
     }
 
     private void DrawEmotePreview() {
@@ -243,13 +289,18 @@ public class HotbarConfigSubTab {
         ImGui.TextColored(new Vector4(0.7f, 0.7f, 0.7f, 1.0f), $"Preview: {resolvedEmotes.Count} emotes");
         ImGui.Spacing();
 
-        if (resolvedEmotes.Count == 0) return;
+        if (resolvedEmotes.Count == 0) {
+            return;
+        }
 
         int maxPreview = Math.Min(16, resolvedEmotes.Count);
 
         if (ImGui.BeginTable("PreviewGrid", 4, ImGuiTableFlags.SizingFixedFit)) {
             for (int i = 0; i < maxPreview; i++) {
-                if (i % 4 == 0) ImGui.TableNextRow();
+                if (i % 4 == 0) {
+                    ImGui.TableNextRow();
+                }
+
                 ImGui.TableNextColumn();
 
                 var emote = resolvedEmotes[i];
@@ -260,7 +311,9 @@ public class HotbarConfigSubTab {
 
                         if (iconWrap != null) {
                             ImGui.Image(iconWrap.Handle, new Vector2(32, 32));
-                            if (ImGui.IsItemHovered()) ImGui.SetTooltip(emote.Name);
+                            if (ImGui.IsItemHovered()) {
+                                ImGui.SetTooltip(emote.Name);
+                            }
                         }
                     }
                     catch (IconNotFoundException) { }
@@ -285,8 +338,13 @@ public class HotbarConfigSubTab {
             foreach (var item in items) {
                 bool isSelected = selectedItems.Contains(item);
                 if (ImGui.Checkbox(item, ref isSelected)) {
-                    if (isSelected) selectedItems.Add(item);
-                    else selectedItems.Remove(item);
+                    if (isSelected) {
+                        selectedItems.Add(item);
+                    }
+                    else {
+                        selectedItems.Remove(item);
+                    }
+
                     changed = true;
                 }
             }

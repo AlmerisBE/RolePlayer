@@ -13,6 +13,9 @@ public class TagsConfigSubTab {
     private string editingTag = string.Empty;
     private string editName = string.Empty;
 
+    private string tagToDelete = string.Empty;
+    private bool isDeleteDialogOpen = false;
+
     public TagsConfigSubTab(ITagManagementService tagService) {
         this.tagService = tagService;
     }
@@ -82,13 +85,41 @@ public class TagsConfigSubTab {
                     ImGui.SameLine();
                     ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
                     if (ImGui.Button($"Delete##{tag}")) {
-                        this.tagService.DeleteGlobalTag(tag);
+                        this.tagToDelete = tag;
+                        this.isDeleteDialogOpen = true;
                     }
-
                     ImGui.PopStyleColor();
                 }
             }
             ImGui.EndTable();
+        }
+
+        this.DrawDeleteConfirmationModal();
+    }
+
+    private void DrawDeleteConfirmationModal() {
+        if (this.isDeleteDialogOpen) {
+            ImGui.OpenPopup("Delete Tag Confirmation");
+            this.isDeleteDialogOpen = false;
+        }
+
+        if (ImGui.BeginPopupModal("Delete Tag Confirmation", ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoSavedSettings)) {
+            ImGui.Text($"Are you sure you want to delete the tag '{this.tagToDelete}'?");
+            ImGui.TextColored(new Vector4(0.8f, 0.2f, 0.2f, 1.0f), "This will remove the tag from all associated emotes.");
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
+
+            if (ImGui.Button("Yes, Delete", new Vector2(120, 0))) {
+                this.tagService.DeleteGlobalTag(this.tagToDelete);
+                ImGui.CloseCurrentPopup();
+            }
+            ImGui.SameLine();
+            if (ImGui.Button("Cancel", new Vector2(120, 0))) {
+                ImGui.CloseCurrentPopup();
+            }
+
+            ImGui.EndPopup();
         }
     }
 }
