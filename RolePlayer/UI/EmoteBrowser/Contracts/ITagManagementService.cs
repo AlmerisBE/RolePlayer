@@ -6,7 +6,9 @@ public interface ITagManagementService {
     IEnumerable<string> GetAvailableTags();
     IEnumerable<string> GetTagsForEmote(uint emoteId);
     void CreateGlobalTag(string tag);
+    void RenameGlobalTag(string oldTag, string newTag);
     void DeleteGlobalTag(string tag);
     void AddTagToEmote(uint emoteId, string tag);
     void RemoveTagFromEmote(uint emoteId, string tag);
+    int GetTagEmoteCount(string tag);
 }

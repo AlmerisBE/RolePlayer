@@ -2,6 +2,7 @@
 
 using RolePlayer.Core.Configuration.Contracts;
 using RolePlayer.UI.EmoteBrowser.Contracts;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -23,28 +24,41 @@ public class TagManagementService : ITagManagementService {
         }
 
         var config = this.configurationService.GetConfig();
-        if (config.AvailableTags == null) {
-            config.AvailableTags = new HashSet<string>();
-        }
-
         if (config.AvailableTags.Add(tag.Trim())) {
             this.configurationService.Save();
         }
     }
 
-    public void DeleteGlobalTag(string tag) {
-        var config = this.configurationService.GetConfig();
-        var changed = false;
-
-        if (config.AvailableTags != null && config.AvailableTags.Remove(tag)) {
-            changed = true;
+    public void RenameGlobalTag(string oldTag, string newTag) {
+        if (string.IsNullOrWhiteSpace(newTag) || oldTag.Equals(newTag, StringComparison.OrdinalIgnoreCase)) {
+            return;
         }
 
-        if (config.EmoteTags != null) {
-            foreach (var kvp in config.EmoteTags) {
-                if (kvp.Value != null && kvp.Value.Remove(tag)) {
-                    changed = true;
-                }
+        var config = this.configurationService.GetConfig();
+        if (config.AvailableTags.Contains(newTag)) {
+            return;
+        }
+
+        if (config.AvailableTags.Remove(oldTag)) {
+            config.AvailableTags.Add(newTag.Trim());
+        }
+
+        foreach (var kvp in config.EmoteTags) {
+            if (kvp.Value.Remove(oldTag)) {
+                kvp.Value.Add(newTag.Trim());
+            }
+        }
+
+        this.configurationService.Save();
+    }
+
+    public void DeleteGlobalTag(string tag) {
+        var config = this.configurationService.GetConfig();
+        bool changed = config.AvailableTags.Remove(tag);
+
+        foreach (var kvp in config.EmoteTags) {
+            if (kvp.Value.Remove(tag)) {
+                changed = true;
             }
         }
 
@@ -55,7 +69,7 @@ public class TagManagementService : ITagManagementService {
 
     public IEnumerable<string> GetTagsForEmote(uint emoteId) {
         var config = this.configurationService.GetConfig();
-        if (config.EmoteTags != null && config.EmoteTags.TryGetValue(emoteId, out var tags) && tags != null) {
+        if (config.EmoteTags.TryGetValue(emoteId, out var tags)) {
             return tags;
         }
 
@@ -68,10 +82,6 @@ public class TagManagementService : ITagManagementService {
         }
 
         var config = this.configurationService.GetConfig();
-        if (config.EmoteTags == null) {
-            config.EmoteTags = new Dictionary<uint, HashSet<string>>();
-        }
-
         if (!config.EmoteTags.ContainsKey(emoteId)) {
             config.EmoteTags[emoteId] = new HashSet<string>();
         }
@@ -83,8 +93,12 @@ public class TagManagementService : ITagManagementService {
 
     public void RemoveTagFromEmote(uint emoteId, string tag) {
         var config = this.configurationService.GetConfig();
-        if (config.EmoteTags != null && config.EmoteTags.TryGetValue(emoteId, out var tags) && tags != null && tags.Remove(tag)) {
+        if (config.EmoteTags.TryGetValue(emoteId, out var tags) && tags.Remove(tag)) {
             this.configurationService.Save();
         }
+    }
+
+    public int GetTagEmoteCount(string tag) {
+        return this.configurationService.GetConfig().EmoteTags.Values.Count(tags => tags.Contains(tag));
     }
 }
