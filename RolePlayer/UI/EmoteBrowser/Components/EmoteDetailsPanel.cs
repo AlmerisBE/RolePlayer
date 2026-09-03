@@ -2,7 +2,10 @@
 
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
+using RolePlayer.Core.Configuration.Contracts;
 using RolePlayer.UI.EmoteBrowser.Contracts;
+using RolePlayer.UI.Hotbar.Components;
+using RolePlayer.UI.Hotbar.Models;
 using System.Linq;
 using System.Numerics;
 
@@ -14,6 +17,8 @@ public class EmoteDetailsPanel {
     private IEmoteExecutionService executionService;
     private ITagManagementService tagManagementService;
     private IGroupManagementService groupManagementService;
+    private IConfigurationService configurationService;
+    private HotbarManagerComponent hotbarManager;
 
     public EmoteDetailsPanel(
         IUnlockSourceProvider unlockSourceProvider,
@@ -22,7 +27,9 @@ public class EmoteDetailsPanel {
         IEmoteDebugService debugService,
         IEmoteExecutionService executionService,
         ITagManagementService tagManagementService,
-        IGroupManagementService groupManagementService) {
+        IGroupManagementService groupManagementService,
+        IConfigurationService configurationService,
+        HotbarManagerComponent hotbarManager) {
 
         this.unlockSourceProvider = unlockSourceProvider;
         this.modStateProvider = modStateProvider;
@@ -31,6 +38,8 @@ public class EmoteDetailsPanel {
         this.executionService = executionService;
         this.tagManagementService = tagManagementService;
         this.groupManagementService = groupManagementService;
+        this.configurationService = configurationService;
+        this.hotbarManager = hotbarManager;
     }
 
     public void Draw() {
@@ -116,6 +125,12 @@ public class EmoteDetailsPanel {
         ImGui.Separator();
         ImGui.Spacing();
 
+        this.DrawStaticHotbarAssignment(emote.Id);
+
+        ImGui.Spacing();
+        ImGui.Separator();
+        ImGui.Spacing();
+
         this.DrawGroupManagement(emote.Id);
 
         ImGui.Spacing();
@@ -130,6 +145,38 @@ public class EmoteDetailsPanel {
 
         if (ImGui.Button("Debug to Console", new Vector2(-1, 0))) {
             this.debugService.LogEmoteDetails(emote.Id);
+        }
+    }
+
+    private void DrawStaticHotbarAssignment(uint emoteId) {
+        ImGui.TextDisabled("Static Hotbars:");
+
+        var config = this.configurationService.GetConfig();
+        var manualHotbars = config.Hotbars.Where(h => h.PopulationMode == HotbarPopulationMode.Manual).ToList();
+
+        if (!manualHotbars.Any()) {
+            ImGui.TextDisabled("No manual hotbars available.");
+            return;
+        }
+
+        bool hotbarChanged = false;
+        foreach (var hotbar in manualHotbars) {
+            bool isInHotbar = hotbar.ManualEmoteIds.Contains(emoteId);
+            if (ImGui.Checkbox($"{hotbar.Name}##hb_{hotbar.Id}", ref isInHotbar)) {
+                if (isInHotbar) {
+                    hotbar.ManualEmoteIds.Add(emoteId);
+                }
+                else {
+                    hotbar.ManualEmoteIds.Remove(emoteId);
+                }
+
+                hotbarChanged = true;
+            }
+        }
+
+        if (hotbarChanged) {
+            this.configurationService.Save();
+            this.hotbarManager.RefreshWindows();
         }
     }
 
@@ -233,7 +280,6 @@ public class EmoteDetailsPanel {
             }
             else {
                 ImGui.BeginDisabled();
-                // CORRECTION CRITIQUE : Conditionnement de ImGui.EndCombo()
                 if (ImGui.BeginCombo("##addTagCombo", "No available tags...")) {
                     ImGui.EndCombo();
                 }
