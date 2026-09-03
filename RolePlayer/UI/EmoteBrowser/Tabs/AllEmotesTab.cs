@@ -6,12 +6,14 @@ using Dalamud.Interface;
 using Dalamud.Interface.Textures;
 using Dalamud.Interface.Textures.Internal;
 using Dalamud.Plugin.Services;
+using RolePlayer.Core.Logging.Contracts;
 using RolePlayer.UI.EmoteBrowser.Contracts;
 using RolePlayer.UI.EmoteBrowser.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Threading.Tasks;
 
 public enum GroupingMode {
     None,
@@ -29,6 +31,7 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
     private IClientState clientState;
     private IGroupManagementService groupManagementService;
     private ITagManagementService tagManagementService;
+    private ILoggerService logger;
 
     private List<EmoteDisplayData> emotesCache;
     private List<string> availableCategories;
@@ -37,12 +40,15 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
     private string searchQuery = string.Empty;
     private bool showFilters = false;
     private bool showModdedOnly = false;
-    private bool needsRefresh = false;
     private GroupingMode currentGrouping = GroupingMode.None;
 
     private HashSet<string> selectedCategories = new();
     private HashSet<string> selectedGroups = new();
     private HashSet<string> selectedTags = new();
+
+    private bool needsRefresh = false;
+    private bool needsFilterApply = false;
+    private bool isRefreshing = false;
 
     public string TabName => "All Emotes";
     public int SortOrder => 0;
@@ -56,7 +62,8 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
         ITextureProvider textureProvider,
         IClientState clientState,
         IGroupManagementService groupManagementService,
-        ITagManagementService tagManagementService) {
+        ITagManagementService tagManagementService,
+        ILoggerService logger) {
 
         this.emoteRepository = emoteRepository;
         this.playerStateProvider = playerStateProvider;
@@ -67,6 +74,7 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
         this.clientState = clientState;
         this.groupManagementService = groupManagementService;
         this.tagManagementService = tagManagementService;
+        this.logger = logger;
 
         this.emotesCache = new List<EmoteDisplayData>();
         this.availableCategories = new List<string>();
@@ -76,17 +84,23 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
     }
 
     private void OnModStateChanged() {
+        this.logger.Debug("[AllEmotesTab] ModStateChanged event received. Queuing background cache rebuild.");
         this.needsRefresh = true;
     }
 
     public void Draw() {
-        if (this.needsRefresh) {
-            this.emotesCache.Clear();
+        if (this.needsRefresh && !this.isRefreshing) {
             this.needsRefresh = false;
+            this.LoadEmotesAsync();
         }
 
-        if (!this.emotesCache.Any()) {
-            this.LoadEmotes();
+        if (this.needsFilterApply) {
+            this.ApplyFilters();
+            this.needsFilterApply = false;
+        }
+
+        if (!this.emotesCache.Any() && !this.isRefreshing) {
+            this.LoadEmotesAsync();
         }
 
         bool filtersChanged = false;
@@ -105,12 +119,28 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
         }
 
         ImGui.SameLine();
-        ImGui.PushFont(UiBuilder.IconFont);
-        if (ImGui.Button(refreshIcon)) {
-            this.needsRefresh = true;
-        }
 
-        ImGui.PopFont();
+        if (this.isRefreshing) {
+            ImGui.BeginDisabled();
+            ImGui.PushFont(UiBuilder.IconFont);
+            ImGui.Button(refreshIcon);
+            ImGui.PopFont();
+            ImGui.EndDisabled();
+            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) {
+                ImGui.SetTooltip("Synchronizing cache with Penumbra...");
+            }
+        }
+        else {
+            ImGui.PushFont(UiBuilder.IconFont);
+            if (ImGui.Button(refreshIcon)) {
+                this.logger.Info("[AllEmotesTab] Manual synchronization triggered by user.");
+                this.needsRefresh = true;
+            }
+            ImGui.PopFont();
+            if (ImGui.IsItemHovered()) {
+                ImGui.SetTooltip("Force synchronization with Penumbra mod states");
+            }
+        }
 
         ImGui.SameLine();
         if (ImGui.Button(filterBtnText)) {
@@ -345,26 +375,56 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
         }
     }
 
-    private void LoadEmotes() {
-        var baseEmotes = this.emoteRepository.GetBaseEmotes();
-        var uniqueCategories = new HashSet<string>();
-
-        foreach (var emote in baseEmotes) {
-            emote.IsUnlocked = !emote.IsUnlockable || this.playerStateProvider.IsEmoteUnlocked(emote.Id);
-            var modName = this.modStateProvider.GetModNameModifyingEmote(emote.Id);
-            emote.IsModded = !string.IsNullOrEmpty(modName);
-
-            this.emotesCache.Add(emote);
-            if (!string.IsNullOrEmpty(emote.Category)) {
-                uniqueCategories.Add(emote.Category);
-            }
+    private void LoadEmotesAsync() {
+        if (this.isRefreshing) {
+            return;
         }
 
-        this.availableCategories = uniqueCategories.OrderBy(c => c).ToList();
-        this.ApplyFilters();
+        this.isRefreshing = true;
+
+        this.logger.Debug("[AllEmotesTab] Spawning background Task to execute async emote mod resolution.");
+
+        Task.Run(() => {
+            try {
+                var baseEmotes = this.emoteRepository.GetBaseEmotes().ToList();
+                var uniqueCategories = new HashSet<string>();
+                var newCache = new List<EmoteDisplayData>();
+
+                int moddedCount = 0;
+
+                foreach (var emote in baseEmotes) {
+                    emote.IsUnlocked = !emote.IsUnlockable || this.playerStateProvider.IsEmoteUnlocked(emote.Id);
+                    var modName = this.modStateProvider.GetModNameModifyingEmote(emote.Id);
+                    emote.IsModded = !string.IsNullOrEmpty(modName);
+
+                    if (emote.IsModded) {
+                        moddedCount++;
+                    }
+
+                    newCache.Add(emote);
+                    if (!string.IsNullOrEmpty(emote.Category)) {
+                        uniqueCategories.Add(emote.Category);
+                    }
+                }
+
+                // Atomic reassignment is thread-safe for the UI loop
+                this.emotesCache = newCache;
+                this.availableCategories = uniqueCategories.OrderBy(c => c).ToList();
+
+                this.logger.Debug($"[AllEmotesTab] Async resolution finished safely. Identified {moddedCount} actively modded emotes.");
+                this.needsFilterApply = true;
+            }
+            catch (Exception ex) {
+                this.logger.Error(ex, "[AllEmotesTab] Background emote resolution failed unexpectedly.");
+            }
+            finally {
+                this.isRefreshing = false;
+            }
+        });
     }
 
     public void Dispose() {
+        this.logger.Debug("[AllEmotesTab] Unsubscribing from IPC event triggers.");
         this.modStateProvider.ModStateChanged -= this.OnModStateChanged;
     }
 }
