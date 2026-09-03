@@ -3,6 +3,7 @@
 using Dalamud.Configuration;
 using RolePlayer.Core.MetaData.Models;
 using RolePlayer.UI.EmoteBrowser.Models;
+using RolePlayer.UI.Hotbar.Models;
 using System;
 using System.Collections.Generic;
 
@@ -23,4 +24,5 @@ public class PluginConfiguration : IPluginConfiguration {
     public HashSet<string> SelectedCategories { get; set; } = new();
     public HashSet<string> SelectedGroups { get; set; } = new();
     public HashSet<string> SelectedTags { get; set; } = new();
+    public List<HotbarConfig> Hotbars { get; set; } = new();
 }
