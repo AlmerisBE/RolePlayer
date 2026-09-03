@@ -3,4 +3,5 @@
 public interface IPlayerStateProvider {
     bool IsEmoteUnlocked(uint emoteId);
     bool IsEmoteActive(uint emoteId);
+    uint GetActiveEmoteId();
 }

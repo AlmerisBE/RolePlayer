@@ -164,6 +164,7 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
                                         var cursorPos = ImGui.GetCursorScreenPos();
                                         ImGui.Image(iconWrap.Handle, new Vector2(24, 24));
 
+                                        // Ajout de l'indicateur visuel pour les variations (/cpose)
                                         if (emote.HasVariations) {
                                             var drawList = ImGui.GetWindowDrawList();
                                             ImGui.PushFont(UiBuilder.IconFont);

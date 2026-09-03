@@ -49,6 +49,20 @@ public class PlayerStateProvider : IPlayerStateProvider {
         return character->EmoteController.EmoteId == emoteId;
     }
 
+    public unsafe uint GetActiveEmoteId() {
+        var localPlayer = this.objectTable.LocalPlayer;
+        if (localPlayer == null) {
+            return 0;
+        }
+
+        var character = (Character*)localPlayer.Address;
+        if (character == null) {
+            return 0;
+        }
+
+        return character->EmoteController.EmoteId;
+    }
+
     public void Dispose() {
         this.framework.Update -= this.OnFrameworkUpdate;
     }

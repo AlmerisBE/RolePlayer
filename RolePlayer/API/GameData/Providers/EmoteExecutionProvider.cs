@@ -16,6 +16,7 @@ public class EmoteExecutionProvider : IEmoteExecutionService {
 
     private readonly HashSet<uint> emotesWithVariations = new() { 50, 52, 53, 174 };
     private Dictionary<uint, DateTime> lastExecutionTime = new();
+    private uint lastPersistentEmoteId = 0;
 
     private IDataManager dataManager;
     private IPlayerStateProvider playerStateProvider;
@@ -45,17 +46,22 @@ public class EmoteExecutionProvider : IEmoteExecutionService {
             return;
         }
 
-        // Évaluation de l'état actif ou d'un spam-clic durant la transition d'animation
         if (this.emotesWithVariations.Contains(emoteId)) {
-            bool isActive = this.playerStateProvider.IsEmoteActive(emoteId);
-            bool isSpam = this.lastExecutionTime.TryGetValue(emoteId, out var lastTime) && (DateTime.Now - lastTime).TotalSeconds < 1.5;
+            uint activeId = this.playerStateProvider.GetActiveEmoteId();
+            bool isTransitioning = this.lastExecutionTime.TryGetValue(emoteId, out var lastTime) && (DateTime.Now - lastTime).TotalSeconds < 2.5;
 
-            if (isActive || isSpam) {
-                this.logger.Debug($"Emote {emoteId} is already active or transitioning. Injecting /cpose variation command.");
+            // Si une emote est jouée (ou en transition) ET qu'il s'agit bien de la même emote persistante déclenchée précédemment
+            if ((activeId != 0 || isTransitioning) && this.lastPersistentEmoteId == emoteId) {
+                this.logger.Debug($"Emote {emoteId} variation sequence detected. Injecting /cpose variation command.");
                 this.ExecuteCommand("/cpose");
                 this.lastExecutionTime[emoteId] = DateTime.Now;
                 return;
             }
+
+            this.lastPersistentEmoteId = emoteId;
+        }
+        else {
+            this.lastPersistentEmoteId = 0; // Réinitialisation si on clique une emote normale
         }
 
         var textCommandRef = emoteRow.Value.TextCommand;

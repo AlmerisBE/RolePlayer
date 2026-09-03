@@ -13,6 +13,8 @@ public class LuminaEmoteProvider : IEmoteRepository {
     private IUnlockSourceProvider unlockSourceProvider;
     private IClientState clientState;
 
+    private readonly HashSet<uint> emotesWithVariations = new() { 50, 52, 53, 174 };
+
     public LuminaEmoteProvider(IDataManager dataManager, IUnlockSourceProvider unlockSourceProvider, IClientState clientState) {
         this.dataManager = dataManager;
         this.unlockSourceProvider = unlockSourceProvider;
@@ -48,7 +50,8 @@ public class LuminaEmoteProvider : IEmoteRepository {
                     UnlockRequirement = this.unlockSourceProvider.GetUnlockSource(e.RowId),
                     Category = e.EmoteCategory.IsValid ? e.EmoteCategory.Value.Name.ToString() : string.Empty,
                     LocalizedCommand = localizedCommand,
-                    EnglishCommand = englishCommand
+                    EnglishCommand = englishCommand,
+                    HasVariations = this.emotesWithVariations.Contains(e.RowId)
                 };
             });
     }
