@@ -1,123 +1,59 @@
-# BasePlugin - Dalamud Plugin Template
+# RolePlayer
 
-[![Build and Release Plugin](https://github.com/AlmerisBE/BasePlugin/actions/workflows/release.yml/badge.svg)](https://github.com/AlmerisBE/BasePlugin/actions/workflows/release.yml)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+[![Framework: Dalamud](https://img.shields.io/badge/Framework-Dalamud_v15-ff69b4.svg)](https://goatcorp.github.io/)
+[![Target: .NET 10](https://img.shields.io/badge/.NET-10.0-purple.svg)](https://dotnet.microsoft.com/)
 
-A robust, enterprise-grade template for building [Dalamud](https://github.com/goatcorp/Dalamud) plugins for Final Fantasy XIV. 
-
-This template is built upon the **Vertical Slice Architecture** pattern, utilizing **SOLID principles**, robust **Dependency Injection** (via `Microsoft.Extensions.DependencyInjection`), and is fully set up for **Test-Driven Development (TDD)** using xUnit and NSubstitute.
-
----
-
-## 🌟 Core Features Included
-
-This base plugin provides a solid foundation so you can immediately focus on your business logic instead of boilerplate code:
-
-*   **🧩 Feature Module Architecture**: Automatically discovers and registers services, commands, and UI windows using reflection (`IFeatureModule`). No more bloated `Plugin.cs`.
-*   **💉 Dependency Injection**: Native support for constructor injection for all your services and Dalamud APIs.
-*   **💬 Command Dispatcher**: A routing system that maps chat commands (e.g., `/myplugin config`) to specific `ICommand` classes.
-*   **🌐 Modular Localization**: A JSON-based embedded localization system (`en`, `fr`, `de`, `ja`) with automatic fallback mechanisms.
-*   **⚙️ Configuration & UI**: Pre-configured ImGui window (`WindowSystem` via `Dalamud.Bindings.ImGui`) linked to the Dalamud `IPluginConfiguration` save states.
-*   **📜 Unified Logging**: An abstraction over `IPluginLog` (`ILoggerService`) to ensure consistent logging across your application and easy mocking in unit tests.
-*   **🧪 TDD Ready**: A pre-configured `xUnit` test project demonstrating how to mock Dalamud interfaces and test your services.
+**RolePlayer** is an advanced, native-feeling Final Fantasy XIV plugin built for the Dalamud framework. Designed specifically for roleplayers and content creators, it provides a modern, intuitive interface to browse, organize, filter, and execute emotes seamlessly in-game.
 
 ---
 
-## 🚀 Getting Started
+## Key Features
 
-To create a new plugin from this template:
+### 🔍 Advanced Emote Browser
+* **Comprehensive Library**: Lists all native game emotes, clearly distinguishing unlocked emotes from lock-restricted ones.
+* **Unlock Information**: Displays unlock sources (quests, achievements, Mog Station, or item manuals) directly in the details panel for locked emotes.
+* **Native In-Game Invocation**: Instantly trigger emotes or open the native game emote window directly from the plugin interface.
 
-### 1. Create your repository
-Click the green **Use this template** button at the top of this repository on GitHub to create your own copy.
+### 🎨 Modded Emote Detection (Penumbra Integration)
+* **Dynamic IPC Scanning**: Interrogates Penumbra in real-time to detect active emote mod replacements.
+* **Exact Mod Attribution**: Maps modified action paths back to Penumbra's logical mod names, visually highlighting modified emotes (`★ Modded`) in green.
+* **Filter by Modded Status**: Toggle "Modded Only" filters to quickly view all custom animations currently active on your character.
 
-### 2. Rename the project
-Once cloned to your local machine, you need to replace the `BasePlugin` placeholder with your actual plugin name.
+### 📂 Dynamic Categorization & Custom Organization
+* **Native & Custom Grouping**: Group emotes by their native game categories or assign them to custom, user-defined groups with full name and description editing capabilities.
+* **Custom Short Tags**: Create and assign custom tags (e.g., `SFW`, `NSFW`, `Dance`, `Combat`) to organize your emote library freely.
+* **Relational Counter**: Automatically calculates and displays the number of emotes associated with each custom tag and group.
+* **Inline Advanced Filtering**: Filter emotes dynamically by search query, native category, custom group, custom tag, or modded state. Filters persist automatically between sessions.
+* **Context Menu Access**: Right-click any emote in the list to execute it, copy its chat command, or instantly assign it to groups, tags, or manual hotbars.
 
-1. Rename the folders: `BasePlugin` and `BasePlugin.Tests`.
-2. Rename the `.sln` and `.csproj` files.
-3. Open the solution in Visual Studio and perform a global **Find and Replace** (Ctrl+Shift+F):
-   * Find: `BasePlugin`
-   * Replace: `YourPluginName`
-4. Update the `BasePlugin.json` file with your plugin's metadata (Author, Description, etc.).
+### 🔄 Multi-Pose & Variation Execution (`/cpose`)
+* **Contextual Memory Inspection**: Reads the local player's active animation state via `FFXIVClientStructs`.
+* **Smart Variation Swapping**: Clicking an active pose emote (e.g., `/sit` or `/groundsit`) automatically sends the `/cpose` command to cycle through alternative poses rather than canceling the animation.
+* **Visual Indicator**: Emotes with variation support feature a subtle overlay icon (`Sync`) and contextual tooltip guidance.
 
-### 3. Build & Run
-Build the solution in `Debug | x64`. 
-Load the resulting folder into Dalamud via the `/xlsettings` > **Experimental** > **Dev Plugin Locations** menu.
-
----
-
-## 🏗️ Architecture Guide: How to add a new Feature
-
-Instead of organizing files by technical type (e.g., all interfaces in one folder, all models in another), this template groups code by **Feature** (Vertical Slicing).
-
-To add a new feature (e.g., `AutoLoot`):
-
-### 1. Create the Feature Folder
-Create a new directory: `Features/AutoLoot/`. Inside, you can have subfolders like `Services/`, `Commands/`, `UI/`, and `Contracts/`.
-
-### 2. Define the Feature Module
-Create a registration class that implements `IFeatureModule`. The core system will automatically detect this and register your services on startup.
-
-```csharp
-using Microsoft.Extensions.DependencyInjection;
-using BasePlugin.Core;
-using BasePlugin.Features.AutoLoot.Contracts;
-using BasePlugin.Features.AutoLoot.Services;
-using BasePlugin.Features.AutoLoot.Commands;
-using BasePlugin.Features.Command.Contracts;
-
-namespace BasePlugin.Features.AutoLoot;
-
-public class AutoLootFeature : IFeatureModule {
-    public void RegisterServices(IServiceCollection services) {
-        services.AddSingleton<IAutoLootService, AutoLootService>();
-        services.AddSingleton<ICommand, ToggleAutoLootCommand>();
-    }
-}
-```
-
-### 3. Add a Command
-Implement the `ICommand` interface. The `CommandDispatcher` will route user input directly to your `Execute` method.
-
-```csharp
-using BasePlugin.Features.Command.Contracts;
-
-namespace BasePlugin.Features.AutoLoot.Commands;
-
-public class ToggleAutoLootCommand : ICommand {
-    public string CommandTrigger => "autoloot";
-    public string Description => "Toggles the auto-loot feature.";
-
-    public void Execute(string arguments) {
-        // Your command logic here
-    }
-}
-```
-
-### 4. Add Localized Text
-Create a `Resources/` folder in your feature directory and add an `en.json` file. Ensure it is marked as an **Embedded Resource** by MSBuild (already configured in the `.csproj`).
-
-```json
-{
-  "AutoLoot_Enabled": "Auto-Loot is now enabled!"
-}
-```
-
-Create a provider to feed this JSON into the global translation engine:
-
-```csharp
-using BasePlugin.Features.Localization.Providers;
-
-namespace BasePlugin.Features.AutoLoot.Providers;
-
-public class AutoLootLocalizationProvider : JsonLocalizationProvider {
-    protected override string ResourceBasePath => "BasePlugin.Features.AutoLoot.Resources";
-}
-```
-
-*(Don't forget to register this provider in your `AutoLootFeature`!)*
+### 🎛️ Native-Style Persistent Hotbars
+* **Floating Action Bars**: Create an unlimited number of customizable, borderless hotbars that stay on screen even when the main plugin window is closed.
+* **Flexible Grids & Layouts**: Choose from multiple grid dispositions (16x1, 8x2, 4x4, 2x8, 1x16) with compact, native-feeling button padding.
+* **Dynamic & Manual Modes**:
+  * **Dynamic Hotbars**: Automatically populate based on assigned tags, groups, categories, or search filters.
+  * **Manual Hotbars**: Manually assign specific emotes using the right-click context menu or details panel.
+* **Auto-Pagination**: Hotbars exceeding 16 emotes feature integrated pagination controls.
+* **Position Locking & Live Preview**: Lock hotbar positions on screen and inspect live 4x4 previews with aggregate match counts directly from the configuration tab.
 
 ---
 
-## 🤝 Contributing & License
+## Installation & Usage
 
-This template is provided as-is to help the Final Fantasy XIV community build better, more maintainable plugins. Feel free to fork, improve, and submit pull requests.
+1. Download the latest release from the [Releases](https://github.com/AlmerisBE/RolePlayer/releases) section or install via your custom Dalamud plugin repository.
+2. In-game, use the command `/roleplayer` or `/roleplayer emotes` to open the main Emote Browser.
+
+---
+
+## Developer Architecture
+
+RolePlayer is built adhering strictly to modern software engineering principles:
+* **Vertical Slicing (Feature Modules)**: High cohesion and low coupling across domain boundaries.
+* **Dependency Injection**: Driven via `Microsoft.Extensions.DependencyInjection`.
+* **SOLID & Inversion of Control**: Consuming features own contracts (`Contracts`), decoupled from implementation providers.
+* **Pure ImGui Binding**: Powered exclusively by `Dalamud.Bindings.ImGui` for high-performance rendering.
