@@ -170,7 +170,6 @@ public class ConfigurationTab : IEmoteBrowserTab, IDisposable {
         ImGui.Separator();
         ImGui.Spacing();
 
-        // Toolbar
         ImGui.PushFont(UiBuilder.IconFont);
 
         var eyeIcon = this.selectedHotbar.IsVisible ? FontAwesomeIcon.Eye.ToIconString() : FontAwesomeIcon.EyeSlash.ToIconString();
@@ -268,14 +267,16 @@ public class ConfigurationTab : IEmoteBrowserTab, IDisposable {
 
             var tags = config.AvailableTags.ToList();
             this.DrawMultiSelectCombo("Tags", tags, this.selectedHotbar.SelectedTags, ref configChanged);
-
-            ImGui.Spacing();
-            this.DrawDynamicPreview();
         }
         else {
-            ImGui.Text("Manual Population (Select emotes from the browser)");
-            // La logique de sélection manuelle (Drag&Drop, etc.) sera ajoutée ici
+            ImGui.Text("Manual Population");
+            ImGui.TextDisabled("Select emotes from the browser.");
         }
+
+        ImGui.Spacing();
+
+        // La prévisualisation est désormais appelée quel que soit le mode de population
+        this.DrawEmotePreview();
 
         if (configChanged) {
             this.configService.Save();
@@ -283,12 +284,12 @@ public class ConfigurationTab : IEmoteBrowserTab, IDisposable {
         }
     }
 
-    private void DrawDynamicPreview() {
+    private void DrawEmotePreview() {
         var resolvedEmotes = this.hotbarResolver.ResolveEmotesForHotbar(this.selectedHotbar!, this.hotbarManager.GetEmoteCache());
 
         ImGui.Separator();
         ImGui.Spacing();
-        ImGui.TextColored(new Vector4(0.7f, 0.7f, 0.7f, 1.0f), $"Preview: {resolvedEmotes.Count} matching emotes");
+        ImGui.TextColored(new Vector4(0.7f, 0.7f, 0.7f, 1.0f), $"Preview: {resolvedEmotes.Count} emotes");
         ImGui.Spacing();
 
         if (resolvedEmotes.Count == 0) {
