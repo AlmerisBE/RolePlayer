@@ -26,11 +26,16 @@ public class ConfigurationService : IConfigurationService {
 
     public CharacterProfile GetCurrentProfile() {
         var localPlayer = this.objectTable.LocalPlayer;
-        if (localPlayer == null) {
+        if (localPlayer == null || localPlayer.Name == null) {
             return this.defaultProfile;
         }
 
-        var profileId = $"{localPlayer.Name.TextValue}@{localPlayer.HomeWorld.RowId}";
+        var name = localPlayer.Name.TextValue;
+        if (string.IsNullOrEmpty(name)) {
+            return this.defaultProfile;
+        }
+
+        var profileId = $"{name}@{localPlayer.HomeWorld.RowId}";
 
         if (!this.config.Profiles.ContainsKey(profileId)) {
             this.config.Profiles[profileId] = new CharacterProfile();
