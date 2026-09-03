@@ -1,0 +1,296 @@
+﻿namespace RolePlayer.UI.MainWindow.Tabs.SubTabs;
+
+using Dalamud.Bindings.ImGui;
+using Dalamud.Interface;
+using Dalamud.Interface.Textures;
+using Dalamud.Interface.Textures.Internal;
+using Dalamud.Plugin.Services;
+using RolePlayer.Core.Configuration.Contracts;
+using RolePlayer.UI.Hotbar.Components;
+using RolePlayer.UI.Hotbar.Contracts;
+using RolePlayer.UI.Hotbar.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Numerics;
+
+public class HotbarConfigSubTab {
+    private IConfigurationService configService;
+    private HotbarManagerComponent hotbarManager;
+    private IHotbarResolverService hotbarResolver;
+    private ITextureProvider textureProvider;
+
+    private HotbarConfig? selectedHotbar;
+
+    public bool IsSidePanelOpen => this.selectedHotbar != null;
+
+    public HotbarConfigSubTab(
+        IConfigurationService configService,
+        HotbarManagerComponent hotbarManager,
+        IHotbarResolverService hotbarResolver,
+        ITextureProvider textureProvider) {
+
+        this.configService = configService;
+        this.hotbarManager = hotbarManager;
+        this.hotbarResolver = hotbarResolver;
+        this.textureProvider = textureProvider;
+    }
+
+    public void Draw() {
+        var config = this.configService.GetConfig();
+
+        ImGui.Text("Hotbar Management");
+        ImGui.Separator();
+        ImGui.Spacing();
+
+        if (ImGui.Button("Create New Hotbar", new Vector2(-1, 0))) {
+            var newHotbar = new HotbarConfig { Name = $"Hotbar {config.Hotbars.Count + 1}" };
+            config.Hotbars.Add(newHotbar);
+            this.selectedHotbar = newHotbar;
+            this.configService.Save();
+            this.hotbarManager.RefreshWindows();
+        }
+
+        ImGui.Spacing();
+
+        foreach (var hotbar in config.Hotbars) {
+            bool isSelected = this.selectedHotbar?.Id == hotbar.Id;
+            if (ImGui.Selectable(hotbar.Name, isSelected)) {
+                this.selectedHotbar = hotbar;
+            }
+        }
+    }
+
+    public void DrawSidePanel() {
+        if (this.selectedHotbar == null) {
+            return;
+        }
+
+        var config = this.configService.GetConfig();
+        bool configChanged = false;
+
+        string closeIcon = FontAwesomeIcon.Times.ToIconString();
+        ImGui.PushFont(UiBuilder.IconFont);
+        var closeBtnWidth = ImGui.CalcTextSize(closeIcon).X + ImGui.GetStyle().FramePadding.X * 2;
+        ImGui.PopFont();
+
+        if (ImGui.BeginTable("HotbarSettingsHeaderTable", 2)) {
+            ImGui.TableSetupColumn("Title", ImGuiTableColumnFlags.WidthStretch);
+            ImGui.TableSetupColumn("CloseBtn", ImGuiTableColumnFlags.WidthFixed, closeBtnWidth);
+
+            ImGui.TableNextRow();
+            ImGui.TableNextColumn();
+            ImGui.AlignTextToFramePadding();
+            ImGui.SetWindowFontScale(1.3f);
+            ImGui.TextUnformatted("Hotbar Settings");
+            ImGui.SetWindowFontScale(1.0f);
+
+            ImGui.TableNextColumn();
+            ImGui.PushFont(UiBuilder.IconFont);
+            if (ImGui.Button($"{closeIcon}##CloseHotbarDetails")) {
+                this.selectedHotbar = null;
+                ImGui.PopFont();
+                ImGui.EndTable();
+                return;
+            }
+            ImGui.PopFont();
+
+            ImGui.EndTable();
+        }
+
+        ImGui.Separator();
+        ImGui.Spacing();
+
+        var eyeIcon = this.selectedHotbar.IsVisible ? FontAwesomeIcon.Eye.ToIconString() : FontAwesomeIcon.EyeSlash.ToIconString();
+        ImGui.PushFont(UiBuilder.IconFont);
+        bool toggleVis = ImGui.Button(eyeIcon);
+        ImGui.PopFont();
+
+        if (toggleVis) {
+            this.selectedHotbar.IsVisible = !this.selectedHotbar.IsVisible;
+            configChanged = true;
+        }
+        if (ImGui.IsItemHovered()) {
+            ImGui.SetTooltip("Toggle Visibility");
+        }
+
+        ImGui.SameLine();
+
+        var lockIcon = this.selectedHotbar.IsLocked ? FontAwesomeIcon.Lock.ToIconString() : FontAwesomeIcon.Unlock.ToIconString();
+        ImGui.PushFont(UiBuilder.IconFont);
+        bool toggleLock = ImGui.Button(lockIcon);
+        ImGui.PopFont();
+
+        if (toggleLock) {
+            this.selectedHotbar.IsLocked = !this.selectedHotbar.IsLocked;
+            configChanged = true;
+        }
+        if (ImGui.IsItemHovered()) {
+            ImGui.SetTooltip("Toggle Position Lock");
+        }
+
+        ImGui.SameLine();
+        ImGui.SetCursorPosX(ImGui.GetWindowContentRegionMax().X - 30f);
+
+        ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
+        ImGui.PushFont(UiBuilder.IconFont);
+        bool doDelete = ImGui.Button(FontAwesomeIcon.Trash.ToIconString());
+        ImGui.PopFont();
+        ImGui.PopStyleColor();
+
+        if (doDelete) {
+            config.Hotbars.Remove(this.selectedHotbar);
+            this.selectedHotbar = null;
+            configChanged = true;
+        }
+        if (ImGui.IsItemHovered()) {
+            ImGui.SetTooltip("Delete Hotbar");
+        }
+
+        ImGui.Spacing();
+
+        if (this.selectedHotbar == null) {
+            return;
+        }
+
+        string name = this.selectedHotbar.Name;
+        if (ImGui.InputText("Name", ref name, 64)) {
+            this.selectedHotbar.Name = name;
+            configChanged = true;
+        }
+
+        if (ImGui.BeginCombo("Layout", this.selectedHotbar.Layout.ToString())) {
+            foreach (HotbarLayout layout in Enum.GetValues(typeof(HotbarLayout))) {
+                if (ImGui.Selectable(layout.ToString(), this.selectedHotbar.Layout == layout)) {
+                    this.selectedHotbar.Layout = layout;
+                    configChanged = true;
+                }
+            }
+            ImGui.EndCombo();
+        }
+
+        if (ImGui.BeginCombo("Population Mode", this.selectedHotbar.PopulationMode.ToString())) {
+            foreach (HotbarPopulationMode mode in Enum.GetValues(typeof(HotbarPopulationMode))) {
+                if (ImGui.Selectable(mode.ToString(), this.selectedHotbar.PopulationMode == mode)) {
+                    this.selectedHotbar.PopulationMode = mode;
+                    configChanged = true;
+                }
+            }
+            ImGui.EndCombo();
+        }
+
+        ImGui.Spacing();
+        ImGui.Separator();
+        ImGui.Spacing();
+
+        if (this.selectedHotbar.PopulationMode == HotbarPopulationMode.Dynamic) {
+            ImGui.Text("Dynamic Filters");
+            string searchQuery = this.selectedHotbar.SearchQuery;
+            if (ImGui.InputTextWithHint("##HotbarSearch", "Search emotes...", ref searchQuery, 128)) {
+                this.selectedHotbar.SearchQuery = searchQuery;
+                configChanged = true;
+            }
+
+            bool moddedOnly = this.selectedHotbar.ShowModdedOnly;
+            if (ImGui.Checkbox("Modded Only", ref moddedOnly)) {
+                this.selectedHotbar.ShowModdedOnly = moddedOnly;
+                configChanged = true;
+            }
+
+            ImGui.Spacing();
+
+            var categories = this.hotbarManager.GetEmoteCache().Select(e => e.Category).Where(c => !string.IsNullOrEmpty(c)).Distinct().ToList();
+            this.DrawMultiSelectCombo("Categories", categories, this.selectedHotbar.SelectedCategories, ref configChanged);
+
+            var groups = config.EmoteGroups.Select(g => g.Name).ToList();
+            this.DrawMultiSelectCombo("Groups", groups, this.selectedHotbar.SelectedGroups, ref configChanged);
+
+            var tags = config.AvailableTags.ToList();
+            this.DrawMultiSelectCombo("Tags", tags, this.selectedHotbar.SelectedTags, ref configChanged);
+        }
+        else {
+            ImGui.Text("Manual Population");
+            ImGui.TextDisabled("Select emotes from the browser.");
+        }
+
+        ImGui.Spacing();
+
+        this.DrawEmotePreview();
+
+        if (configChanged) {
+            this.configService.Save();
+            this.hotbarManager.RefreshWindows();
+        }
+    }
+
+    private void DrawEmotePreview() {
+        var resolvedEmotes = this.hotbarResolver.ResolveEmotesForHotbar(this.selectedHotbar!, this.hotbarManager.GetEmoteCache());
+
+        ImGui.Separator();
+        ImGui.Spacing();
+        ImGui.TextColored(new Vector4(0.7f, 0.7f, 0.7f, 1.0f), $"Preview: {resolvedEmotes.Count} emotes");
+        ImGui.Spacing();
+
+        if (resolvedEmotes.Count == 0) {
+            return;
+        }
+
+        int maxPreview = Math.Min(16, resolvedEmotes.Count);
+
+        if (ImGui.BeginTable("PreviewGrid", 4, ImGuiTableFlags.SizingFixedFit)) {
+            for (int i = 0; i < maxPreview; i++) {
+                if (i % 4 == 0) {
+                    ImGui.TableNextRow();
+                }
+
+                ImGui.TableNextColumn();
+
+                var emote = resolvedEmotes[i];
+                if (emote.IconId > 0) {
+                    try {
+                        var lookup = new GameIconLookup { IconId = emote.IconId, HiRes = false };
+                        var iconWrap = this.textureProvider.GetFromGameIcon(lookup).GetWrapOrDefault();
+
+                        if (iconWrap != null) {
+                            ImGui.Image(iconWrap.Handle, new Vector2(32, 32));
+                            if (ImGui.IsItemHovered()) {
+                                ImGui.SetTooltip(emote.Name);
+                            }
+                        }
+                    }
+                    catch (IconNotFoundException) { }
+                }
+            }
+            ImGui.EndTable();
+        }
+    }
+
+    private void DrawMultiSelectCombo(string label, List<string> items, HashSet<string> selectedItems, ref bool changed) {
+        var preview = selectedItems.Count == 0 ? "All" : $"{selectedItems.Count} selected";
+
+        if (ImGui.BeginCombo(label, preview)) {
+            bool allSelected = selectedItems.Count == 0;
+            if (ImGui.Checkbox("All", ref allSelected)) {
+                selectedItems.Clear();
+                changed = true;
+            }
+
+            ImGui.Separator();
+
+            foreach (var item in items) {
+                bool isSelected = selectedItems.Contains(item);
+                if (ImGui.Checkbox(item, ref isSelected)) {
+                    if (isSelected) {
+                        selectedItems.Add(item);
+                    }
+                    else {
+                        selectedItems.Remove(item);
+                    }
+
+                    changed = true;
+                }
+            }
+            ImGui.EndCombo();
+        }
+    }
+}

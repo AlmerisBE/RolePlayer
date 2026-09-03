@@ -8,23 +8,22 @@ using RolePlayer.UI.EmoteBrowser.Contracts;
 using RolePlayer.UI.MainWindow.Commands;
 using RolePlayer.UI.MainWindow.Components;
 using RolePlayer.UI.MainWindow.Tabs;
+using RolePlayer.UI.MainWindow.Tabs.SubTabs;
 using RolePlayer.UI.MainWindow.Windows;
 
 public class MainWindowFeature : IFeatureModule {
     public void RegisterServices(IServiceCollection services) {
-        // Enregistre la MainWindow concrète pour la commande
         services.AddSingleton<MainWindow>();
 
         services.AddSingleton<TabManagerComponent>();
         services.AddSingleton<StatusBarComponent>();
         services.AddSingleton<MainLayoutComponent>();
 
-        // Enregistre en tant que Window générique pour que le Plugin l'ajoute au WindowSystem
+        services.AddSingleton<HotbarConfigSubTab>();
+        services.AddSingleton<TagsGroupsConfigSubTab>();
+
         services.AddSingleton<Window>(provider => provider.GetRequiredService<MainWindow>());
-
-        // Ajoute la commande d'ouverture
         services.AddSingleton<ICommand, OpenMainWindowCommand>();
-
         services.AddSingleton<IEmoteBrowserTab, ConfigurationTab>();
     }
 }
