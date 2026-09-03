@@ -71,10 +71,12 @@ public class MainWindow : Window, IDisposable {
     public override void Draw() {
         var isPanelOpen = this.selectionState.SelectedEmote != null;
 
+        var panelTotalWidth = SidePanelWidth + ImGui.GetStyle().ItemSpacing.X;
+
         if (this.isFirstFrame) {
             var initialSize = ImGui.GetWindowSize();
-            if (!isPanelOpen && initialSize.X >= BaseWidth + SidePanelWidth - 20f) {
-                ImGui.SetWindowSize(new Vector2(initialSize.X - SidePanelWidth, initialSize.Y));
+            if (!isPanelOpen && initialSize.X >= BaseWidth + panelTotalWidth - 20f) {
+                ImGui.SetWindowSize(new Vector2(initialSize.X - panelTotalWidth, initialSize.Y));
             }
 
             this.isFirstFrame = false;
@@ -82,7 +84,7 @@ public class MainWindow : Window, IDisposable {
         }
         else if (isPanelOpen != this.lastPanelState) {
             var currentSize = ImGui.GetWindowSize();
-            var targetWidth = isPanelOpen ? currentSize.X + SidePanelWidth : currentSize.X - SidePanelWidth;
+            var targetWidth = isPanelOpen ? currentSize.X + panelTotalWidth : currentSize.X - panelTotalWidth;
             if (targetWidth < BaseWidth) {
                 targetWidth = BaseWidth;
             }
@@ -91,16 +93,18 @@ public class MainWindow : Window, IDisposable {
             this.lastPanelState = isPanelOpen;
         }
 
-        var contentWidth = isPanelOpen ? -(SidePanelWidth + ImGui.GetStyle().ItemSpacing.X) : 0;
+        var contentWidth = isPanelOpen ? -panelTotalWidth : 0;
         var footerHeight = ImGui.GetFrameHeightWithSpacing();
 
-        if (ImGui.BeginChild("MainContent", new Vector2(contentWidth, -footerHeight), false)) {
+        // Correction : Utilisation de bool border au lieu de ImGuiChildFlags
+        if (ImGui.BeginChild("MainContent", new Vector2(contentWidth, -footerHeight), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)) {
             this.DrawTabs();
         }
         ImGui.EndChild();
 
         if (isPanelOpen) {
             ImGui.SameLine();
+            // Correction : bool border = true
             if (ImGui.BeginChild("SidePanel", new Vector2(SidePanelWidth, -footerHeight), true)) {
                 this.detailsPanel.Draw();
             }
@@ -124,6 +128,7 @@ public class MainWindow : Window, IDisposable {
     }
 
     private void DrawStatusBar() {
+        // Correction : bool border = false
         if (ImGui.BeginChild("StatusBar", new Vector2(0, 0), false, ImGuiWindowFlags.NoScrollbar)) {
             ImGui.PushFont(UiBuilder.IconFont);
             if (ImGui.Button(FontAwesomeIcon.UserFriends.ToIconString())) {
@@ -137,24 +142,18 @@ public class MainWindow : Window, IDisposable {
             }
 
             var statsText = $"{this.unlockedEmotesCount} / {this.totalEmotesCount} débloquées";
-            // 25f de marge pour éviter l'enchevêtrement avec le grip de redimensionnement de la fenêtre
-            var textSize = ImGui.CalcTextSize(statsText).X + 25f;
+            var textSize = ImGui.CalcTextSize(statsText).X + 30f;
 
             ImGui.SameLine(ImGui.GetWindowContentRegionMax().X - textSize);
             ImGui.AlignTextToFramePadding();
-            // Retrait de TextDisabled pour un affichage blanc standard
             ImGui.Text(statsText);
         }
         ImGui.EndChild();
     }
 
-    private void OnLogout(int type, int code) {
-        this.selectionState.SelectedEmote = null;
-    }
+    private void OnLogout(int type, int code) => this.selectionState.SelectedEmote = null;
 
-    private void OnLogin() {
-        this.CalculateEmoteStatsAsync();
-    }
+    private void OnLogin() => this.CalculateEmoteStatsAsync();
 
     public void Dispose() {
         this.clientState.Logout -= this.OnLogout;

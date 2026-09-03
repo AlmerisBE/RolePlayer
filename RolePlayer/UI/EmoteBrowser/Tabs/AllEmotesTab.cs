@@ -49,6 +49,7 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
 
     private bool needsRefresh = false;
     private bool needsFilterApply = false;
+    private bool isRefreshing = false;
 
     private int sortColumn = -1;
     private bool sortDescending = false;
@@ -88,12 +89,10 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
         this.modStateProvider.ModStateChanged += this.OnModStateChanged;
     }
 
-    private void OnModStateChanged() {
-        this.needsRefresh = true;
-    }
+    private void OnModStateChanged() => this.needsRefresh = true;
 
     public void Draw() {
-        if (this.needsRefresh) {
+        if (this.needsRefresh && !this.isRefreshing) {
             this.needsRefresh = false;
             this.LoadEmotesAsync();
         }
@@ -103,7 +102,7 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
             this.needsFilterApply = false;
         }
 
-        if (!this.emotesCache.Any()) {
+        if (!this.emotesCache.Any() && !this.isRefreshing) {
             this.LoadEmotesAsync();
         }
 
@@ -132,6 +131,7 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
             this.configurationService.Save();
         }
         ImGui.PopFont();
+
         if (config.ShowFilters) {
             ImGui.PopStyleColor();
         }
@@ -142,54 +142,55 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
 
         if (config.ShowFilters) {
             ImGui.Spacing();
-            if (ImGui.BeginTable("FiltersLayoutTable", 3)) {
-                ImGui.TableSetupColumn("Categories");
-                ImGui.TableSetupColumn("Groups");
-                ImGui.TableSetupColumn("Tags");
-                ImGui.TableNextRow();
+            // Correction : Utilisation de bool border = true et ImGuiWindowFlags.AlwaysAutoResize
+            if (ImGui.BeginChild("FiltersPanel", new Vector2(0, 0), true, ImGuiWindowFlags.AlwaysAutoResize)) {
 
-                ImGui.TableNextColumn();
-                this.DrawMultiSelectCombo("Categories##Combo", this.availableCategories, this.selectedCategories, ref filtersChanged);
+                ImGui.AlignTextToFramePadding();
+                ImGui.Text("Group By:");
+                ImGui.SameLine();
+                ImGui.SetNextItemWidth(150f);
 
-                ImGui.TableNextColumn();
-                var groups = this.groupManagementService.GetGroups().Select(g => g.Name).ToList();
-                this.DrawMultiSelectCombo("Groups##Combo", groups, this.selectedGroups, ref filtersChanged);
+                string currentGroupLabel = this.currentGrouping switch {
+                    GroupingMode.NativeCategory => "Native Category",
+                    GroupingMode.CustomGroup => "Custom Group",
+                    _ => "None"
+                };
 
-                ImGui.TableNextColumn();
-                var tags = this.tagManagementService.GetAvailableTags().ToList();
-                this.DrawMultiSelectCombo("Tags##Combo", tags, this.selectedTags, ref filtersChanged);
+                if (ImGui.BeginCombo("##GroupingMode", currentGroupLabel)) {
+                    if (ImGui.Selectable("None", this.currentGrouping == GroupingMode.None)) { this.currentGrouping = GroupingMode.None; filtersChanged = true; }
+                    if (ImGui.Selectable("Native Category", this.currentGrouping == GroupingMode.NativeCategory)) { this.currentGrouping = GroupingMode.NativeCategory; filtersChanged = true; }
+                    if (ImGui.Selectable("Custom Group", this.currentGrouping == GroupingMode.CustomGroup)) { this.currentGrouping = GroupingMode.CustomGroup; filtersChanged = true; }
+                    ImGui.EndCombo();
+                }
 
-                ImGui.EndTable();
+                ImGui.SameLine();
+                if (ImGui.Checkbox("Show Modded Only", ref this.showModdedOnly)) {
+                    filtersChanged = true;
+                }
+
+                ImGui.Separator();
+
+                if (ImGui.BeginTable("FiltersLayoutTable", 3)) {
+                    ImGui.TableSetupColumn("Categories");
+                    ImGui.TableSetupColumn("Groups");
+                    ImGui.TableSetupColumn("Tags");
+                    ImGui.TableNextRow();
+
+                    ImGui.TableNextColumn();
+                    this.DrawMultiSelectCombo("Categories##Combo", this.availableCategories, this.selectedCategories, ref filtersChanged);
+
+                    ImGui.TableNextColumn();
+                    var groups = this.groupManagementService.GetGroups().Select(g => g.Name).ToList();
+                    this.DrawMultiSelectCombo("Groups##Combo", groups, this.selectedGroups, ref filtersChanged);
+
+                    ImGui.TableNextColumn();
+                    var tags = this.tagManagementService.GetAvailableTags().ToList();
+                    this.DrawMultiSelectCombo("Tags##Combo", tags, this.selectedTags, ref filtersChanged);
+
+                    ImGui.EndTable();
+                }
             }
-
-            ImGui.Spacing();
-            if (ImGui.Checkbox("Show Modded Only", ref this.showModdedOnly)) {
-                filtersChanged = true;
-            }
-
-            ImGui.SameLine();
-            ImGui.Spacing();
-            ImGui.SameLine();
-            ImGui.AlignTextToFramePadding();
-            ImGui.Text("Group By:");
-            ImGui.SameLine();
-            ImGui.SetNextItemWidth(150f);
-
-            string currentGroupLabel = this.currentGrouping switch {
-                GroupingMode.NativeCategory => "Native Category",
-                GroupingMode.CustomGroup => "Custom Group",
-                _ => "None"
-            };
-
-            if (ImGui.BeginCombo("##GroupingMode", currentGroupLabel)) {
-                if (ImGui.Selectable("None", this.currentGrouping == GroupingMode.None)) { this.currentGrouping = GroupingMode.None; filtersChanged = true; }
-                if (ImGui.Selectable("Native Category", this.currentGrouping == GroupingMode.NativeCategory)) { this.currentGrouping = GroupingMode.NativeCategory; filtersChanged = true; }
-                if (ImGui.Selectable("Custom Group", this.currentGrouping == GroupingMode.CustomGroup)) { this.currentGrouping = GroupingMode.CustomGroup; filtersChanged = true; }
-                ImGui.EndCombo();
-            }
-
-            ImGui.Spacing();
-            ImGui.Separator();
+            ImGui.EndChild();
             ImGui.Spacing();
         }
 
@@ -197,96 +198,101 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
             this.ApplyFilters();
         }
 
-        // Ajout de ImGuiTableFlags.Borders pour le visuel fermé, retrait de ScrollY pour un scroll global propre
-        var tableFlags = ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.Sortable | ImGuiTableFlags.SizingFixedFit;
+        // Correction : Utilisation de bool border = false
+        if (ImGui.BeginChild("EmoteListScrollArea", new Vector2(0, 0), false, ImGuiWindowFlags.None)) {
 
-        foreach (var groupKvp in this.groupedEmotes.OrderBy(k => k.Key)) {
-            bool isNodeOpen = true;
+            var tableFlags = ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.Sortable | ImGuiTableFlags.SizingFixedFit;
 
-            if (this.currentGrouping != GroupingMode.None) {
-                var headerLabel = $"{groupKvp.Key} ({groupKvp.Value.Count})";
-                isNodeOpen = ImGui.CollapsingHeader(headerLabel, ImGuiTreeNodeFlags.DefaultOpen);
-            }
+            foreach (var groupKvp in this.groupedEmotes.OrderBy(k => k.Key)) {
+                bool isNodeOpen = true;
 
-            if (isNodeOpen) {
-                if (ImGui.BeginTable($"AllEmotesTable_{groupKvp.Key}", 4, tableFlags)) {
-                    ImGui.TableSetupColumn("Icon", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoSort, 32f);
-                    ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch, 0.4f);
-                    ImGui.TableSetupColumn("Command", ImGuiTableColumnFlags.WidthStretch, 0.4f);
-                    ImGui.TableSetupColumn("Action", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoSort, 60f);
-                    ImGui.TableHeadersRow();
+                if (this.currentGrouping != GroupingMode.None) {
+                    ImGui.Spacing();
+                    ImGui.TextColored(new Vector4(0.7f, 0.7f, 0.7f, 1.0f), $"▼ {groupKvp.Key} ({groupKvp.Value.Count})");
+                    ImGui.Separator();
+                }
 
-                    var sortSpecs = ImGui.TableGetSortSpecs();
-                    if (sortSpecs.SpecsDirty) {
-                        this.sortColumn = sortSpecs.Specs.ColumnIndex;
-                        this.sortDescending = sortSpecs.Specs.SortDirection == ImGuiSortDirection.Descending;
-                        this.ApplyCurrentSorting();
-                        sortSpecs.SpecsDirty = false;
-                    }
+                if (isNodeOpen) {
+                    if (ImGui.BeginTable($"AllEmotesTable_{groupKvp.Key}", 4, tableFlags)) {
+                        ImGui.TableSetupColumn("Icon", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoSort, 32f);
+                        ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch, 0.4f);
+                        ImGui.TableSetupColumn("Command", ImGuiTableColumnFlags.WidthStretch, 0.4f);
+                        ImGui.TableSetupColumn("Action", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoSort, 60f);
+                        ImGui.TableHeadersRow();
 
-                    foreach (var emote in groupKvp.Value) {
-                        ImGui.TableNextRow();
-
-                        var isSelected = this.selectionState.SelectedEmote?.Id == emote.Id;
-                        var hasCustomColor = false;
-
-                        if (!emote.IsUnlocked) {
-                            ImGui.PushStyleColor(ImGuiCol.Text, 0xFF808080);
-                            hasCustomColor = true;
-                        }
-                        else if (emote.IsModded) {
-                            ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.2f, 0.8f, 0.2f, 1.0f));
-                            hasCustomColor = true;
+                        var sortSpecs = ImGui.TableGetSortSpecs();
+                        if (sortSpecs.SpecsDirty) {
+                            this.sortColumn = sortSpecs.Specs.ColumnIndex;
+                            this.sortDescending = sortSpecs.Specs.SortDirection == ImGuiSortDirection.Descending;
+                            this.ApplyCurrentSorting();
+                            sortSpecs.SpecsDirty = false;
                         }
 
-                        ImGui.TableNextColumn();
-                        if (ImGui.Selectable($"##select_{emote.Id}", isSelected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowItemOverlap, new Vector2(0, 24))) {
-                            this.selectionState.SelectedEmote = isSelected ? null : emote;
-                        }
+                        foreach (var emote in groupKvp.Value) {
+                            ImGui.TableNextRow();
 
-                        ImGui.SameLine();
+                            var isSelected = this.selectionState.SelectedEmote?.Id == emote.Id;
+                            var hasCustomColor = false;
 
-                        if (emote.IconId > 0) {
-                            try {
-                                var lookup = new GameIconLookup { IconId = emote.IconId, HiRes = false };
-                                var iconWrap = this.textureProvider.GetFromGameIcon(lookup).GetWrapOrDefault();
-                                if (iconWrap != null) {
-                                    ImGui.Image(iconWrap.Handle, new Vector2(24, 24));
+                            if (!emote.IsUnlocked) {
+                                ImGui.PushStyleColor(ImGuiCol.Text, 0xFF808080);
+                                hasCustomColor = true;
+                            }
+                            else if (emote.IsModded) {
+                                ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.2f, 0.8f, 0.2f, 1.0f));
+                                hasCustomColor = true;
+                            }
+
+                            ImGui.TableNextColumn();
+                            if (ImGui.Selectable($"##select_{emote.Id}", isSelected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowItemOverlap, new Vector2(0, 24))) {
+                                this.selectionState.SelectedEmote = isSelected ? null : emote;
+                            }
+
+                            ImGui.SameLine();
+
+                            if (emote.IconId > 0) {
+                                try {
+                                    var lookup = new GameIconLookup { IconId = emote.IconId, HiRes = false };
+                                    var iconWrap = this.textureProvider.GetFromGameIcon(lookup).GetWrapOrDefault();
+                                    if (iconWrap != null) {
+                                        ImGui.Image(iconWrap.Handle, new Vector2(24, 24));
+                                    }
+                                }
+                                catch (IconNotFoundException) { }
+                            }
+
+                            ImGui.TableNextColumn();
+                            var displayName = emote.IsModded ? $"★ {emote.Name}" : emote.Name;
+                            ImGui.AlignTextToFramePadding();
+                            ImGui.Text(displayName);
+
+                            ImGui.TableNextColumn();
+                            ImGui.AlignTextToFramePadding();
+                            var commandText = emote.LocalizedCommand;
+
+                            if (this.clientState.ClientLanguage != ClientLanguage.English && !string.IsNullOrEmpty(emote.EnglishCommand) && emote.EnglishCommand != emote.LocalizedCommand) {
+                                commandText += $" / {emote.EnglishCommand}";
+                            }
+
+                            ImGui.Text(commandText);
+
+                            ImGui.TableNextColumn();
+                            if (emote.IsUnlocked) {
+                                if (ImGui.Button($"Play##{emote.Id}", new Vector2(-1, 24))) {
+                                    this.executionService.ExecuteEmote(emote.Id);
                                 }
                             }
-                            catch (IconNotFoundException) { }
-                        }
 
-                        ImGui.TableNextColumn();
-                        var displayName = emote.IsModded ? $"★ {emote.Name}" : emote.Name;
-                        ImGui.AlignTextToFramePadding();
-                        ImGui.Text(displayName);
-
-                        ImGui.TableNextColumn();
-                        ImGui.AlignTextToFramePadding();
-                        var commandText = emote.LocalizedCommand;
-
-                        if (this.clientState.ClientLanguage != ClientLanguage.English && !string.IsNullOrEmpty(emote.EnglishCommand) && emote.EnglishCommand != emote.LocalizedCommand) {
-                            commandText += $" / {emote.EnglishCommand}";
-                        }
-
-                        ImGui.Text(commandText);
-
-                        ImGui.TableNextColumn();
-                        if (emote.IsUnlocked) {
-                            if (ImGui.Button($"Play##{emote.Id}", new Vector2(-1, 24))) {
-                                this.executionService.ExecuteEmote(emote.Id);
+                            if (hasCustomColor) {
+                                ImGui.PopStyleColor();
                             }
                         }
-
-                        if (hasCustomColor) {
-                            ImGui.PopStyleColor();
-                        }
+                        ImGui.EndTable();
                     }
-                    ImGui.EndTable();
                 }
             }
         }
+        ImGui.EndChild();
     }
 
     private void DrawMultiSelectCombo(string label, List<string> items, HashSet<string> selectedItems, ref bool changed) {
@@ -423,7 +429,5 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
         });
     }
 
-    public void Dispose() {
-        this.modStateProvider.ModStateChanged -= this.OnModStateChanged;
-    }
+    public void Dispose() => this.modStateProvider.ModStateChanged -= this.OnModStateChanged;
 }

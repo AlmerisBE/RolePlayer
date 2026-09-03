@@ -80,7 +80,7 @@ public class EmoteExecutionProvider : IEmoteExecutionService {
         try {
             var uiModule = UIModule.Instance();
             if (uiModule != null) {
-                uiModule->ExecuteMainCommand(43);
+                uiModule->ExecuteMainCommand(17);
             }
         }
         catch (Exception ex) {
