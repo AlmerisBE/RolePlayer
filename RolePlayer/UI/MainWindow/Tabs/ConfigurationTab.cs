@@ -17,6 +17,7 @@ public class ConfigurationTab : IEmoteBrowserTab {
 
     public string TabName => "Configuration";
     public int SortOrder => 100; // Toujours en dernier
+    public bool SupportsSidePanel => false;
 
     public ConfigurationTab(IGroupManagementService groupService, ITagManagementService tagService) {
         this.groupService = groupService;
