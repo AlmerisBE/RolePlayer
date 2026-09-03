@@ -2,11 +2,13 @@
 
 using Dalamud.Bindings.ImGui;
 using Dalamud.Game;
+using Dalamud.Interface;
 using Dalamud.Interface.Textures;
 using Dalamud.Interface.Textures.Internal;
 using Dalamud.Plugin.Services;
 using RolePlayer.UI.EmoteBrowser.Contracts;
 using RolePlayer.UI.EmoteBrowser.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -17,7 +19,7 @@ public enum GroupingMode {
     CustomGroup
 }
 
-public class AllEmotesTab : IEmoteBrowserTab {
+public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
     private IEmoteRepository emoteRepository;
     private IPlayerStateProvider playerStateProvider;
     private IEmoteSelectionState selectionState;
@@ -35,6 +37,7 @@ public class AllEmotesTab : IEmoteBrowserTab {
     private string searchQuery = string.Empty;
     private bool showFilters = false;
     private bool showModdedOnly = false;
+    private bool needsRefresh = false;
     private GroupingMode currentGrouping = GroupingMode.None;
 
     private HashSet<string> selectedCategories = new();
@@ -68,9 +71,20 @@ public class AllEmotesTab : IEmoteBrowserTab {
         this.emotesCache = new List<EmoteDisplayData>();
         this.availableCategories = new List<string>();
         this.groupedEmotes = new Dictionary<string, List<EmoteDisplayData>>();
+
+        this.modStateProvider.ModStateChanged += this.OnModStateChanged;
+    }
+
+    private void OnModStateChanged() {
+        this.needsRefresh = true;
     }
 
     public void Draw() {
+        if (this.needsRefresh) {
+            this.emotesCache.Clear();
+            this.needsRefresh = false;
+        }
+
         if (!this.emotesCache.Any()) {
             this.LoadEmotes();
         }
@@ -80,10 +94,23 @@ public class AllEmotesTab : IEmoteBrowserTab {
         var filterBtnText = "Filters";
         var filterBtnWidth = ImGui.CalcTextSize(filterBtnText).X + ImGui.GetStyle().FramePadding.X * 2;
 
-        ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - filterBtnWidth - ImGui.GetStyle().ItemSpacing.X);
+        string refreshIcon = FontAwesomeIcon.Sync.ToIconString();
+        ImGui.PushFont(UiBuilder.IconFont);
+        var refreshBtnWidth = ImGui.CalcTextSize(refreshIcon).X + ImGui.GetStyle().FramePadding.X * 2;
+        ImGui.PopFont();
+
+        ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - filterBtnWidth - refreshBtnWidth - (ImGui.GetStyle().ItemSpacing.X * 2));
         if (ImGui.InputTextWithHint("##SearchEmotes", "Search by name or command...", ref this.searchQuery, 128)) {
             filtersChanged = true;
         }
+
+        ImGui.SameLine();
+        ImGui.PushFont(UiBuilder.IconFont);
+        if (ImGui.Button(refreshIcon)) {
+            this.needsRefresh = true;
+        }
+
+        ImGui.PopFont();
 
         ImGui.SameLine();
         if (ImGui.Button(filterBtnText)) {
@@ -335,5 +362,9 @@ public class AllEmotesTab : IEmoteBrowserTab {
 
         this.availableCategories = uniqueCategories.OrderBy(c => c).ToList();
         this.ApplyFilters();
+    }
+
+    public void Dispose() {
+        this.modStateProvider.ModStateChanged -= this.OnModStateChanged;
     }
 }
