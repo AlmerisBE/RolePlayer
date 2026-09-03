@@ -58,7 +58,11 @@ public class HotbarManagerComponent : IDisposable {
 
         foreach (var emote in baseEmotes) {
             emote.IsUnlocked = !emote.IsUnlockable || this.playerStateProvider.IsEmoteUnlocked(emote.Id);
-            emote.IsModded = !string.IsNullOrEmpty(this.modStateProvider.GetModNameModifyingEmote(emote.Id));
+
+            var modName = this.modStateProvider.GetModNameModifyingEmote(emote.Id);
+            emote.IsModded = !string.IsNullOrEmpty(modName);
+            emote.ModName = modName;
+
             newCache.Add(emote);
         }
 

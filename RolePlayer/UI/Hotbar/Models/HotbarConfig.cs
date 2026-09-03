@@ -8,6 +8,7 @@ public class HotbarConfig {
     public Guid Id { get; set; } = Guid.NewGuid();
     public string Name { get; set; } = "New Hotbar";
     public bool IsVisible { get; set; } = false;
+    public bool IsLocked { get; set; } = false;
     public HotbarLayout Layout { get; set; } = HotbarLayout.Grid16x1;
     public HotbarPopulationMode PopulationMode { get; set; } = HotbarPopulationMode.Manual;
 

@@ -168,6 +168,14 @@ public class ConfigurationTab : IEmoteBrowserTab, IDisposable {
             configChanged = true;
         }
 
+        ImGui.SameLine();
+
+        bool isLocked = this.selectedHotbar.IsLocked;
+        if (ImGui.Checkbox("Lock Position", ref isLocked)) {
+            this.selectedHotbar.IsLocked = isLocked;
+            configChanged = true;
+        }
+
         if (ImGui.BeginCombo("Layout", this.selectedHotbar.Layout.ToString())) {
             foreach (HotbarLayout layout in Enum.GetValues(typeof(HotbarLayout))) {
                 if (ImGui.Selectable(layout.ToString(), this.selectedHotbar.Layout == layout)) {

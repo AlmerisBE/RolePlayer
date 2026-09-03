@@ -42,9 +42,21 @@ public class HotbarWindow : Window {
 
         this.SizeCondition = ImGuiCond.Always;
         this.BgAlpha = 0.7f;
-
-        // Force l'ouverture de la fenêtre dans le WindowSystem de Dalamud
         this.IsOpen = true;
+    }
+
+    public override void PreDraw() {
+        // Application du verrouillage de la fenêtre si demandé
+        if (this.config.IsLocked) {
+            this.Flags |= ImGuiWindowFlags.NoMove;
+        }
+        else {
+            this.Flags &= ~ImGuiWindowFlags.NoMove;
+        }
+
+        // Réduction drastique des espacements pour un effet "Barre de raccourcis native"
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(4f, 4f));
+        ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(2f, 2f));
     }
 
     public override void Draw() {
@@ -54,6 +66,10 @@ public class HotbarWindow : Window {
 
         var allEmotes = this.emoteCacheProvider();
         var resolvedEmotes = this.resolverService.ResolveEmotesForHotbar(this.config, allEmotes);
+
+        if (resolvedEmotes.Count == 0) {
+            return;
+        }
 
         int totalPages = (int)Math.Ceiling(resolvedEmotes.Count / (double)MaxItemsPerPage);
         if (this.currentPage >= totalPages && totalPages > 0) {
@@ -66,23 +82,21 @@ public class HotbarWindow : Window {
 
         var displayedEmotes = resolvedEmotes.Skip(this.currentPage * MaxItemsPerPage).Take(MaxItemsPerPage).ToList();
 
-        int columns = this.GetColumnsForLayout(this.config.Layout);
+        // Taille dynamique : Si nous avons moins d'emotes que de colonnes prévues, nous réduisons le tableau
+        int maxColumns = this.GetColumnsForLayout(this.config.Layout);
+        int actualColumns = Math.Min(maxColumns, displayedEmotes.Count);
+        if (actualColumns <= 0) {
+            actualColumns = 1;
+        }
 
-        if (ImGui.BeginTable($"HotbarGrid_{this.config.Id}", columns, ImGuiTableFlags.SizingFixedFit)) {
-            for (int i = 0; i < MaxItemsPerPage; i++) {
-                if (i % columns == 0) {
+        if (ImGui.BeginTable($"HotbarGrid_{this.config.Id}", actualColumns, ImGuiTableFlags.SizingFixedFit)) {
+            for (int i = 0; i < displayedEmotes.Count; i++) {
+                if (i % actualColumns == 0) {
                     ImGui.TableNextRow();
                 }
 
                 ImGui.TableNextColumn();
-
-                if (i < displayedEmotes.Count) {
-                    var emote = displayedEmotes[i];
-                    this.DrawEmoteIcon(emote);
-                }
-                else {
-                    this.DrawEmptySlot();
-                }
+                this.DrawEmoteIcon(displayedEmotes[i]);
             }
             ImGui.EndTable();
         }
@@ -90,6 +104,10 @@ public class HotbarWindow : Window {
         if (totalPages > 1) {
             this.DrawPagination(totalPages);
         }
+    }
+
+    public override void PostDraw() {
+        ImGui.PopStyleVar(2);
     }
 
     private int GetColumnsForLayout(HotbarLayout layout) {
@@ -104,50 +122,26 @@ public class HotbarWindow : Window {
     }
 
     private void DrawEmoteIcon(EmoteDisplayData emote) {
-        bool drawn = false;
+        try {
+            var lookup = new GameIconLookup { IconId = emote.IconId, HiRes = false };
+            var iconWrap = this.textureProvider.GetFromGameIcon(lookup).GetWrapOrDefault();
 
-        if (emote.IconId > 0) {
-            try {
-                var lookup = new GameIconLookup { IconId = emote.IconId, HiRes = false };
-                var iconWrap = this.textureProvider.GetFromGameIcon(lookup).GetWrapOrDefault();
+            if (iconWrap != null) {
+                ImGui.PushID($"emote_{emote.Id}");
 
-                if (iconWrap != null) {
-                    ImGui.PushID($"emote_{emote.Id}");
-
-                    if (!emote.IsUnlocked) {
-                        ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.3f, 0.3f, 0.3f, 0.5f));
-                    }
-
-                    if (ImGui.ImageButton(iconWrap.Handle, new Vector2(IconSize, IconSize))) {
-                        if (emote.IsUnlocked) {
-                            this.executionService.ExecuteEmote(emote.Id);
-                        }
-                    }
-
-                    if (!emote.IsUnlocked) {
-                        ImGui.PopStyleColor();
-                    }
-
-                    if (ImGui.IsItemHovered()) {
-                        ImGui.SetTooltip(emote.IsModded ? $"★ {emote.Name}\n{emote.LocalizedCommand}" : $"{emote.Name}\n{emote.LocalizedCommand}");
-                    }
-
-                    ImGui.PopID();
-                    drawn = true;
+                if (ImGui.ImageButton(iconWrap.Handle, new Vector2(IconSize, IconSize))) {
+                    this.executionService.ExecuteEmote(emote.Id);
                 }
+
+                if (ImGui.IsItemHovered()) {
+                    string tooltipText = emote.IsModded ? $"★ {emote.Name}\nMod: {emote.ModName}\n{emote.LocalizedCommand}" : $"{emote.Name}\n{emote.LocalizedCommand}";
+                    ImGui.SetTooltip(tooltipText);
+                }
+
+                ImGui.PopID();
             }
-            catch (IconNotFoundException) { }
         }
-
-        if (!drawn) {
-            ImGui.Button("?", new Vector2(IconSize, IconSize));
-        }
-    }
-
-    private void DrawEmptySlot() {
-        ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0, 0, 0, 0.2f));
-        ImGui.Button("##empty", new Vector2(IconSize, IconSize));
-        ImGui.PopStyleColor();
+        catch (IconNotFoundException) { }
     }
 
     private void DrawPagination(int totalPages) {

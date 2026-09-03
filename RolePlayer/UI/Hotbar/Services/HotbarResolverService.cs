@@ -17,8 +17,11 @@ public class HotbarResolverService : IHotbarResolverService {
     }
 
     public List<EmoteDisplayData> ResolveEmotesForHotbar(HotbarConfig config, IEnumerable<EmoteDisplayData> allCachedEmotes) {
+        // Application stricte des filtres de base : débloquée et possédant une icône
+        var validEmotes = allCachedEmotes.Where(e => e.IsUnlocked && e.IconId > 0);
+
         if (config.PopulationMode == HotbarPopulationMode.Manual) {
-            return allCachedEmotes.Where(e => config.ManualEmoteIds.Contains(e.Id)).ToList();
+            return validEmotes.Where(e => config.ManualEmoteIds.Contains(e.Id)).ToList();
         }
 
         var results = new List<EmoteDisplayData>();
@@ -28,7 +31,7 @@ public class HotbarResolverService : IHotbarResolverService {
         bool hasGroupFilter = config.SelectedGroups.Count > 0;
         bool hasTagFilter = config.SelectedTags.Count > 0;
 
-        foreach (var emote in allCachedEmotes) {
+        foreach (var emote in validEmotes) {
             if (config.ShowModdedOnly && !emote.IsModded) {
                 continue;
             }

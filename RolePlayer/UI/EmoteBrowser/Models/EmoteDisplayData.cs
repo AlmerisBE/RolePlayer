@@ -13,5 +13,6 @@ public class EmoteDisplayData {
     public string EnglishCommand { get; init; } = string.Empty;
     public bool IsUnlocked { get; set; }
     public bool IsModded { get; set; }
+    public string ModName { get; set; } = string.Empty;
     public HashSet<string> CustomTags { get; set; } = new();
 }
