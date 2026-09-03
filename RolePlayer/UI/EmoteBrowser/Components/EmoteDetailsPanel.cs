@@ -167,7 +167,6 @@ public class EmoteDetailsPanel {
             ImGui.EndTable();
         }
 
-        // Action d'état différée hors du contexte ImGui pour sécuriser la pile
         if (removeGroup) {
             this.groupManagementService.RemoveEmoteFromGroup(emoteId);
         }
@@ -207,7 +206,6 @@ public class EmoteDetailsPanel {
             ImGui.EndTable();
         }
 
-        // Action d'état différée
         if (tagToRemove != null) {
             this.tagManagementService.RemoveTagFromEmote(emoteId, tagToRemove);
         }
@@ -235,14 +233,16 @@ public class EmoteDetailsPanel {
             }
             else {
                 ImGui.BeginDisabled();
-                ImGui.BeginCombo("##addTagCombo", "No available tags...");
-                ImGui.EndCombo();
+                // CORRECTION CRITIQUE : Conditionnement de ImGui.EndCombo()
+                if (ImGui.BeginCombo("##addTagCombo", "No available tags...")) {
+                    ImGui.EndCombo();
+                }
+
                 ImGui.EndDisabled();
             }
             ImGui.EndTable();
         }
 
-        // Action d'état différée
         if (tagToAdd != null) {
             this.tagManagementService.AddTagToEmote(emoteId, tagToAdd);
         }
