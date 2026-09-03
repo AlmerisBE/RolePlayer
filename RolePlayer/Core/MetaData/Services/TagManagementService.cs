@@ -13,7 +13,8 @@ public class TagManagementService : ITagManagementService {
     }
 
     public IEnumerable<string> GetAvailableTags() {
-        return this.configurationService.GetConfig().AvailableTags;
+        var config = this.configurationService.GetConfig();
+        return config.AvailableTags ?? Enumerable.Empty<string>();
     }
 
     public void CreateGlobalTag(string tag) {
@@ -22,6 +23,10 @@ public class TagManagementService : ITagManagementService {
         }
 
         var config = this.configurationService.GetConfig();
+        if (config.AvailableTags == null) {
+            config.AvailableTags = new HashSet<string>();
+        }
+
         if (config.AvailableTags.Add(tag.Trim())) {
             this.configurationService.Save();
         }
@@ -31,13 +36,15 @@ public class TagManagementService : ITagManagementService {
         var config = this.configurationService.GetConfig();
         var changed = false;
 
-        if (config.AvailableTags.Remove(tag)) {
+        if (config.AvailableTags != null && config.AvailableTags.Remove(tag)) {
             changed = true;
         }
 
-        foreach (var kvp in config.EmoteTags) {
-            if (kvp.Value.Remove(tag)) {
-                changed = true;
+        if (config.EmoteTags != null) {
+            foreach (var kvp in config.EmoteTags) {
+                if (kvp.Value != null && kvp.Value.Remove(tag)) {
+                    changed = true;
+                }
             }
         }
 
@@ -48,7 +55,7 @@ public class TagManagementService : ITagManagementService {
 
     public IEnumerable<string> GetTagsForEmote(uint emoteId) {
         var config = this.configurationService.GetConfig();
-        if (config.EmoteTags.TryGetValue(emoteId, out var tags)) {
+        if (config.EmoteTags != null && config.EmoteTags.TryGetValue(emoteId, out var tags) && tags != null) {
             return tags;
         }
 
@@ -61,6 +68,10 @@ public class TagManagementService : ITagManagementService {
         }
 
         var config = this.configurationService.GetConfig();
+        if (config.EmoteTags == null) {
+            config.EmoteTags = new Dictionary<uint, HashSet<string>>();
+        }
+
         if (!config.EmoteTags.ContainsKey(emoteId)) {
             config.EmoteTags[emoteId] = new HashSet<string>();
         }
@@ -72,7 +83,7 @@ public class TagManagementService : ITagManagementService {
 
     public void RemoveTagFromEmote(uint emoteId, string tag) {
         var config = this.configurationService.GetConfig();
-        if (config.EmoteTags.TryGetValue(emoteId, out var tags) && tags.Remove(tag)) {
+        if (config.EmoteTags != null && config.EmoteTags.TryGetValue(emoteId, out var tags) && tags != null && tags.Remove(tag)) {
             this.configurationService.Save();
         }
     }

@@ -44,7 +44,6 @@ public class EmoteDetailsPanel {
         var closeBtnWidth = ImGui.CalcTextSize(closeIcon).X + ImGui.GetStyle().FramePadding.X * 2;
         ImGui.PopFont();
 
-        // Utilisation d'une table invisible pour garantir le titre à gauche et l'icône à l'extrême droite
         if (ImGui.BeginTable("HeaderTable", 2)) {
             ImGui.TableSetupColumn("Title", ImGuiTableColumnFlags.WidthStretch);
             ImGui.TableSetupColumn("CloseBtn", ImGuiTableColumnFlags.WidthFixed, closeBtnWidth);
@@ -139,6 +138,9 @@ public class EmoteDetailsPanel {
         var currentGroup = this.groupManagementService.GetGroupForEmote(emoteId);
         var previewValue = string.IsNullOrEmpty(currentGroup) ? "None" : currentGroup;
 
+        string? groupToAssign = null;
+        bool removeGroup = false;
+
         if (ImGui.BeginTable("GroupTable", 1, ImGuiTableFlags.None)) {
             ImGui.TableSetupColumn("Combo", ImGuiTableColumnFlags.WidthStretch);
             ImGui.TableNextRow();
@@ -147,13 +149,13 @@ public class EmoteDetailsPanel {
             ImGui.SetNextItemWidth(-1f);
             if (ImGui.BeginCombo("##GroupCombo", previewValue)) {
                 if (ImGui.Selectable("None", string.IsNullOrEmpty(currentGroup))) {
-                    this.groupManagementService.RemoveEmoteFromGroup(emoteId);
+                    removeGroup = true;
                 }
 
                 foreach (var group in this.groupManagementService.GetGroups()) {
                     var isSelected = group.Name == currentGroup;
                     if (ImGui.Selectable(group.Name, isSelected)) {
-                        this.groupManagementService.AssignEmoteToGroup(emoteId, group.Name);
+                        groupToAssign = group.Name;
                     }
 
                     if (isSelected) {
@@ -163,6 +165,14 @@ public class EmoteDetailsPanel {
                 ImGui.EndCombo();
             }
             ImGui.EndTable();
+        }
+
+        // Action d'état différée hors du contexte ImGui pour sécuriser la pile
+        if (removeGroup) {
+            this.groupManagementService.RemoveEmoteFromGroup(emoteId);
+        }
+        else if (groupToAssign != null) {
+            this.groupManagementService.AssignEmoteToGroup(emoteId, groupToAssign);
         }
     }
 
@@ -197,6 +207,7 @@ public class EmoteDetailsPanel {
             ImGui.EndTable();
         }
 
+        // Action d'état différée
         if (tagToRemove != null) {
             this.tagManagementService.RemoveTagFromEmote(emoteId, tagToRemove);
         }
@@ -204,6 +215,7 @@ public class EmoteDetailsPanel {
         ImGui.Spacing();
 
         var availableTags = this.tagManagementService.GetAvailableTags().Except(currentTags).ToList();
+        string? tagToAdd = null;
 
         if (ImGui.BeginTable("AddTagTable", 1, ImGuiTableFlags.None)) {
             ImGui.TableSetupColumn("Combo", ImGuiTableColumnFlags.WidthStretch);
@@ -215,7 +227,7 @@ public class EmoteDetailsPanel {
                 if (ImGui.BeginCombo("##addTagCombo", "Select a tag to add...")) {
                     foreach (var tag in availableTags) {
                         if (ImGui.Selectable(tag)) {
-                            this.tagManagementService.AddTagToEmote(emoteId, tag);
+                            tagToAdd = tag;
                         }
                     }
                     ImGui.EndCombo();
@@ -228,6 +240,11 @@ public class EmoteDetailsPanel {
                 ImGui.EndDisabled();
             }
             ImGui.EndTable();
+        }
+
+        // Action d'état différée
+        if (tagToAdd != null) {
+            this.tagManagementService.AddTagToEmote(emoteId, tagToAdd);
         }
     }
 }
