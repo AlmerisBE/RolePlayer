@@ -4,6 +4,7 @@ using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using RolePlayer.Core.Configuration.Contracts;
 using RolePlayer.Core.Configuration.Models;
+using System;
 using System.Collections.Generic;
 
 public class ConfigurationService : IConfigurationService {
@@ -25,24 +26,36 @@ public class ConfigurationService : IConfigurationService {
     public PluginConfiguration GetConfig() => this.config;
 
     public CharacterProfile GetCurrentProfile() {
-        var localPlayer = this.objectTable.LocalPlayer;
-        if (localPlayer == null || localPlayer.Name == null) {
+        try {
+            var localPlayer = this.objectTable.LocalPlayer;
+            if (localPlayer == null || localPlayer.Name == null) {
+                return this.defaultProfile;
+            }
+
+            var name = localPlayer.Name.TextValue;
+            if (string.IsNullOrEmpty(name)) {
+                return this.defaultProfile;
+            }
+
+            // Utilisation de RowId selon l'implémentation de Lumina.Excel.RowRef dans l'API v10+
+            var worldId = localPlayer.HomeWorld.RowId;
+            if (worldId == 0) {
+                return this.defaultProfile;
+            }
+
+            var profileId = $"{name}@{worldId}";
+
+            if (!this.config.Profiles.ContainsKey(profileId)) {
+                this.config.Profiles[profileId] = new CharacterProfile();
+                this.Save();
+            }
+
+            return this.config.Profiles[profileId];
+        }
+        catch (Exception) {
+            // Failsafe critique durant les écrans de chargement ou l'écran titre
             return this.defaultProfile;
         }
-
-        var name = localPlayer.Name.TextValue;
-        if (string.IsNullOrEmpty(name)) {
-            return this.defaultProfile;
-        }
-
-        var profileId = $"{name}@{localPlayer.HomeWorld.RowId}";
-
-        if (!this.config.Profiles.ContainsKey(profileId)) {
-            this.config.Profiles[profileId] = new CharacterProfile();
-            this.Save();
-        }
-
-        return this.config.Profiles[profileId];
     }
 
     public void Save() => this.pluginInterface.SavePluginConfig(this.config);
