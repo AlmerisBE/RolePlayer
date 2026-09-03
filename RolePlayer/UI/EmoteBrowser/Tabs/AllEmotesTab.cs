@@ -382,8 +382,6 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
 
         this.isRefreshing = true;
 
-        this.logger.Debug("[AllEmotesTab] Spawning background Task to execute async emote mod resolution.");
-
         Task.Run(() => {
             try {
                 var baseEmotes = this.emoteRepository.GetBaseEmotes().ToList();
@@ -407,11 +405,8 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
                     }
                 }
 
-                // Atomic reassignment is thread-safe for the UI loop
                 this.emotesCache = newCache;
                 this.availableCategories = uniqueCategories.OrderBy(c => c).ToList();
-
-                this.logger.Debug($"[AllEmotesTab] Async resolution finished safely. Identified {moddedCount} actively modded emotes.");
                 this.needsFilterApply = true;
             }
             catch (Exception ex) {
@@ -424,7 +419,6 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
     }
 
     public void Dispose() {
-        this.logger.Debug("[AllEmotesTab] Unsubscribing from IPC event triggers.");
         this.modStateProvider.ModStateChanged -= this.OnModStateChanged;
     }
 }

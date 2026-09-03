@@ -3,6 +3,7 @@
 using Dalamud.Plugin;
 using Dalamud.Plugin.Ipc;
 using Dalamud.Plugin.Services;
+using global::Penumbra.Api.Enums;
 using global::Penumbra.Api.IpcSubscribers;
 using RolePlayer.API.Penumbra.Contracts;
 using RolePlayer.Core.Logging.Contracts;
@@ -14,22 +15,17 @@ public class PenumbraIpcProvider : IModStateProvider, IDisposable {
     private IDalamudPluginInterface pluginInterface;
     private IEmotePathProvider emotePathProvider;
     private ILoggerService logger;
-    private IFramework framework;
-    private IObjectTable objectTable;
 
     private ICallGateSubscriber<string, string> resolvePlayerPathSubscriber;
     private ApiVersion apiVersionSubscriber;
-    private GetModList getModListSubscriber;
-    private GetCollectionForObject getCollectionForObjectSubscriber;
 
-    private ICallGateSubscriber<Action>? initializedSubscriber;
-    private ICallGateSubscriber<Action>? disposedSubscriber;
     private Action onPenumbraLifecycleChanged;
+    private Action<ModSettingChange, Guid, string, bool> onModSettingChanged;
 
-    private DateTime lastCheckTime = DateTime.MinValue;
-    private int lastModCount = -1;
-    private Guid lastCollectionId = Guid.Empty;
-    private string lastPlayerName = string.Empty;
+    // Utilisation de IDisposable pour encapsuler l'EventSubscriber retourné par l'API Penumbra
+    private IDisposable? initializedSubscriber;
+    private IDisposable? disposedSubscriber;
+    private IDisposable? modSettingChangedSubscriber;
 
     public event Action? ModStateChanged;
 
@@ -43,77 +39,30 @@ public class PenumbraIpcProvider : IModStateProvider, IDisposable {
         this.pluginInterface = pluginInterface;
         this.emotePathProvider = emotePathProvider;
         this.logger = logger;
-        this.framework = framework;
-        this.objectTable = objectTable;
 
         this.resolvePlayerPathSubscriber = pluginInterface.GetIpcSubscriber<string, string>("Penumbra.ResolvePlayerPath");
         this.apiVersionSubscriber = new ApiVersion(pluginInterface);
-        this.getModListSubscriber = new GetModList(pluginInterface);
-        this.getCollectionForObjectSubscriber = new GetCollectionForObject(pluginInterface);
 
-        // Instance de l'action unique pour un désabonnement garanti sans fuite mémoire
-        this.onPenumbraLifecycleChanged = this.OnPenumbraLifecycleChanged;
+        this.onPenumbraLifecycleChanged = () => {
+            this.logger.Debug("[PenumbraIpcProvider] Penumbra lifecycle event detected. Triggering UI refresh.");
+            this.ModStateChanged?.Invoke();
+        };
 
-        try {
-            this.logger.Debug("[PenumbraIpcProvider] Initializing native Penumbra lifecycle subscribers...");
-
-            this.initializedSubscriber = pluginInterface.GetIpcSubscriber<Action>("Penumbra.Initialized");
-            if (this.initializedSubscriber != null) {
-                this.initializedSubscriber.Subscribe(this.onPenumbraLifecycleChanged);
-            }
-
-            this.disposedSubscriber = pluginInterface.GetIpcSubscriber<Action>("Penumbra.Disposed");
-            if (this.disposedSubscriber != null) {
-                this.disposedSubscriber.Subscribe(this.onPenumbraLifecycleChanged);
-            }
-        }
-        catch (Exception ex) {
-            this.logger.Error(ex, "[PenumbraIpcProvider] Failed to subscribe to Penumbra lifecycle IPC events.");
-        }
-
-        this.framework.Update += this.OnFrameworkUpdate;
-    }
-
-    private void OnPenumbraLifecycleChanged() {
-        this.logger.Debug("[PenumbraIpcProvider] Penumbra lifecycle event detected. Forcing background cache invalidation.");
-        this.lastCheckTime = DateTime.MinValue;
-    }
-
-    private void OnFrameworkUpdate(IFramework fw) {
-        if ((DateTime.Now - this.lastCheckTime).TotalSeconds < 2.0) {
-            return;
-        }
-
-        this.lastCheckTime = DateTime.Now;
-
-        if (!this.IsEnabled()) {
-            return;
-        }
+        this.onModSettingChanged = (type, collectionId, modDirectory, inherited) => {
+            this.logger.Debug($"[PenumbraIpcProvider] ModSettingChanged event detected (Type: {type}, Mod: {modDirectory}). Triggering UI refresh.");
+            this.ModStateChanged?.Invoke();
+        };
 
         try {
-            var currentPlayerName = this.objectTable.LocalPlayer?.Name.TextValue ?? string.Empty;
-            var currentModList = this.getModListSubscriber.Invoke();
-            var currentModCount = currentModList?.Count ?? 0;
+            this.logger.Debug("[PenumbraIpcProvider] Initializing Penumbra API static event subscribers...");
 
-            var collectionResult = this.getCollectionForObjectSubscriber.Invoke(0);
-            var currentCollectionId = collectionResult.EffectiveCollection.Id;
-
-            bool hasChanged = currentPlayerName != this.lastPlayerName
-                           || currentModCount != this.lastModCount
-                           || currentCollectionId != this.lastCollectionId;
-
-            if (hasChanged) {
-                this.logger.Debug($"[PenumbraIpcProvider] Mod state change detected (Player: {currentPlayerName}, Mods: {currentModCount}, Collection: {currentCollectionId}). Firing UI refresh event.");
-
-                this.lastPlayerName = currentPlayerName;
-                this.lastModCount = currentModCount;
-                this.lastCollectionId = currentCollectionId;
-
-                this.ModStateChanged?.Invoke();
-            }
+            // L'appel à la méthode Subscriber retourne le jeton de désabonnement
+            this.initializedSubscriber = Initialized.Subscriber(this.pluginInterface, this.onPenumbraLifecycleChanged);
+            this.disposedSubscriber = Disposed.Subscriber(this.pluginInterface, this.onPenumbraLifecycleChanged);
+            this.modSettingChangedSubscriber = ModSettingChanged.Subscriber(this.pluginInterface, this.onModSettingChanged);
         }
         catch (Exception ex) {
-            this.logger.Verbose($"[PenumbraIpcProvider] Background sync check encountered an error: {ex.Message}");
+            this.logger.Error(ex, "[PenumbraIpcProvider] Failed to subscribe to Penumbra static IPC events.");
         }
     }
 
@@ -171,16 +120,19 @@ public class PenumbraIpcProvider : IModStateProvider, IDisposable {
     }
 
     public void Dispose() {
-        this.logger.Debug("[PenumbraIpcProvider] Disposing IPC polling processes.");
-        this.framework.Update -= this.OnFrameworkUpdate;
-
+        this.logger.Debug("[PenumbraIpcProvider] Disposing IPC static subscriptions.");
         try {
+            // Un simple Dispose sur le jeton suffit à couper l'écoute IPC
             if (this.initializedSubscriber != null) {
-                this.initializedSubscriber.Unsubscribe(this.onPenumbraLifecycleChanged);
+                this.initializedSubscriber.Dispose();
             }
 
             if (this.disposedSubscriber != null) {
-                this.disposedSubscriber.Unsubscribe(this.onPenumbraLifecycleChanged);
+                this.disposedSubscriber.Dispose();
+            }
+
+            if (this.modSettingChangedSubscriber != null) {
+                this.modSettingChangedSubscriber.Dispose();
             }
         }
         catch (Exception ex) {
