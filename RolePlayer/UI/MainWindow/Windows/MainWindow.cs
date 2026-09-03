@@ -15,7 +15,7 @@ public class MainWindow : Window, IDisposable {
     private IEmoteSelectionState selectionState;
     private IClientState clientState;
 
-    private const float BaseWidth = 350f;
+    private const float BaseWidth = 400f;
     private const float SidePanelWidth = 300f;
     private bool lastPanelState = false;
 
@@ -34,7 +34,7 @@ public class MainWindow : Window, IDisposable {
         this.clientState.Logout += this.OnLogout;
 
         this.SizeConstraints = new WindowSizeConstraints {
-            MinimumSize = new Vector2(BaseWidth, 350),
+            MinimumSize = new Vector2(BaseWidth, 400),
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
         };
     }

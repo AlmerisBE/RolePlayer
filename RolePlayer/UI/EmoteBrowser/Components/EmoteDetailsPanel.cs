@@ -39,26 +39,37 @@ public class EmoteDetailsPanel {
             return;
         }
 
-        ImGui.AlignTextToFramePadding();
-        ImGui.Text($"Name: {emote.Name}");
-
         string closeIcon = FontAwesomeIcon.Times.ToIconString();
         ImGui.PushFont(UiBuilder.IconFont);
         var closeBtnWidth = ImGui.CalcTextSize(closeIcon).X + ImGui.GetStyle().FramePadding.X * 2;
         ImGui.PopFont();
 
-        var alignX = ImGui.GetWindowContentRegionMax().X - closeBtnWidth;
-        if (alignX > ImGui.GetCursorPosX()) {
-            ImGui.SameLine(alignX);
+        // Utilisation d'une table invisible pour garantir le titre à gauche et l'icône à l'extrême droite
+        if (ImGui.BeginTable("HeaderTable", 2)) {
+            ImGui.TableSetupColumn("Title", ImGuiTableColumnFlags.WidthStretch);
+            ImGui.TableSetupColumn("CloseBtn", ImGuiTableColumnFlags.WidthFixed, closeBtnWidth);
+
+            ImGui.TableNextRow();
+            ImGui.TableNextColumn();
+            ImGui.AlignTextToFramePadding();
+            ImGui.SetWindowFontScale(1.3f);
+            ImGui.TextUnformatted(emote.Name);
+            ImGui.SetWindowFontScale(1.0f);
+
+            ImGui.TableNextColumn();
+            ImGui.PushFont(UiBuilder.IconFont);
+            if (ImGui.Button($"{closeIcon}##CloseDetails")) {
+                this.selectionState.SelectedEmote = null;
+                ImGui.PopFont();
+                ImGui.EndTable();
+                return;
+            }
+            ImGui.PopFont();
+
+            ImGui.EndTable();
         }
 
-        ImGui.PushFont(UiBuilder.IconFont);
-        if (ImGui.Button($"{closeIcon}##CloseDetails")) {
-            this.selectionState.SelectedEmote = null;
-            ImGui.PopFont();
-            return;
-        }
-        ImGui.PopFont();
+        ImGui.Spacing();
 
         if (!string.IsNullOrEmpty(emote.Category)) {
             ImGui.Text($"Category: {emote.Category}");
@@ -71,9 +82,27 @@ public class EmoteDetailsPanel {
             ImGui.TextColored(new Vector4(0.2f, 0.8f, 0.2f, 1.0f), $"Modified by: {modName}");
         }
 
-        ImGui.TextWrapped($"Source: {emote.UnlockRequirement}");
+        ImGui.Spacing();
 
+        if (ImGui.BeginTable("CommandsTable", 2, ImGuiTableFlags.BordersInnerH)) {
+            ImGui.TableSetupColumn("Lang", ImGuiTableColumnFlags.WidthFixed, 70f);
+            ImGui.TableSetupColumn("Cmd", ImGuiTableColumnFlags.WidthStretch);
+
+            ImGui.TableNextRow();
+            ImGui.TableNextColumn(); ImGui.TextDisabled("Command:");
+            ImGui.TableNextColumn(); ImGui.TextUnformatted(emote.LocalizedCommand);
+
+            if (!string.IsNullOrEmpty(emote.EnglishCommand) && emote.EnglishCommand != emote.LocalizedCommand) {
+                ImGui.TableNextRow();
+                ImGui.TableNextColumn(); ImGui.TextDisabled("English:");
+                ImGui.TableNextColumn(); ImGui.TextUnformatted(emote.EnglishCommand);
+            }
+            ImGui.EndTable();
+        }
+
+        ImGui.Spacing();
         ImGui.Separator();
+        ImGui.Spacing();
 
         if (emote.IsUnlocked) {
             if (ImGui.Button("Execute Emote", new Vector2(-1, 30))) {
@@ -84,75 +113,121 @@ public class EmoteDetailsPanel {
             ImGui.TextDisabled("You have not unlocked this emote yet.");
         }
 
+        ImGui.Spacing();
         ImGui.Separator();
+        ImGui.Spacing();
+
         this.DrawGroupManagement(emote.Id);
 
+        ImGui.Spacing();
         ImGui.Separator();
+        ImGui.Spacing();
+
         this.DrawTagManagement(emote.Id);
 
+        ImGui.Spacing();
         ImGui.Separator();
-        if (ImGui.Button("Debug to Console")) {
+        ImGui.Spacing();
+
+        if (ImGui.Button("Debug to Console", new Vector2(-1, 0))) {
             this.debugService.LogEmoteDetails(emote.Id);
         }
     }
 
     private void DrawGroupManagement(uint emoteId) {
+        ImGui.TextDisabled("Group Assignment:");
         var currentGroup = this.groupManagementService.GetGroupForEmote(emoteId);
         var previewValue = string.IsNullOrEmpty(currentGroup) ? "None" : currentGroup;
 
-        if (ImGui.BeginCombo("Group", previewValue)) {
-            if (ImGui.Selectable("None", string.IsNullOrEmpty(currentGroup))) {
-                this.groupManagementService.RemoveEmoteFromGroup(emoteId);
-            }
+        if (ImGui.BeginTable("GroupTable", 1, ImGuiTableFlags.None)) {
+            ImGui.TableSetupColumn("Combo", ImGuiTableColumnFlags.WidthStretch);
+            ImGui.TableNextRow();
+            ImGui.TableNextColumn();
 
-            foreach (var group in this.groupManagementService.GetGroups()) {
-                var isSelected = group.Name == currentGroup;
-                if (ImGui.Selectable(group.Name, isSelected)) {
-                    this.groupManagementService.AssignEmoteToGroup(emoteId, group.Name);
+            ImGui.SetNextItemWidth(-1f);
+            if (ImGui.BeginCombo("##GroupCombo", previewValue)) {
+                if (ImGui.Selectable("None", string.IsNullOrEmpty(currentGroup))) {
+                    this.groupManagementService.RemoveEmoteFromGroup(emoteId);
                 }
 
-                if (isSelected) {
-                    ImGui.SetItemDefaultFocus();
+                foreach (var group in this.groupManagementService.GetGroups()) {
+                    var isSelected = group.Name == currentGroup;
+                    if (ImGui.Selectable(group.Name, isSelected)) {
+                        this.groupManagementService.AssignEmoteToGroup(emoteId, group.Name);
+                    }
+
+                    if (isSelected) {
+                        ImGui.SetItemDefaultFocus();
+                    }
                 }
+                ImGui.EndCombo();
             }
-            ImGui.EndCombo();
+            ImGui.EndTable();
         }
     }
 
     private void DrawTagManagement(uint emoteId) {
-        ImGui.Text("Assigned Tags:");
+        ImGui.TextDisabled("Assigned Tags:");
 
         var currentTags = this.tagManagementService.GetTagsForEmote(emoteId).ToList();
         string? tagToRemove = null;
 
-        foreach (var tag in currentTags) {
-            ImGui.BulletText(tag);
-            ImGui.SameLine();
-            if (ImGui.SmallButton($"Remove##{tag}")) {
-                tagToRemove = tag;
+        if (ImGui.BeginTable("TagsTable", 2, ImGuiTableFlags.BordersInnerH | ImGuiTableFlags.RowBg)) {
+            ImGui.TableSetupColumn("Tag", ImGuiTableColumnFlags.WidthStretch);
+            ImGui.TableSetupColumn("Action", ImGuiTableColumnFlags.WidthFixed, 60f);
+
+            if (currentTags.Count == 0) {
+                ImGui.TableNextRow();
+                ImGui.TableNextColumn();
+                ImGui.TextDisabled("No tags assigned");
+                ImGui.TableNextColumn();
             }
+
+            foreach (var tag in currentTags) {
+                ImGui.TableNextRow();
+                ImGui.TableNextColumn();
+                ImGui.AlignTextToFramePadding();
+                ImGui.TextUnformatted(tag);
+
+                ImGui.TableNextColumn();
+                if (ImGui.Button($"Remove##{tag}", new Vector2(-1f, 0))) {
+                    tagToRemove = tag;
+                }
+            }
+            ImGui.EndTable();
         }
 
         if (tagToRemove != null) {
             this.tagManagementService.RemoveTagFromEmote(emoteId, tagToRemove);
         }
 
-        // On détermine les tags qui n'ont pas encore été assignés à l'emote
+        ImGui.Spacing();
+
         var availableTags = this.tagManagementService.GetAvailableTags().Except(currentTags).ToList();
 
-        if (availableTags.Count > 0) {
-            ImGui.SetNextItemWidth(150f);
-            if (ImGui.BeginCombo("##addTagCombo", "Select a tag...")) {
-                foreach (var tag in availableTags) {
-                    if (ImGui.Selectable(tag)) {
-                        this.tagManagementService.AddTagToEmote(emoteId, tag);
+        if (ImGui.BeginTable("AddTagTable", 1, ImGuiTableFlags.None)) {
+            ImGui.TableSetupColumn("Combo", ImGuiTableColumnFlags.WidthStretch);
+            ImGui.TableNextRow();
+            ImGui.TableNextColumn();
+
+            ImGui.SetNextItemWidth(-1f);
+            if (availableTags.Count > 0) {
+                if (ImGui.BeginCombo("##addTagCombo", "Select a tag to add...")) {
+                    foreach (var tag in availableTags) {
+                        if (ImGui.Selectable(tag)) {
+                            this.tagManagementService.AddTagToEmote(emoteId, tag);
+                        }
                     }
+                    ImGui.EndCombo();
                 }
-                ImGui.EndCombo();
             }
-        }
-        else {
-            ImGui.TextDisabled("No more tags available.");
+            else {
+                ImGui.BeginDisabled();
+                ImGui.BeginCombo("##addTagCombo", "No available tags...");
+                ImGui.EndCombo();
+                ImGui.EndDisabled();
+            }
+            ImGui.EndTable();
         }
     }
 }

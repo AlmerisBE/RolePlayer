@@ -73,9 +73,9 @@ public class AllEmotesTab : IEmoteBrowserTab {
                     hasCustomColor = true;
                 }
 
-                // Column 1: Icon + Global selectable
+                // Application d'une hauteur forcée de 24px pour remplir parfaitement la cellule
                 ImGui.TableNextColumn();
-                if (ImGui.Selectable($"##select_{emote.Id}", isSelected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowItemOverlap)) {
+                if (ImGui.Selectable($"##select_{emote.Id}", isSelected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowItemOverlap, new Vector2(0, 24))) {
                     this.selectionState.SelectedEmote = isSelected ? null : emote;
                 }
 
@@ -83,7 +83,6 @@ public class AllEmotesTab : IEmoteBrowserTab {
 
                 if (emote.IconId > 0) {
                     try {
-                        // Explicitly disable HiRes lookup to prevent IconNotFoundException on standard emote icons
                         var lookup = new GameIconLookup {
                             IconId = emote.IconId,
                             HiRes = false
@@ -95,17 +94,15 @@ public class AllEmotesTab : IEmoteBrowserTab {
                         }
                     }
                     catch (IconNotFoundException) {
-                        // Gracefully ignore missing textures to maintain UI stability
+                        // Ignore silencieusement les textures manquantes
                     }
                 }
 
-                // Column 2: Name
                 ImGui.TableNextColumn();
                 var displayName = emote.IsModded ? $"★ {emote.Name}" : emote.Name;
                 ImGui.AlignTextToFramePadding();
                 ImGui.Text(displayName);
 
-                // Column 3: Command(s)
                 ImGui.TableNextColumn();
                 ImGui.AlignTextToFramePadding();
                 var commandText = emote.LocalizedCommand;
@@ -116,7 +113,6 @@ public class AllEmotesTab : IEmoteBrowserTab {
 
                 ImGui.Text(commandText);
 
-                // Column 4: Quick Play
                 ImGui.TableNextColumn();
                 if (emote.IsUnlocked) {
                     if (ImGui.Button($"Play##{emote.Id}", new Vector2(-1, 24))) {
