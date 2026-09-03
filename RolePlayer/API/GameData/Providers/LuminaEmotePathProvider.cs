@@ -6,13 +6,50 @@ using RolePlayer.API.Penumbra.Contracts;
 using System;
 using System.Collections.Generic;
 
-public class LuminaEmotePathProvider : IEmotePathProvider {
+public class LuminaEmotePathProvider : IEmotePathProvider, IDisposable {
     private IDataManager dataManager;
     private IObjectTable objectTable;
+    private IFramework framework;
 
-    public LuminaEmotePathProvider(IDataManager dataManager, IObjectTable objectTable) {
+    private int cachedCharaCode = 101;
+    private bool isPlayerValid = false;
+
+    public LuminaEmotePathProvider(IDataManager dataManager, IObjectTable objectTable, IFramework framework) {
         this.dataManager = dataManager;
         this.objectTable = objectTable;
+        this.framework = framework;
+
+        this.framework.Update += this.OnFrameworkUpdate;
+    }
+
+    private void OnFrameworkUpdate(IFramework fw) {
+        var player = this.objectTable.LocalPlayer;
+        if (player == null) {
+            this.isPlayerValid = false;
+            return;
+        }
+
+        this.isPlayerValid = true;
+        var customize = player.Customize;
+        var race = customize[0];
+        var gender = customize[1];
+        var clan = customize[4];
+
+        int charaCode = 0;
+        switch (race) {
+            case 1: charaCode = clan == 2 ? 200 : 100; break;
+            case 2: charaCode = 300; break;
+            case 3: charaCode = 600; break;
+            case 4: charaCode = 400; break;
+            case 5: charaCode = 500; break;
+            case 6: charaCode = 700; break;
+            case 7: charaCode = 1100; break;
+            case 8: charaCode = 1200; break;
+            default: charaCode = 100; break;
+        }
+
+        charaCode += gender == 0 ? 1 : 4;
+        this.cachedCharaCode = charaCode;
     }
 
     public IEnumerable<string> GetEmoteGamePaths(uint emoteId) {
@@ -56,7 +93,6 @@ public class LuminaEmotePathProvider : IEmotePathProvider {
 
                 paths.Add($"chara/action/{key}.tmb");
 
-                // 1. Chemin spécifique à la race et au genre du joueur local
                 var specificPapPath = this.GetPapPathForLocalPlayer(key);
                 if (!string.IsNullOrEmpty(specificPapPath)) {
                     paths.Add(specificPapPath);
@@ -64,7 +100,6 @@ public class LuminaEmotePathProvider : IEmotePathProvider {
                     paths.Add($"Animation/{specificPapPath}");
                 }
 
-                // 2. Chemin universel FFXIV de base (Midlander Male - c0101) utilisé par FFXIV comme Fallback
                 var fallbackPapPath = $"chara/human/c0101/animation/a0001/bt_common/{key}.pap";
                 paths.Add(fallbackPapPath);
                 paths.Add($"Animation/Animation/{fallbackPapPath}");
@@ -76,31 +111,14 @@ public class LuminaEmotePathProvider : IEmotePathProvider {
     }
 
     private string GetPapPathForLocalPlayer(string actionKey) {
-        var player = this.objectTable.LocalPlayer;
-        if (player == null) {
+        if (!this.isPlayerValid) {
             return string.Empty;
         }
 
-        var customize = player.Customize;
-        var race = customize[0];
-        var gender = customize[1];
-        var clan = customize[4];
+        return $"chara/human/c{this.cachedCharaCode:D4}/animation/a0001/bt_common/{actionKey}.pap";
+    }
 
-        int charaCode = 0;
-        switch (race) {
-            case 1: charaCode = (clan == 2) ? 200 : 100; break;
-            case 2: charaCode = 300; break;
-            case 3: charaCode = 600; break;
-            case 4: charaCode = 400; break;
-            case 5: charaCode = 500; break;
-            case 6: charaCode = 700; break;
-            case 7: charaCode = 1100; break;
-            case 8: charaCode = 1200; break;
-            default: charaCode = 100; break;
-        }
-
-        charaCode += (gender == 0) ? 1 : 4;
-
-        return $"chara/human/c{charaCode:D4}/animation/a0001/bt_common/{actionKey}.pap";
+    public void Dispose() {
+        this.framework.Update -= this.OnFrameworkUpdate;
     }
 }
