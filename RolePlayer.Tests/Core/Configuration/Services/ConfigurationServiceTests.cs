@@ -13,13 +13,14 @@ public class ConfigurationServiceTests {
     public void ConfigurationService_Initialization_LoadsExistingConfig() {
         var mockPluginInterface = Substitute.For<IDalamudPluginInterface>();
         var mockObjectTable = Substitute.For<IObjectTable>();
+        var mockFramework = Substitute.For<IFramework>();
         var existingConfig = new PluginConfiguration {
             Version = 1
         };
 
         mockPluginInterface.GetPluginConfig().Returns(existingConfig);
 
-        var service = new ConfigurationService(mockPluginInterface, mockObjectTable);
+        var service = new ConfigurationService(mockPluginInterface, mockObjectTable, mockFramework);
         var config = service.GetConfig();
 
         Assert.NotNull(config);
@@ -30,9 +31,10 @@ public class ConfigurationServiceTests {
     public void ConfigurationService_Initialization_CreatesNewConfigIfNull() {
         var mockPluginInterface = Substitute.For<IDalamudPluginInterface>();
         var mockObjectTable = Substitute.For<IObjectTable>();
+        var mockFramework = Substitute.For<IFramework>();
         mockPluginInterface.GetPluginConfig().Returns((IPluginConfiguration)null!);
 
-        var service = new ConfigurationService(mockPluginInterface, mockObjectTable);
+        var service = new ConfigurationService(mockPluginInterface, mockObjectTable, mockFramework);
         var config = service.GetConfig();
 
         Assert.NotNull(config);
@@ -43,7 +45,8 @@ public class ConfigurationServiceTests {
     public void ConfigurationService_Save_PassesConfigToDalamud() {
         var mockPluginInterface = Substitute.For<IDalamudPluginInterface>();
         var mockObjectTable = Substitute.For<IObjectTable>();
-        var service = new ConfigurationService(mockPluginInterface, mockObjectTable);
+        var mockFramework = Substitute.For<IFramework>();
+        var service = new ConfigurationService(mockPluginInterface, mockObjectTable, mockFramework);
         var config = service.GetConfig();
 
         config.Version = 2;

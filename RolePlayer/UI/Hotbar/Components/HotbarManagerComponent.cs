@@ -24,7 +24,6 @@ public class HotbarManagerComponent : IDisposable {
     private IPlayerStateProvider playerStateProvider;
     private IModStateProvider modStateProvider;
     private ICondition condition;
-    private IClientState clientState;
 
     private WindowSystem windowSystem;
     private List<EmoteDisplayData> sharedCache = new();
@@ -39,8 +38,7 @@ public class HotbarManagerComponent : IDisposable {
         IEmoteRepository emoteRepository,
         IPlayerStateProvider playerStateProvider,
         IModStateProvider modStateProvider,
-        ICondition condition,
-        IClientState clientState) {
+        ICondition condition) {
 
         this.pluginInterface = pluginInterface;
         this.configService = configService;
@@ -52,19 +50,21 @@ public class HotbarManagerComponent : IDisposable {
         this.playerStateProvider = playerStateProvider;
         this.modStateProvider = modStateProvider;
         this.condition = condition;
-        this.clientState = clientState;
 
         this.windowSystem = new WindowSystem("RolePlayer_Hotbars");
         this.pluginInterface.UiBuilder.Draw += this.windowSystem.Draw;
         this.modStateProvider.ModStateChanged += this.RebuildCache;
-        this.clientState.Login += this.OnLogin;
+        this.configService.ProfileLoaded += this.OnProfileLoaded;
         this.contextService.ContextChanged += this.OnContextChanged;
 
         this.RebuildCache();
         this.RefreshWindows();
     }
 
-    private void OnLogin() => this.RefreshWindows();
+    private void OnProfileLoaded() {
+        this.RebuildCache();
+        this.RefreshWindows();
+    }
 
     private void OnContextChanged() {
         this.RebuildCache();
@@ -119,7 +119,7 @@ public class HotbarManagerComponent : IDisposable {
     public void Dispose() {
         this.pluginInterface.UiBuilder.Draw -= this.windowSystem.Draw;
         this.modStateProvider.ModStateChanged -= this.RebuildCache;
-        this.clientState.Login -= this.OnLogin;
+        this.configService.ProfileLoaded -= this.OnProfileLoaded;
         this.contextService.ContextChanged -= this.OnContextChanged;
         this.windowSystem.RemoveAllWindows();
     }
