@@ -9,6 +9,7 @@ using RolePlayer.API.Penumbra.Contracts;
 using RolePlayer.Core.Logging.Contracts;
 using RolePlayer.UI.EmoteBrowser.Contracts;
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 public class PenumbraIpcProvider : IModStateProvider, IDisposable {
@@ -18,14 +19,18 @@ public class PenumbraIpcProvider : IModStateProvider, IDisposable {
 
     private ICallGateSubscriber<string, string> resolvePlayerPathSubscriber;
     private ApiVersion apiVersionSubscriber;
+    private GetModList getModListSubscriber;
+    private GetModDirectory getModDirectorySubscriber;
 
     private Action onPenumbraLifecycleChanged;
     private Action<ModSettingChange, Guid, string, bool> onModSettingChanged;
 
-    // Utilisation de IDisposable pour encapsuler l'EventSubscriber retourné par l'API Penumbra
     private IDisposable? initializedSubscriber;
     private IDisposable? disposedSubscriber;
     private IDisposable? modSettingChangedSubscriber;
+
+    private IReadOnlyDictionary<string, string> modNamesCache = new Dictionary<string, string>();
+    private string penumbraRootPath = string.Empty;
 
     public event Action? ModStateChanged;
 
@@ -42,27 +47,58 @@ public class PenumbraIpcProvider : IModStateProvider, IDisposable {
 
         this.resolvePlayerPathSubscriber = pluginInterface.GetIpcSubscriber<string, string>("Penumbra.ResolvePlayerPath");
         this.apiVersionSubscriber = new ApiVersion(pluginInterface);
+        this.getModListSubscriber = new GetModList(pluginInterface);
+        this.getModDirectorySubscriber = new GetModDirectory(pluginInterface);
 
         this.onPenumbraLifecycleChanged = () => {
-            this.logger.Debug("[PenumbraIpcProvider] Penumbra lifecycle event detected. Triggering UI refresh.");
+            this.logger.Debug("[PenumbraIpcProvider] Penumbra lifecycle event detected. Updating cache and triggering UI refresh.");
+            this.UpdateModCache();
             this.ModStateChanged?.Invoke();
         };
 
         this.onModSettingChanged = (type, collectionId, modDirectory, inherited) => {
-            this.logger.Debug($"[PenumbraIpcProvider] ModSettingChanged event detected (Type: {type}, Mod: {modDirectory}). Triggering UI refresh.");
+            this.logger.Debug($"[PenumbraIpcProvider] ModSettingChanged event detected (Type: {type}, Mod: {modDirectory}). Updating cache and triggering UI refresh.");
+            this.UpdateModCache();
             this.ModStateChanged?.Invoke();
         };
 
         try {
             this.logger.Debug("[PenumbraIpcProvider] Initializing Penumbra API static event subscribers...");
 
-            // L'appel à la méthode Subscriber retourne le jeton de désabonnement
             this.initializedSubscriber = Initialized.Subscriber(this.pluginInterface, this.onPenumbraLifecycleChanged);
             this.disposedSubscriber = Disposed.Subscriber(this.pluginInterface, this.onPenumbraLifecycleChanged);
             this.modSettingChangedSubscriber = ModSettingChanged.Subscriber(this.pluginInterface, this.onModSettingChanged);
         }
         catch (Exception ex) {
             this.logger.Error(ex, "[PenumbraIpcProvider] Failed to subscribe to Penumbra static IPC events.");
+        }
+
+        this.UpdateModCache();
+    }
+
+    private void UpdateModCache() {
+        try {
+            if (!this.IsEnabled()) {
+                this.modNamesCache = new Dictionary<string, string>();
+                this.penumbraRootPath = string.Empty;
+                return;
+            }
+
+            this.penumbraRootPath = this.getModDirectorySubscriber.Invoke();
+            var mods = this.getModListSubscriber.Invoke();
+
+            // Atomic allocation for thread-safety during background reading
+            var newCache = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var kvp in mods) {
+                newCache[kvp.Key] = kvp.Value;
+            }
+
+            this.modNamesCache = newCache;
+        }
+        catch (Exception ex) {
+            this.logger.Verbose($"[PenumbraIpcProvider] Failed to refresh Mod Directory or Mod List: {ex.Message}");
+            this.modNamesCache = new Dictionary<string, string>();
         }
     }
 
@@ -105,11 +141,39 @@ public class PenumbraIpcProvider : IModStateProvider, IDisposable {
 
     private string ExtractModNameFromPath(string resolvedPath) {
         try {
-            var parts = resolvedPath.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-            var charaIndex = Array.IndexOf(parts, "chara");
+            // Strategic isolation of the mod directory using the exact Penumbra Root Directory
+            if (!string.IsNullOrEmpty(this.penumbraRootPath) && resolvedPath.StartsWith(this.penumbraRootPath, StringComparison.OrdinalIgnoreCase)) {
+                var relativePath = resolvedPath.Substring(this.penumbraRootPath.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                var parts = relativePath.Split(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries);
 
-            if (charaIndex > 0) {
-                return parts[charaIndex - 1];
+                if (parts.Length > 0) {
+                    var modDirectory = parts[0];
+                    if (this.modNamesCache.TryGetValue(modDirectory, out var realModName)) {
+                        return realModName;
+                    }
+
+                    return modDirectory;
+                }
+            }
+
+            // Fallback for edge cases outside the standard root path
+            var fallbackParts = resolvedPath.Split(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries);
+            int pivotIndex = -1;
+
+            for (int i = 0; i < fallbackParts.Length; i++) {
+                if (fallbackParts[i].Equals("chara", StringComparison.OrdinalIgnoreCase) || fallbackParts[i].Equals("animation", StringComparison.OrdinalIgnoreCase)) {
+                    pivotIndex = i;
+                    break;
+                }
+            }
+
+            if (pivotIndex > 0) {
+                var modDirectory = fallbackParts[pivotIndex - 1];
+                if (this.modNamesCache.TryGetValue(modDirectory, out var realModName)) {
+                    return realModName;
+                }
+
+                return modDirectory;
             }
 
             return "Modded Emote";
@@ -122,7 +186,6 @@ public class PenumbraIpcProvider : IModStateProvider, IDisposable {
     public void Dispose() {
         this.logger.Debug("[PenumbraIpcProvider] Disposing IPC static subscriptions.");
         try {
-            // Un simple Dispose sur le jeton suffit à couper l'écoute IPC
             if (this.initializedSubscriber != null) {
                 this.initializedSubscriber.Dispose();
             }
