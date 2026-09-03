@@ -44,10 +44,12 @@ public class MainWindow : Window, IDisposable {
     }
 
     public override void Draw() {
+        bool shouldOpenPanel = this.selectionState.SelectedEmote != null && this.tabManager.ActiveTab?.SupportsSidePanel == true;
+
         this.layoutManager.Draw(
             drawMainContent: () => this.tabManager.Draw(),
             drawSidePanel: () => this.detailsPanel.Draw(),
-            isPanelOpen: this.selectionState.SelectedEmote != null
+            isPanelOpen: shouldOpenPanel
         );
 
         Dalamud.Bindings.ImGui.ImGui.Separator();

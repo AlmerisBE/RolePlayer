@@ -9,13 +9,12 @@ using RolePlayer.UI.EmoteBrowser.Tabs;
 
 public class EmoteBrowserFeature : IFeatureModule {
     public void RegisterServices(IServiceCollection services) {
-        // Services d'état
-        services.AddSingleton<IEmoteSelectionState, EmoteSelectionState>();
+        // Enregistrement de notre nouveau composant de filtrage
+        services.AddSingleton<EmoteFilterComponent>();
 
-        // Composants UI
+        // (Assure-toi que le reste de tes services existants sont bien présents)
         services.AddSingleton<EmoteDetailsPanel>();
-
-        // Onglets (Enregistrés en tant que IEmoteBrowserTab pour l'injection IEnumerable<IEmoteBrowserTab>)
+        services.AddSingleton<IEmoteSelectionState, EmoteSelectionState>();
         services.AddSingleton<IEmoteBrowserTab, AllEmotesTab>();
     }
 }

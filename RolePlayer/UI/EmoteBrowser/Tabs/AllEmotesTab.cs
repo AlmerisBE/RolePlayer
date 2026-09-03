@@ -37,6 +37,7 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
 
     public string TabName => "All Emotes";
     public int SortOrder => 0;
+    public bool SupportsSidePanel => true;
 
     public AllEmotesTab(
         IEmoteRepository emoteRepository,
