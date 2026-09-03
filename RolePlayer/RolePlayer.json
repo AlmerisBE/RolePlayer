@@ -2,12 +2,12 @@
   "Author": "Almeris",
   "Name": "RolePlayer",
   "InternalName": "RolePlayer",
-  "AssemblyVersion": "0.0.0.1",
-  "Description": "Managing your emotes and RP macros",
+  "AssemblyVersion": "0.1.0.0",
+  "Description": "Managing your emotes and RP hotbars",
   "ApplicableVersion": "any",
   "DalamudApiLevel": 15,
   "LoadRequiredState": 0,
   "LoadSync": false,
   "LoadPriority": 0,
-  "Punchline": "Use this as a base to develop your own plugin."
+  "Punchline": "What about dynamic hotbars?"
 }
