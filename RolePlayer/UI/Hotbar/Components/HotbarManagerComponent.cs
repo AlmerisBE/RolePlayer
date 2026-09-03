@@ -69,6 +69,8 @@ public class HotbarManagerComponent : IDisposable {
         this.sharedCache = newCache;
     }
 
+    public IReadOnlyList<EmoteDisplayData> GetEmoteCache() => this.sharedCache;
+
     public void RefreshWindows() {
         this.windowSystem.RemoveAllWindows();
         var config = this.configService.GetConfig();
