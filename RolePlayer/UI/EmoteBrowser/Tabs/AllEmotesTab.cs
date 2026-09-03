@@ -30,6 +30,7 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
     private IClientState clientState;
     private ILoggerService logger;
     private IConfigurationService configurationService;
+    private IContextManagementService contextService;
     private IGroupManagementService groupManagementService;
     private ITagManagementService tagManagementService;
     private HotbarManagerComponent hotbarManager;
@@ -59,6 +60,7 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
         IClientState clientState,
         ILoggerService logger,
         IConfigurationService configurationService,
+        IContextManagementService contextService,
         IGroupManagementService groupManagementService,
         ITagManagementService tagManagementService,
         HotbarManagerComponent hotbarManager,
@@ -74,6 +76,7 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
         this.clientState = clientState;
         this.logger = logger;
         this.configurationService = configurationService;
+        this.contextService = contextService;
         this.groupManagementService = groupManagementService;
         this.tagManagementService = tagManagementService;
         this.hotbarManager = hotbarManager;
@@ -104,12 +107,12 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
 
         if (ImGui.BeginChild("EmoteListScrollArea", new Vector2(0, 0), false, ImGuiWindowFlags.None)) {
             var tableFlags = ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.Sortable | ImGuiTableFlags.SizingFixedFit;
-            var profile = this.configurationService.GetCurrentProfile();
+            var context = this.contextService.GetCurrentContext();
 
             foreach (var groupKvp in this.groupedEmotes.OrderBy(k => k.Key)) {
                 bool isNodeOpen = true;
 
-                if (profile.CurrentGrouping != GroupingMode.None) {
+                if (context.CurrentGrouping != GroupingMode.None) {
                     isNodeOpen = ImGui.CollapsingHeader($"{groupKvp.Key} ({groupKvp.Value.Count})###Header_{groupKvp.Key}", ImGuiTreeNodeFlags.DefaultOpen);
                 }
 
@@ -148,7 +151,7 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
                                 this.selectionState.SelectedEmote = isSelected ? null : emote;
                             }
 
-                            this.DrawContextMenu(emote, profile);
+                            this.DrawContextMenu(emote, context);
 
                             ImGui.SameLine();
 
@@ -204,7 +207,7 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
         ImGui.EndChild();
     }
 
-    private void DrawContextMenu(EmoteDisplayData emote, CharacterProfile profile) {
+    private void DrawContextMenu(EmoteDisplayData emote, EmoteContext context) {
         if (ImGui.BeginPopupContextItem($"EmoteContextMenu_{emote.Id}")) {
             if (ImGui.MenuItem("Copy Command")) {
                 ImGui.SetClipboardText(emote.LocalizedCommand);
@@ -217,7 +220,7 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
             ImGui.Separator();
 
             if (ImGui.BeginMenu("Assign to Hotbar")) {
-                var manualHotbars = profile.Hotbars.Where(h => h.PopulationMode == HotbarPopulationMode.Manual).ToList();
+                var manualHotbars = context.Hotbars.Where(h => h.PopulationMode == HotbarPopulationMode.Manual).ToList();
                 if (!manualHotbars.Any()) {
                     ImGui.MenuItem("No static hotbars available", "", false, false);
                 }
@@ -253,7 +256,7 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
                     groupChanged = true;
                 }
 
-                foreach (var group in profile.EmoteGroups) {
+                foreach (var group in context.EmoteGroups) {
                     bool isInGroup = currentGroup == group.Name;
                     if (ImGui.MenuItem(group.Name, "", isInGroup)) {
                         this.groupManagementService.AssignEmoteToGroup(emote.Id, group.Name);
@@ -272,11 +275,11 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
                 bool tagChanged = false;
                 var currentTags = this.tagManagementService.GetTagsForEmote(emote.Id).ToList();
 
-                if (!profile.AvailableTags.Any()) {
+                if (!context.AvailableTags.Any()) {
                     ImGui.MenuItem("No tags available", "", false, false);
                 }
 
-                foreach (var tag in profile.AvailableTags) {
+                foreach (var tag in context.AvailableTags) {
                     bool hasTag = currentTags.Contains(tag);
                     if (ImGui.MenuItem(tag, "", hasTag)) {
                         if (hasTag) {

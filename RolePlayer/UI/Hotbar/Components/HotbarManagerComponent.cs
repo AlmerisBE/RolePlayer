@@ -16,6 +16,7 @@ using System.Linq;
 public class HotbarManagerComponent : IDisposable {
     private IDalamudPluginInterface pluginInterface;
     private IConfigurationService configService;
+    private IContextManagementService contextService;
     private IHotbarResolverService resolverService;
     private IEmoteExecutionService executionService;
     private ITextureProvider textureProvider;
@@ -31,6 +32,7 @@ public class HotbarManagerComponent : IDisposable {
     public HotbarManagerComponent(
         IDalamudPluginInterface pluginInterface,
         IConfigurationService configService,
+        IContextManagementService contextService,
         IHotbarResolverService resolverService,
         IEmoteExecutionService executionService,
         ITextureProvider textureProvider,
@@ -42,6 +44,7 @@ public class HotbarManagerComponent : IDisposable {
 
         this.pluginInterface = pluginInterface;
         this.configService = configService;
+        this.contextService = contextService;
         this.resolverService = resolverService;
         this.executionService = executionService;
         this.textureProvider = textureProvider;
@@ -55,12 +58,18 @@ public class HotbarManagerComponent : IDisposable {
         this.pluginInterface.UiBuilder.Draw += this.windowSystem.Draw;
         this.modStateProvider.ModStateChanged += this.RebuildCache;
         this.clientState.Login += this.OnLogin;
+        this.contextService.ContextChanged += this.OnContextChanged;
 
         this.RebuildCache();
         this.RefreshWindows();
     }
 
     private void OnLogin() => this.RefreshWindows();
+
+    private void OnContextChanged() {
+        this.RebuildCache();
+        this.RefreshWindows();
+    }
 
     private bool ShouldHideHotbars() {
         return this.condition[ConditionFlag.InCombat] ||
@@ -88,9 +97,9 @@ public class HotbarManagerComponent : IDisposable {
 
     public void RefreshWindows() {
         this.windowSystem.RemoveAllWindows();
-        var profile = this.configService.GetCurrentProfile();
+        var context = this.contextService.GetCurrentContext();
 
-        foreach (var hotbarConfig in profile.Hotbars) {
+        foreach (var hotbarConfig in context.Hotbars) {
             if (!hotbarConfig.IsVisible) {
                 continue;
             }
@@ -111,6 +120,7 @@ public class HotbarManagerComponent : IDisposable {
         this.pluginInterface.UiBuilder.Draw -= this.windowSystem.Draw;
         this.modStateProvider.ModStateChanged -= this.RebuildCache;
         this.clientState.Login -= this.OnLogin;
+        this.contextService.ContextChanged -= this.OnContextChanged;
         this.windowSystem.RemoveAllWindows();
     }
 }

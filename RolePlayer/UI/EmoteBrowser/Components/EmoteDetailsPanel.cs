@@ -18,6 +18,7 @@ public class EmoteDetailsPanel {
     private ITagManagementService tagManagementService;
     private IGroupManagementService groupManagementService;
     private IConfigurationService configurationService;
+    private IContextManagementService contextService;
     private HotbarManagerComponent hotbarManager;
 
     public EmoteDetailsPanel(
@@ -29,6 +30,7 @@ public class EmoteDetailsPanel {
         ITagManagementService tagManagementService,
         IGroupManagementService groupManagementService,
         IConfigurationService configurationService,
+        IContextManagementService contextService,
         HotbarManagerComponent hotbarManager) {
 
         this.unlockSourceProvider = unlockSourceProvider;
@@ -39,6 +41,7 @@ public class EmoteDetailsPanel {
         this.tagManagementService = tagManagementService;
         this.groupManagementService = groupManagementService;
         this.configurationService = configurationService;
+        this.contextService = contextService;
         this.hotbarManager = hotbarManager;
     }
 
@@ -151,8 +154,8 @@ public class EmoteDetailsPanel {
     private void DrawStaticHotbarAssignment(uint emoteId) {
         ImGui.TextDisabled("Static Hotbars:");
 
-        var profile = this.configurationService.GetCurrentProfile();
-        var manualHotbars = profile.Hotbars.Where(h => h.PopulationMode == HotbarPopulationMode.Manual).ToList();
+        var context = this.contextService.GetCurrentContext();
+        var manualHotbars = context.Hotbars.Where(h => h.PopulationMode == HotbarPopulationMode.Manual).ToList();
 
         if (!manualHotbars.Any()) {
             ImGui.TextDisabled("No manual hotbars available.");

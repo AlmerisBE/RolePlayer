@@ -10,6 +10,7 @@ using System.Linq;
 
 public class EmoteFilterComponent {
     private IConfigurationService configurationService;
+    private IContextManagementService contextService;
     private IGroupManagementService groupManagementService;
     private ITagManagementService tagManagementService;
 
@@ -19,16 +20,19 @@ public class EmoteFilterComponent {
 
     public EmoteFilterComponent(
         IConfigurationService configurationService,
+        IContextManagementService contextService,
         IGroupManagementService groupManagementService,
         ITagManagementService tagManagementService) {
+
         this.configurationService = configurationService;
+        this.contextService = contextService;
         this.groupManagementService = groupManagementService;
         this.tagManagementService = tagManagementService;
     }
 
     public bool Draw(List<string> availableCategories) {
         bool filtersChanged = false;
-        var profile = this.configurationService.GetCurrentProfile();
+        var context = this.contextService.GetCurrentContext();
 
         ImGui.PushFont(UiBuilder.IconFont);
         var filterIconText = FontAwesomeIcon.Filter.ToIconString();
@@ -42,18 +46,18 @@ public class EmoteFilterComponent {
 
         ImGui.SameLine();
 
-        if (profile.ShowFilters) {
+        if (context.ShowFilters) {
             ImGui.PushStyleColor(ImGuiCol.Button, ImGui.GetStyle().Colors[(int)ImGuiCol.ButtonActive]);
         }
 
         ImGui.PushFont(UiBuilder.IconFont);
         if (ImGui.Button(filterIconText)) {
-            profile.ShowFilters = !profile.ShowFilters;
+            context.ShowFilters = !context.ShowFilters;
             this.configurationService.Save();
         }
         ImGui.PopFont();
 
-        if (profile.ShowFilters) {
+        if (context.ShowFilters) {
             ImGui.PopStyleColor();
         }
 
@@ -61,7 +65,7 @@ public class EmoteFilterComponent {
             ImGui.SetTooltip("Toggle Advanced Filters");
         }
 
-        if (profile.ShowFilters) {
+        if (context.ShowFilters) {
             ImGui.Spacing();
             ImGui.Separator();
             ImGui.Spacing();
@@ -71,25 +75,25 @@ public class EmoteFilterComponent {
             ImGui.SameLine();
             ImGui.SetNextItemWidth(150f);
 
-            string currentGroupLabel = profile.CurrentGrouping switch {
+            string currentGroupLabel = context.CurrentGrouping switch {
                 GroupingMode.NativeCategory => "Native Category",
                 GroupingMode.CustomGroup => "Custom Group",
                 _ => "None"
             };
 
             if (ImGui.BeginCombo("##GroupingMode", currentGroupLabel)) {
-                if (ImGui.Selectable("None", profile.CurrentGrouping == GroupingMode.None)) {
-                    profile.CurrentGrouping = GroupingMode.None;
+                if (ImGui.Selectable("None", context.CurrentGrouping == GroupingMode.None)) {
+                    context.CurrentGrouping = GroupingMode.None;
                     this.configurationService.Save();
                     filtersChanged = true;
                 }
-                if (ImGui.Selectable("Native Category", profile.CurrentGrouping == GroupingMode.NativeCategory)) {
-                    profile.CurrentGrouping = GroupingMode.NativeCategory;
+                if (ImGui.Selectable("Native Category", context.CurrentGrouping == GroupingMode.NativeCategory)) {
+                    context.CurrentGrouping = GroupingMode.NativeCategory;
                     this.configurationService.Save();
                     filtersChanged = true;
                 }
-                if (ImGui.Selectable("Custom Group", profile.CurrentGrouping == GroupingMode.CustomGroup)) {
-                    profile.CurrentGrouping = GroupingMode.CustomGroup;
+                if (ImGui.Selectable("Custom Group", context.CurrentGrouping == GroupingMode.CustomGroup)) {
+                    context.CurrentGrouping = GroupingMode.CustomGroup;
                     this.configurationService.Save();
                     filtersChanged = true;
                 }
@@ -97,9 +101,9 @@ public class EmoteFilterComponent {
             }
 
             ImGui.SameLine();
-            bool showModded = profile.ShowModdedOnly;
+            bool showModded = context.ShowModdedOnly;
             if (ImGui.Checkbox("Show Modded Only", ref showModded)) {
-                profile.ShowModdedOnly = showModded;
+                context.ShowModdedOnly = showModded;
                 this.configurationService.Save();
                 filtersChanged = true;
             }
@@ -115,15 +119,15 @@ public class EmoteFilterComponent {
                 bool multiSelectChanged = false;
 
                 ImGui.TableNextColumn();
-                this.DrawMultiSelectCombo("Categories##Combo", availableCategories, profile.SelectedCategories, ref multiSelectChanged);
+                this.DrawMultiSelectCombo("Categories##Combo", availableCategories, context.SelectedCategories, ref multiSelectChanged);
 
                 ImGui.TableNextColumn();
                 var groups = this.groupManagementService.GetGroups().Select(g => g.Name).ToList();
-                this.DrawMultiSelectCombo("Groups##Combo", groups, profile.SelectedGroups, ref multiSelectChanged);
+                this.DrawMultiSelectCombo("Groups##Combo", groups, context.SelectedGroups, ref multiSelectChanged);
 
                 ImGui.TableNextColumn();
                 var tags = this.tagManagementService.GetAvailableTags().ToList();
-                this.DrawMultiSelectCombo("Tags##Combo", tags, profile.SelectedTags, ref multiSelectChanged);
+                this.DrawMultiSelectCombo("Tags##Combo", tags, context.SelectedTags, ref multiSelectChanged);
 
                 if (multiSelectChanged) {
                     this.configurationService.Save();
@@ -178,16 +182,16 @@ public class EmoteFilterComponent {
 
     public Dictionary<string, List<EmoteDisplayData>> Apply(List<EmoteDisplayData> emotesCache) {
         var groupedEmotes = new Dictionary<string, List<EmoteDisplayData>>();
-        var profile = this.configurationService.GetCurrentProfile();
+        var context = this.contextService.GetCurrentContext();
 
         var query = this.SearchQuery.Trim().ToLowerInvariant();
         bool hasSearch = !string.IsNullOrEmpty(query);
-        bool hasCatFilter = profile.SelectedCategories.Count > 0;
-        bool hasGroupFilter = profile.SelectedGroups.Count > 0;
-        bool hasTagFilter = profile.SelectedTags.Count > 0;
+        bool hasCatFilter = context.SelectedCategories.Count > 0;
+        bool hasGroupFilter = context.SelectedGroups.Count > 0;
+        bool hasTagFilter = context.SelectedTags.Count > 0;
 
         foreach (var emote in emotesCache) {
-            if (profile.ShowModdedOnly && !emote.IsModded) {
+            if (context.ShowModdedOnly && !emote.IsModded) {
                 continue;
             }
 
@@ -200,27 +204,27 @@ public class EmoteFilterComponent {
                 }
             }
 
-            if (hasCatFilter && !profile.SelectedCategories.Contains(emote.Category)) {
+            if (hasCatFilter && !context.SelectedCategories.Contains(emote.Category)) {
                 continue;
             }
 
             var customGroup = this.groupManagementService.GetGroupForEmote(emote.Id);
-            if (hasGroupFilter && (string.IsNullOrEmpty(customGroup) || !profile.SelectedGroups.Contains(customGroup))) {
+            if (hasGroupFilter && (string.IsNullOrEmpty(customGroup) || !context.SelectedGroups.Contains(customGroup))) {
                 continue;
             }
 
             if (hasTagFilter) {
                 var tags = this.tagManagementService.GetTagsForEmote(emote.Id);
-                if (!profile.SelectedTags.Overlaps(tags)) {
+                if (!context.SelectedTags.Overlaps(tags)) {
                     continue;
                 }
             }
 
             string groupKey = "All";
-            if (profile.CurrentGrouping == GroupingMode.NativeCategory) {
+            if (context.CurrentGrouping == GroupingMode.NativeCategory) {
                 groupKey = string.IsNullOrEmpty(emote.Category) ? "Uncategorized" : emote.Category;
             }
-            else if (profile.CurrentGrouping == GroupingMode.CustomGroup) {
+            else if (context.CurrentGrouping == GroupingMode.CustomGroup) {
                 groupKey = string.IsNullOrEmpty(customGroup) ? "Ungrouped" : customGroup;
             }
 

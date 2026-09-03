@@ -16,6 +16,7 @@ using System.Numerics;
 
 public class HotbarConfigSubTab {
     private IConfigurationService configService;
+    private IContextManagementService contextService;
     private HotbarManagerComponent hotbarManager;
     private IHotbarResolverService hotbarResolver;
     private ITextureProvider textureProvider;
@@ -28,26 +29,28 @@ public class HotbarConfigSubTab {
 
     public HotbarConfigSubTab(
         IConfigurationService configService,
+        IContextManagementService contextService,
         HotbarManagerComponent hotbarManager,
         IHotbarResolverService hotbarResolver,
         ITextureProvider textureProvider) {
 
         this.configService = configService;
+        this.contextService = contextService;
         this.hotbarManager = hotbarManager;
         this.hotbarResolver = hotbarResolver;
         this.textureProvider = textureProvider;
     }
 
     public void Draw() {
-        var profile = this.configService.GetCurrentProfile();
+        var context = this.contextService.GetCurrentContext();
 
         ImGui.Text("Hotbar Management");
         ImGui.Separator();
         ImGui.Spacing();
 
         if (ImGui.Button("Create New Hotbar", new Vector2(-1, 0))) {
-            var newHotbar = new HotbarConfig { Name = $"Hotbar {profile.Hotbars.Count + 1}" };
-            profile.Hotbars.Add(newHotbar);
+            var newHotbar = new HotbarConfig { Name = $"Hotbar {context.Hotbars.Count + 1}" };
+            context.Hotbars.Add(newHotbar);
             this.selectedHotbar = newHotbar;
             this.configService.Save();
             this.hotbarManager.RefreshWindows();
@@ -55,7 +58,7 @@ public class HotbarConfigSubTab {
 
         ImGui.Spacing();
 
-        if (profile.Hotbars.Count == 0) {
+        if (context.Hotbars.Count == 0) {
             ImGui.TextDisabled("No hotbars created yet.");
             return;
         }
@@ -66,7 +69,7 @@ public class HotbarConfigSubTab {
             ImGui.TableSetupColumn("Emotes", ImGuiTableColumnFlags.WidthFixed, 60f);
             ImGui.TableHeadersRow();
 
-            foreach (var hotbar in profile.Hotbars) {
+            foreach (var hotbar in context.Hotbars) {
                 ImGui.TableNextRow();
 
                 bool isSelected = this.selectedHotbar?.Id == hotbar.Id;
@@ -92,7 +95,7 @@ public class HotbarConfigSubTab {
             return;
         }
 
-        var profile = this.configService.GetCurrentProfile();
+        var context = this.contextService.GetCurrentContext();
         bool configChanged = false;
 
         string closeIcon = FontAwesomeIcon.Times.ToIconString();
@@ -223,10 +226,10 @@ public class HotbarConfigSubTab {
             var categories = this.hotbarManager.GetEmoteCache().Select(e => e.Category).Where(c => !string.IsNullOrEmpty(c)).Distinct().ToList();
             this.DrawMultiSelectCombo("Categories", categories, this.selectedHotbar.SelectedCategories, ref configChanged);
 
-            var groups = profile.EmoteGroups.Select(g => g.Name).ToList();
+            var groups = context.EmoteGroups.Select(g => g.Name).ToList();
             this.DrawMultiSelectCombo("Groups", groups, this.selectedHotbar.SelectedGroups, ref configChanged);
 
-            var tags = profile.AvailableTags.ToList();
+            var tags = context.AvailableTags.ToList();
             this.DrawMultiSelectCombo("Tags", tags, this.selectedHotbar.SelectedTags, ref configChanged);
         }
         else {
@@ -261,8 +264,8 @@ public class HotbarConfigSubTab {
 
             if (ImGui.Button("Yes, Delete", new Vector2(120, 0))) {
                 if (this.hotbarToDelete != null) {
-                    var profile = this.configService.GetCurrentProfile();
-                    profile.Hotbars.Remove(this.hotbarToDelete);
+                    var context = this.contextService.GetCurrentContext();
+                    context.Hotbars.Remove(this.hotbarToDelete);
                     if (this.selectedHotbar == this.hotbarToDelete) {
                         this.selectedHotbar = null;
                     }
