@@ -14,7 +14,8 @@ using System.Collections.Generic;
 public class EmoteExecutionProvider : IEmoteExecutionService {
     private const uint EmoteWindowCommandId = 17;
 
-    private readonly HashSet<uint> emotesWithVariations = new() { 50, 52, 53 };
+    private readonly HashSet<uint> emotesWithVariations = new() { 50, 52, 53, 174 };
+    private Dictionary<uint, DateTime> lastExecutionTime = new();
 
     private IDataManager dataManager;
     private IPlayerStateProvider playerStateProvider;
@@ -44,11 +45,17 @@ public class EmoteExecutionProvider : IEmoteExecutionService {
             return;
         }
 
-        // Logique d'interception pour les variations
-        if (this.emotesWithVariations.Contains(emoteId) && this.playerStateProvider.IsEmoteActive(emoteId)) {
-            this.logger.Debug($"Emote {emoteId} is already active. Injecting /cpose variation command.");
-            this.ExecuteCommand("/cpose");
-            return;
+        // Évaluation de l'état actif ou d'un spam-clic durant la transition d'animation
+        if (this.emotesWithVariations.Contains(emoteId)) {
+            bool isActive = this.playerStateProvider.IsEmoteActive(emoteId);
+            bool isSpam = this.lastExecutionTime.TryGetValue(emoteId, out var lastTime) && (DateTime.Now - lastTime).TotalSeconds < 1.5;
+
+            if (isActive || isSpam) {
+                this.logger.Debug($"Emote {emoteId} is already active or transitioning. Injecting /cpose variation command.");
+                this.ExecuteCommand("/cpose");
+                this.lastExecutionTime[emoteId] = DateTime.Now;
+                return;
+            }
         }
 
         var textCommandRef = emoteRow.Value.TextCommand;
@@ -62,6 +69,7 @@ public class EmoteExecutionProvider : IEmoteExecutionService {
         }
 
         this.ExecuteCommand($"{command} motion");
+        this.lastExecutionTime[emoteId] = DateTime.Now;
     }
 
     private unsafe void ExecuteCommand(string commandText) {

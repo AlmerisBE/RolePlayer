@@ -159,8 +159,22 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
                                 try {
                                     var lookup = new GameIconLookup { IconId = emote.IconId, HiRes = false };
                                     var iconWrap = this.textureProvider.GetFromGameIcon(lookup).GetWrapOrDefault();
+
                                     if (iconWrap != null) {
+                                        var cursorPos = ImGui.GetCursorScreenPos();
                                         ImGui.Image(iconWrap.Handle, new Vector2(24, 24));
+
+                                        if (emote.HasVariations) {
+                                            var drawList = ImGui.GetWindowDrawList();
+                                            ImGui.PushFont(UiBuilder.IconFont);
+                                            var indicatorText = FontAwesomeIcon.Sync.ToIconString();
+                                            var textSize = ImGui.CalcTextSize(indicatorText);
+                                            ImGui.PopFont();
+
+                                            var indicatorPos = new Vector2(cursorPos.X + 24f - textSize.X - 1f, cursorPos.Y + 24f - textSize.Y - 1f);
+                                            drawList.AddText(UiBuilder.IconFont, ImGui.GetFontSize(), new Vector2(indicatorPos.X + 1, indicatorPos.Y + 1), 0xFF000000, indicatorText);
+                                            drawList.AddText(UiBuilder.IconFont, ImGui.GetFontSize(), indicatorPos, 0xFF40DD40, indicatorText);
+                                        }
                                     }
                                 }
                                 catch (IconNotFoundException) { }
