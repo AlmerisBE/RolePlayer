@@ -24,7 +24,8 @@ public sealed class RolePlayerPlugin : IDalamudPlugin {
         IDataManager dataManager,
         IObjectTable objectTable,
         IGameInteropProvider interopProvider,
-        ITextureProvider textureProvider) {
+        ITextureProvider textureProvider,
+        IFramework framework) {
 
         this.pluginInterface = pluginInterface;
         this.windowSystem = new WindowSystem("RolePlayer");
@@ -40,6 +41,7 @@ public sealed class RolePlayerPlugin : IDalamudPlugin {
         services.AddSingleton(objectTable);
         services.AddSingleton(interopProvider);
         services.AddSingleton(textureProvider);
+        services.AddSingleton(framework);
 
         services.AddPluginFeatures();
 
