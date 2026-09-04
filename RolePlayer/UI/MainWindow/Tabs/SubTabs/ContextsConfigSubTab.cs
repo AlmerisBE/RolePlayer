@@ -3,12 +3,14 @@
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using RolePlayer.Core.Configuration.Contracts;
+using RolePlayer.UI.Localization.Contracts;
 using System;
 using System.Linq;
 using System.Numerics;
 
 public class ContextsConfigSubTab {
     private IContextManagementService contextService;
+    private ILocalizationService localization;
 
     private string newContextName = string.Empty;
     private Guid cloneSourceId = Guid.Empty;
@@ -17,12 +19,13 @@ public class ContextsConfigSubTab {
     private Guid contextToDelete = Guid.Empty;
     private bool isDeleteDialogOpen = false;
 
-    public ContextsConfigSubTab(IContextManagementService contextService) {
+    public ContextsConfigSubTab(IContextManagementService contextService, ILocalizationService localization) {
         this.contextService = contextService;
+        this.localization = localization;
     }
 
     public void Draw() {
-        ImGui.Text("Create New Context");
+        ImGui.Text(this.localization.Translate("config_ctx_create"));
 
         float availableWidth = ImGui.GetContentRegionAvail().X;
         float btnWidth = 32f;
@@ -30,20 +33,16 @@ public class ContextsConfigSubTab {
         float remainingWidth = availableWidth - btnWidth - (spacing * 2);
 
         ImGui.SetNextItemWidth(remainingWidth * 0.5f);
-        ImGui.InputTextWithHint("##NewContextName", "Context Name", ref this.newContextName, 64);
+        ImGui.InputTextWithHint("##NewContextName", this.localization.Translate("config_ctx_name_hint"), ref this.newContextName, 64);
         ImGui.SameLine();
 
         ImGui.SetNextItemWidth(remainingWidth * 0.5f);
-        if (ImGui.BeginCombo("##CloneSource", this.cloneSourceId == Guid.Empty ? "Clone from (None)" : this.contextService.GetAllContexts().First(c => c.Id == this.cloneSourceId).Name)) {
-            if (ImGui.Selectable("None (Empty Context)", this.cloneSourceId == Guid.Empty)) {
-                this.cloneSourceId = Guid.Empty;
-            }
+        if (ImGui.BeginCombo("##CloneSource", this.cloneSourceId == Guid.Empty ? this.localization.Translate("config_ctx_clone_none") : this.contextService.GetAllContexts().First(c => c.Id == this.cloneSourceId).Name)) {
+            if (ImGui.Selectable(this.localization.Translate("config_ctx_clone_empty"), this.cloneSourceId == Guid.Empty)) this.cloneSourceId = Guid.Empty;
 
             ImGui.Separator();
             foreach (var ctx in this.contextService.GetAllContexts()) {
-                if (ImGui.Selectable(ctx.Name, this.cloneSourceId == ctx.Id)) {
-                    this.cloneSourceId = ctx.Id;
-                }
+                if (ImGui.Selectable(ctx.Name, this.cloneSourceId == ctx.Id)) this.cloneSourceId = ctx.Id;
             }
             ImGui.EndCombo();
         }
@@ -56,9 +55,7 @@ public class ContextsConfigSubTab {
             this.cloneSourceId = Guid.Empty;
         }
         ImGui.PopFont();
-        if (ImGui.IsItemHovered()) {
-            ImGui.SetTooltip("Add Context");
-        }
+        if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_ctx_tooltip_add"));
 
         ImGui.Spacing();
         ImGui.Separator();
@@ -68,19 +65,16 @@ public class ContextsConfigSubTab {
         var currentId = this.contextService.GetCurrentContext().Id;
 
         if (ImGui.BeginTable("ContextsTable", 3, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit)) {
-            ImGui.TableSetupColumn("Active", ImGuiTableColumnFlags.WidthFixed, 40f);
-            ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch);
-            ImGui.TableSetupColumn("Actions", ImGuiTableColumnFlags.WidthFixed, 75f);
+            ImGui.TableSetupColumn(this.localization.Translate("config_ctx_col_active"), ImGuiTableColumnFlags.WidthFixed, 40f);
+            ImGui.TableSetupColumn(this.localization.Translate("config_common_name"), ImGuiTableColumnFlags.WidthStretch);
+            ImGui.TableSetupColumn(this.localization.Translate("config_common_actions"), ImGuiTableColumnFlags.WidthFixed, 75f);
             ImGui.TableHeadersRow();
 
             foreach (var ctx in contexts) {
                 ImGui.TableNextRow();
 
                 ImGui.TableNextColumn();
-                // Suppression du texte, seul le bouton radio est affiché
-                if (ImGui.RadioButton($"##SelCtx_{ctx.Id}", currentId == ctx.Id)) {
-                    this.contextService.SwitchContext(ctx.Id);
-                }
+                if (ImGui.RadioButton($"##SelCtx_{ctx.Id}", currentId == ctx.Id)) this.contextService.SwitchContext(ctx.Id);
 
                 if (this.editingContext == ctx.Id.ToString()) {
                     ImGui.TableNextColumn();
@@ -94,21 +88,15 @@ public class ContextsConfigSubTab {
                         this.editingContext = string.Empty;
                     }
                     ImGui.SameLine();
-                    if (ImGui.Button($"{FontAwesomeIcon.Times.ToIconString()}##Cancel_{ctx.Id}")) {
-                        this.editingContext = string.Empty;
-                    }
+                    if (ImGui.Button($"{FontAwesomeIcon.Times.ToIconString()}##Cancel_{ctx.Id}")) this.editingContext = string.Empty;
 
                     ImGui.PopFont();
                 }
                 else {
                     ImGui.TableNextColumn();
                     ImGui.AlignTextToFramePadding();
-                    if (currentId == ctx.Id) {
-                        ImGui.TextColored(new Vector4(0.4f, 0.8f, 0.4f, 1.0f), ctx.Name);
-                    }
-                    else {
-                        ImGui.Text(ctx.Name);
-                    }
+                    if (currentId == ctx.Id) ImGui.TextColored(new Vector4(0.4f, 0.8f, 0.4f, 1.0f), ctx.Name);
+                    else ImGui.Text(ctx.Name);
 
                     ImGui.TableNextColumn();
                     ImGui.PushFont(UiBuilder.IconFont);
@@ -137,26 +125,24 @@ public class ContextsConfigSubTab {
 
     private void DrawDeleteConfirmationModal() {
         if (this.isDeleteDialogOpen) {
-            ImGui.OpenPopup("Delete Context Confirmation");
+            ImGui.OpenPopup(this.localization.Translate("config_ctx_del_title"));
             this.isDeleteDialogOpen = false;
         }
 
-        if (ImGui.BeginPopupModal("Delete Context Confirmation", ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoSavedSettings)) {
+        if (ImGui.BeginPopupModal(this.localization.Translate("config_ctx_del_title"), ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoSavedSettings)) {
             var ctxName = this.contextService.GetAllContexts().FirstOrDefault(c => c.Id == this.contextToDelete)?.Name ?? "Unknown";
-            ImGui.Text($"Are you sure you want to delete the context '{ctxName}'?");
-            ImGui.TextColored(new Vector4(0.8f, 0.2f, 0.2f, 1.0f), "All hotbars, tags, and groups within this context will be permanently lost.");
+            ImGui.Text(this.localization.Translate("config_ctx_del_desc", ctxName));
+            ImGui.TextColored(new Vector4(0.8f, 0.2f, 0.2f, 1.0f), this.localization.Translate("config_ctx_del_warn"));
             ImGui.Spacing();
             ImGui.Separator();
             ImGui.Spacing();
 
-            if (ImGui.Button("Yes, Delete", new Vector2(120, 0))) {
+            if (ImGui.Button(this.localization.Translate("config_common_yes_delete"), new Vector2(120, 0))) {
                 this.contextService.DeleteContext(this.contextToDelete);
                 ImGui.CloseCurrentPopup();
             }
             ImGui.SameLine();
-            if (ImGui.Button("Cancel", new Vector2(120, 0))) {
-                ImGui.CloseCurrentPopup();
-            }
+            if (ImGui.Button(this.localization.Translate("config_common_cancel"), new Vector2(120, 0))) ImGui.CloseCurrentPopup();
 
             ImGui.EndPopup();
         }

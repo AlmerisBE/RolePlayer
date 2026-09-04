@@ -35,9 +35,9 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
     private IGroupManagementService groupManagementService;
     private ITagManagementService tagManagementService;
     private HotbarManagerComponent hotbarManager;
-
     private EmoteFilterComponent filterComponent;
     private EmoteDetailsPanel detailsPanel;
+    private ILocalizationService localization;
 
     private List<EmoteDisplayData> emotesCache = new();
     private List<string> availableCategories = new();
@@ -46,7 +46,6 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
     private bool needsRefresh = false;
     private bool needsFilterApply = false;
     private bool isRefreshing = false;
-    private ILocalizationService localization;
 
     public string TabName => this.localization.Translate("browser_tab_all_emotes");
     public int SortOrder => 0;
@@ -100,9 +99,7 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
             this.LoadEmotesAsync();
         }
 
-        if (!this.emotesCache.Any() && !this.isRefreshing) {
-            this.LoadEmotesAsync();
-        }
+        if (!this.emotesCache.Any() && !this.isRefreshing) this.LoadEmotesAsync();
 
         bool filtersChanged = this.filterComponent.Draw(this.availableCategories);
 
@@ -118,16 +115,14 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
             foreach (var groupKvp in this.groupedEmotes.OrderBy(k => k.Key)) {
                 bool isNodeOpen = true;
 
-                if (context.CurrentGrouping != GroupingMode.None) {
-                    isNodeOpen = ImGui.CollapsingHeader($"{groupKvp.Key} ({groupKvp.Value.Count})###Header_{groupKvp.Key}", ImGuiTreeNodeFlags.DefaultOpen);
-                }
+                if (context.CurrentGrouping != GroupingMode.None) isNodeOpen = ImGui.CollapsingHeader($"{groupKvp.Key} ({groupKvp.Value.Count})###Header_{groupKvp.Key}", ImGuiTreeNodeFlags.DefaultOpen);
 
                 if (isNodeOpen) {
                     if (ImGui.BeginTable($"AllEmotesTable_{groupKvp.Key}", 4, tableFlags)) {
-                        ImGui.TableSetupColumn("Icon", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoSort, 32f);
-                        ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch, 0.4f);
-                        ImGui.TableSetupColumn("Command", ImGuiTableColumnFlags.WidthStretch, 0.4f);
-                        ImGui.TableSetupColumn("Action", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoSort, 40f);
+                        ImGui.TableSetupColumn(this.localization.Translate("browser_col_icon"), ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoSort, 32f);
+                        ImGui.TableSetupColumn(this.localization.Translate("browser_col_name"), ImGuiTableColumnFlags.WidthStretch, 0.4f);
+                        ImGui.TableSetupColumn(this.localization.Translate("browser_col_command"), ImGuiTableColumnFlags.WidthStretch, 0.4f);
+                        ImGui.TableSetupColumn(this.localization.Translate("browser_col_action"), ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoSort, 40f);
                         ImGui.TableHeadersRow();
 
                         var sortSpecs = ImGui.TableGetSortSpecs();
@@ -153,9 +148,7 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
                             }
 
                             ImGui.TableNextColumn();
-                            if (ImGui.Selectable($"##select_{emote.Id}", isSelected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowItemOverlap, new Vector2(0, 24))) {
-                                this.selectionState.SelectedEmote = isSelected ? null : emote;
-                            }
+                            if (ImGui.Selectable($"##select_{emote.Id}", isSelected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowItemOverlap, new Vector2(0, 24))) this.selectionState.SelectedEmote = isSelected ? null : emote;
 
                             this.DrawContextMenu(emote, context);
 
@@ -195,29 +188,20 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
                             ImGui.AlignTextToFramePadding();
                             var commandText = emote.LocalizedCommand;
 
-                            if (this.clientState.ClientLanguage != ClientLanguage.English && !string.IsNullOrEmpty(emote.EnglishCommand) && emote.EnglishCommand != emote.LocalizedCommand) {
-                                commandText += $" / {emote.EnglishCommand}";
-                            }
+                            if (this.clientState.ClientLanguage != ClientLanguage.English && !string.IsNullOrEmpty(emote.EnglishCommand) && emote.EnglishCommand != emote.LocalizedCommand) commandText += $" / {emote.EnglishCommand}";
 
                             ImGui.Text(commandText);
 
                             ImGui.TableNextColumn();
                             if (emote.IsUnlocked) {
                                 ImGui.PushFont(UiBuilder.IconFont);
-                                if (ImGui.Button($"{FontAwesomeIcon.Play.ToIconString()}##{emote.Id}", new Vector2(-1, 24))) {
-                                    this.executionService.ExecuteEmote(emote.Id);
-                                }
-
+                                if (ImGui.Button($"{FontAwesomeIcon.Play.ToIconString()}##{emote.Id}", new Vector2(-1, 24))) this.executionService.ExecuteEmote(emote.Id);
                                 ImGui.PopFont();
 
-                                if (ImGui.IsItemHovered()) {
-                                    ImGui.SetTooltip("Execute Emote");
-                                }
+                                if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("browser_ctx_execute"));
                             }
 
-                            if (hasCustomColor) {
-                                ImGui.PopStyleColor();
-                            }
+                            if (hasCustomColor) ImGui.PopStyleColor();
                         }
                         ImGui.EndTable();
                     }
@@ -301,9 +285,7 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
     }
 
     private void LoadEmotesAsync() {
-        if (!this.playerStateProvider.IsPlayerValid) {
-            return;
-        }
+        if (!this.playerStateProvider.IsPlayerValid) return;
 
         this.isRefreshing = true;
         Task.Run(() => {
@@ -317,9 +299,7 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
                     emote.IsModded = !string.IsNullOrEmpty(this.modStateProvider.GetModNameModifyingEmote(emote.Id));
 
                     newCache.Add(emote);
-                    if (!string.IsNullOrEmpty(emote.Category)) {
-                        uniqueCategories.Add(emote.Category);
-                    }
+                    if (!string.IsNullOrEmpty(emote.Category)) uniqueCategories.Add(emote.Category);
                 }
 
                 this.emotesCache = newCache;

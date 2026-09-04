@@ -39,5 +39,10 @@
   "browser_details_remove": "Remove",
   "browser_details_select_tag": "Select a tag to add...",
   "browser_details_no_available_tags": "No available tags...",
-  "browser_details_debug": "Debug to Console"
+  "browser_details_debug": "Debug to Console",
+  "browser_col_icon": "Icon",
+  "browser_col_name": "Name",
+  "browser_col_command": "Command",
+  "browser_col_action": "Action",
+  "browser_col_tag": "Tag"
 }

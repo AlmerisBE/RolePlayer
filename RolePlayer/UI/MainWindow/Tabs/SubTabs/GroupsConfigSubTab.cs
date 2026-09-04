@@ -4,11 +4,13 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using RolePlayer.Core.MetaData.Models;
 using RolePlayer.UI.EmoteBrowser.Contracts;
+using RolePlayer.UI.Localization.Contracts;
 using System.Linq;
 using System.Numerics;
 
 public class GroupsConfigSubTab {
     private IGroupManagementService groupService;
+    private ILocalizationService localization;
 
     private string newGroupName = string.Empty;
     private string newGroupDesc = string.Empty;
@@ -20,12 +22,13 @@ public class GroupsConfigSubTab {
     private string groupToDelete = string.Empty;
     private bool isDeleteDialogOpen = false;
 
-    public GroupsConfigSubTab(IGroupManagementService groupService) {
+    public GroupsConfigSubTab(IGroupManagementService groupService, ILocalizationService localization) {
         this.groupService = groupService;
+        this.localization = localization;
     }
 
     public void Draw() {
-        ImGui.Text("Create New Group");
+        ImGui.Text(this.localization.Translate("config_grp_create"));
 
         float availableWidth = ImGui.GetContentRegionAvail().X;
         float buttonWidth = 32f;
@@ -36,11 +39,11 @@ public class GroupsConfigSubTab {
         float descWidth = remainingWidth * 0.65f;
 
         ImGui.SetNextItemWidth(nameWidth);
-        ImGui.InputTextWithHint("##NewGroup", "Group Name", ref this.newGroupName, 64);
+        ImGui.InputTextWithHint("##NewGroup", this.localization.Translate("config_grp_name_hint"), ref this.newGroupName, 64);
         ImGui.SameLine();
 
         ImGui.SetNextItemWidth(descWidth);
-        ImGui.InputTextWithHint("##NewDesc", "Description", ref this.newGroupDesc, 256);
+        ImGui.InputTextWithHint("##NewDesc", this.localization.Translate("config_grp_desc_hint"), ref this.newGroupDesc, 256);
         ImGui.SameLine();
 
         ImGui.PushFont(UiBuilder.IconFont);
@@ -50,24 +53,20 @@ public class GroupsConfigSubTab {
             this.newGroupDesc = string.Empty;
         }
         ImGui.PopFont();
-        if (ImGui.IsItemHovered()) {
-            ImGui.SetTooltip("Add Group");
-        }
+        if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_grp_tooltip_add"));
 
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
 
         var groups = this.groupService.GetGroups().ToList();
-        if (groups.Count == 0) {
-            return;
-        }
+        if (groups.Count == 0) return;
 
         if (ImGui.BeginTable("GroupsTable", 4, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit)) {
-            ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthFixed, 150f);
-            ImGui.TableSetupColumn("Description", ImGuiTableColumnFlags.WidthStretch);
-            ImGui.TableSetupColumn("Emotes", ImGuiTableColumnFlags.WidthFixed, 50f);
-            ImGui.TableSetupColumn("Actions", ImGuiTableColumnFlags.WidthFixed, 75f);
+            ImGui.TableSetupColumn(this.localization.Translate("config_common_name"), ImGuiTableColumnFlags.WidthFixed, 150f);
+            ImGui.TableSetupColumn(this.localization.Translate("config_grp_col_desc"), ImGuiTableColumnFlags.WidthStretch);
+            ImGui.TableSetupColumn(this.localization.Translate("config_hb_table_emotes"), ImGuiTableColumnFlags.WidthFixed, 50f);
+            ImGui.TableSetupColumn(this.localization.Translate("config_common_actions"), ImGuiTableColumnFlags.WidthFixed, 75f);
             ImGui.TableHeadersRow();
 
             foreach (var group in groups) {
@@ -93,9 +92,7 @@ public class GroupsConfigSubTab {
                         this.editingGroup = string.Empty;
                     }
                     ImGui.SameLine();
-                    if (ImGui.Button($"{FontAwesomeIcon.Times.ToIconString()}##Cancel_{group.Name}")) {
-                        this.editingGroup = string.Empty;
-                    }
+                    if (ImGui.Button($"{FontAwesomeIcon.Times.ToIconString()}##Cancel_{group.Name}")) this.editingGroup = string.Empty;
 
                     ImGui.PopFont();
                 }
@@ -137,25 +134,23 @@ public class GroupsConfigSubTab {
 
     private void DrawDeleteConfirmationModal() {
         if (this.isDeleteDialogOpen) {
-            ImGui.OpenPopup("Delete Group Confirmation");
+            ImGui.OpenPopup(this.localization.Translate("config_grp_del_title"));
             this.isDeleteDialogOpen = false;
         }
 
-        if (ImGui.BeginPopupModal("Delete Group Confirmation", ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoSavedSettings)) {
-            ImGui.Text($"Are you sure you want to delete the group '{this.groupToDelete}'?");
-            ImGui.TextColored(new Vector4(0.8f, 0.2f, 0.2f, 1.0f), "This will remove the group assignment from all associated emotes.");
+        if (ImGui.BeginPopupModal(this.localization.Translate("config_grp_del_title"), ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoSavedSettings)) {
+            ImGui.Text(this.localization.Translate("config_grp_del_desc", this.groupToDelete));
+            ImGui.TextColored(new Vector4(0.8f, 0.2f, 0.2f, 1.0f), this.localization.Translate("config_grp_del_warn"));
             ImGui.Spacing();
             ImGui.Separator();
             ImGui.Spacing();
 
-            if (ImGui.Button("Yes, Delete", new Vector2(120, 0))) {
+            if (ImGui.Button(this.localization.Translate("config_common_yes_delete"), new Vector2(120, 0))) {
                 this.groupService.DeleteGroup(this.groupToDelete);
                 ImGui.CloseCurrentPopup();
             }
             ImGui.SameLine();
-            if (ImGui.Button("Cancel", new Vector2(120, 0))) {
-                ImGui.CloseCurrentPopup();
-            }
+            if (ImGui.Button(this.localization.Translate("config_common_cancel"), new Vector2(120, 0))) ImGui.CloseCurrentPopup();
 
             ImGui.EndPopup();
         }

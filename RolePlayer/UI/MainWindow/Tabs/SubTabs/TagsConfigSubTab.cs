@@ -3,11 +3,13 @@
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using RolePlayer.UI.EmoteBrowser.Contracts;
+using RolePlayer.UI.Localization.Contracts;
 using System.Linq;
 using System.Numerics;
 
 public class TagsConfigSubTab {
     private ITagManagementService tagService;
+    private ILocalizationService localization;
 
     private string newTagName = string.Empty;
 
@@ -17,19 +19,20 @@ public class TagsConfigSubTab {
     private string tagToDelete = string.Empty;
     private bool isDeleteDialogOpen = false;
 
-    public TagsConfigSubTab(ITagManagementService tagService) {
+    public TagsConfigSubTab(ITagManagementService tagService, ILocalizationService localization) {
         this.tagService = tagService;
+        this.localization = localization;
     }
 
     public void Draw() {
-        ImGui.Text("Create New Tag");
+        ImGui.Text(this.localization.Translate("config_tag_create"));
 
         float availableWidth = ImGui.GetContentRegionAvail().X;
         float btnWidth = 32f;
         float spacing = ImGui.GetStyle().ItemSpacing.X;
 
         ImGui.SetNextItemWidth(availableWidth - btnWidth - spacing);
-        ImGui.InputTextWithHint("##NewTag", "Tag Name", ref this.newTagName, 32);
+        ImGui.InputTextWithHint("##NewTag", this.localization.Translate("config_tag_name_hint"), ref this.newTagName, 32);
         ImGui.SameLine();
 
         ImGui.PushFont(UiBuilder.IconFont);
@@ -38,23 +41,19 @@ public class TagsConfigSubTab {
             this.newTagName = string.Empty;
         }
         ImGui.PopFont();
-        if (ImGui.IsItemHovered()) {
-            ImGui.SetTooltip("Add Tag");
-        }
+        if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_tag_tooltip_add"));
 
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
 
         var tags = this.tagService.GetAvailableTags().ToList();
-        if (tags.Count == 0) {
-            return;
-        }
+        if (tags.Count == 0) return;
 
         if (ImGui.BeginTable("TagsTable", 3, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit)) {
-            ImGui.TableSetupColumn("Tag Name", ImGuiTableColumnFlags.WidthStretch);
-            ImGui.TableSetupColumn("Emotes", ImGuiTableColumnFlags.WidthFixed, 50f);
-            ImGui.TableSetupColumn("Actions", ImGuiTableColumnFlags.WidthFixed, 75f);
+            ImGui.TableSetupColumn(this.localization.Translate("config_tag_col_name"), ImGuiTableColumnFlags.WidthStretch);
+            ImGui.TableSetupColumn(this.localization.Translate("config_hb_table_emotes"), ImGuiTableColumnFlags.WidthFixed, 50f);
+            ImGui.TableSetupColumn(this.localization.Translate("config_common_actions"), ImGuiTableColumnFlags.WidthFixed, 75f);
             ImGui.TableHeadersRow();
 
             foreach (var tag in tags) {
@@ -76,9 +75,7 @@ public class TagsConfigSubTab {
                         this.editingTag = string.Empty;
                     }
                     ImGui.SameLine();
-                    if (ImGui.Button($"{FontAwesomeIcon.Times.ToIconString()}##Cancel_{tag}")) {
-                        this.editingTag = string.Empty;
-                    }
+                    if (ImGui.Button($"{FontAwesomeIcon.Times.ToIconString()}##Cancel_{tag}")) this.editingTag = string.Empty;
 
                     ImGui.PopFont();
                 }
@@ -115,25 +112,23 @@ public class TagsConfigSubTab {
 
     private void DrawDeleteConfirmationModal() {
         if (this.isDeleteDialogOpen) {
-            ImGui.OpenPopup("Delete Tag Confirmation");
+            ImGui.OpenPopup(this.localization.Translate("config_tag_del_title"));
             this.isDeleteDialogOpen = false;
         }
 
-        if (ImGui.BeginPopupModal("Delete Tag Confirmation", ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoSavedSettings)) {
-            ImGui.Text($"Are you sure you want to delete the tag '{this.tagToDelete}'?");
-            ImGui.TextColored(new Vector4(0.8f, 0.2f, 0.2f, 1.0f), "This will remove the tag from all associated emotes.");
+        if (ImGui.BeginPopupModal(this.localization.Translate("config_tag_del_title"), ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoSavedSettings)) {
+            ImGui.Text(this.localization.Translate("config_tag_del_desc", this.tagToDelete));
+            ImGui.TextColored(new Vector4(0.8f, 0.2f, 0.2f, 1.0f), this.localization.Translate("config_tag_del_warn"));
             ImGui.Spacing();
             ImGui.Separator();
             ImGui.Spacing();
 
-            if (ImGui.Button("Yes, Delete", new Vector2(120, 0))) {
+            if (ImGui.Button(this.localization.Translate("config_common_yes_delete"), new Vector2(120, 0))) {
                 this.tagService.DeleteGlobalTag(this.tagToDelete);
                 ImGui.CloseCurrentPopup();
             }
             ImGui.SameLine();
-            if (ImGui.Button("Cancel", new Vector2(120, 0))) {
-                ImGui.CloseCurrentPopup();
-            }
+            if (ImGui.Button(this.localization.Translate("config_common_cancel"), new Vector2(120, 0))) ImGui.CloseCurrentPopup();
 
             ImGui.EndPopup();
         }

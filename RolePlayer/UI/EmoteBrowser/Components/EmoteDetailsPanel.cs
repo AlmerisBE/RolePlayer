@@ -161,12 +161,8 @@ public class EmoteDetailsPanel {
         foreach (var hotbar in manualHotbars) {
             bool isInHotbar = hotbar.ManualEmoteIds.Contains(emoteId);
             if (ImGui.Checkbox($"{hotbar.Name}##hb_{hotbar.Id}", ref isInHotbar)) {
-                if (isInHotbar) {
-                    hotbar.ManualEmoteIds.Add(emoteId);
-                }
-                else {
-                    hotbar.ManualEmoteIds.Remove(emoteId);
-                }
+                if (isInHotbar) hotbar.ManualEmoteIds.Add(emoteId);
+                else hotbar.ManualEmoteIds.Remove(emoteId);
 
                 hotbarChanged = true;
             }
@@ -179,9 +175,9 @@ public class EmoteDetailsPanel {
     }
 
     private void DrawGroupManagement(uint emoteId) {
-        ImGui.TextDisabled("Group Assignment:");
+        ImGui.TextDisabled(this.localization.Translate("browser_details_group_assignment"));
         var currentGroup = this.groupManagementService.GetGroupForEmote(emoteId);
-        var previewValue = string.IsNullOrEmpty(currentGroup) ? "None" : currentGroup;
+        var previewValue = string.IsNullOrEmpty(currentGroup) ? this.localization.Translate("browser_none") : currentGroup;
 
         string? groupToAssign = null;
         bool removeGroup = false;
@@ -193,47 +189,37 @@ public class EmoteDetailsPanel {
 
             ImGui.SetNextItemWidth(-1f);
             if (ImGui.BeginCombo("##GroupCombo", previewValue)) {
-                if (ImGui.Selectable("None", string.IsNullOrEmpty(currentGroup))) {
-                    removeGroup = true;
-                }
+                if (ImGui.Selectable(this.localization.Translate("browser_none"), string.IsNullOrEmpty(currentGroup))) removeGroup = true;
 
                 foreach (var group in this.groupManagementService.GetGroups()) {
                     var isSelected = group.Name == currentGroup;
-                    if (ImGui.Selectable(group.Name, isSelected)) {
-                        groupToAssign = group.Name;
-                    }
+                    if (ImGui.Selectable(group.Name, isSelected)) groupToAssign = group.Name;
 
-                    if (isSelected) {
-                        ImGui.SetItemDefaultFocus();
-                    }
+                    if (isSelected) ImGui.SetItemDefaultFocus();
                 }
                 ImGui.EndCombo();
             }
             ImGui.EndTable();
         }
 
-        if (removeGroup) {
-            this.groupManagementService.RemoveEmoteFromGroup(emoteId);
-        }
-        else if (groupToAssign != null) {
-            this.groupManagementService.AssignEmoteToGroup(emoteId, groupToAssign);
-        }
+        if (removeGroup) this.groupManagementService.RemoveEmoteFromGroup(emoteId);
+        else if (groupToAssign != null) this.groupManagementService.AssignEmoteToGroup(emoteId, groupToAssign);
     }
 
     private void DrawTagManagement(uint emoteId) {
-        ImGui.TextDisabled("Assigned Tags:");
+        ImGui.TextDisabled(this.localization.Translate("browser_details_assigned_tags"));
 
         var currentTags = this.tagManagementService.GetTagsForEmote(emoteId).ToList();
         string? tagToRemove = null;
 
         if (ImGui.BeginTable("TagsTable", 2, ImGuiTableFlags.BordersInnerH | ImGuiTableFlags.RowBg)) {
-            ImGui.TableSetupColumn("Tag", ImGuiTableColumnFlags.WidthStretch);
-            ImGui.TableSetupColumn("Action", ImGuiTableColumnFlags.WidthFixed, 60f);
+            ImGui.TableSetupColumn(this.localization.Translate("browser_col_tag"), ImGuiTableColumnFlags.WidthStretch);
+            ImGui.TableSetupColumn(this.localization.Translate("browser_col_action"), ImGuiTableColumnFlags.WidthFixed, 60f);
 
             if (currentTags.Count == 0) {
                 ImGui.TableNextRow();
                 ImGui.TableNextColumn();
-                ImGui.TextDisabled("No tags assigned");
+                ImGui.TextDisabled(this.localization.Translate("browser_details_no_assigned_tags"));
                 ImGui.TableNextColumn();
             }
 
@@ -244,16 +230,12 @@ public class EmoteDetailsPanel {
                 ImGui.TextUnformatted(tag);
 
                 ImGui.TableNextColumn();
-                if (ImGui.Button($"Remove##{tag}", new Vector2(-1f, 0))) {
-                    tagToRemove = tag;
-                }
+                if (ImGui.Button($"{this.localization.Translate("browser_details_remove")}##{tag}", new Vector2(-1f, 0))) tagToRemove = tag;
             }
             ImGui.EndTable();
         }
 
-        if (tagToRemove != null) {
-            this.tagManagementService.RemoveTagFromEmote(emoteId, tagToRemove);
-        }
+        if (tagToRemove != null) this.tagManagementService.RemoveTagFromEmote(emoteId, tagToRemove);
 
         ImGui.Spacing();
 
@@ -267,28 +249,21 @@ public class EmoteDetailsPanel {
 
             ImGui.SetNextItemWidth(-1f);
             if (availableTags.Count > 0) {
-                if (ImGui.BeginCombo("##addTagCombo", "Select a tag to add...")) {
+                if (ImGui.BeginCombo("##addTagCombo", this.localization.Translate("browser_details_select_tag"))) {
                     foreach (var tag in availableTags) {
-                        if (ImGui.Selectable(tag)) {
-                            tagToAdd = tag;
-                        }
+                        if (ImGui.Selectable(tag)) tagToAdd = tag;
                     }
                     ImGui.EndCombo();
                 }
             }
             else {
                 ImGui.BeginDisabled();
-                if (ImGui.BeginCombo("##addTagCombo", "No available tags...")) {
-                    ImGui.EndCombo();
-                }
-
+                if (ImGui.BeginCombo("##addTagCombo", this.localization.Translate("browser_details_no_available_tags"))) ImGui.EndCombo();
                 ImGui.EndDisabled();
             }
             ImGui.EndTable();
         }
 
-        if (tagToAdd != null) {
-            this.tagManagementService.AddTagToEmote(emoteId, tagToAdd);
-        }
+        if (tagToAdd != null) this.tagManagementService.AddTagToEmote(emoteId, tagToAdd);
     }
 }
