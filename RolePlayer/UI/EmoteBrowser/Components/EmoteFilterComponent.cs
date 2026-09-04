@@ -239,13 +239,10 @@ public class EmoteFilterComponent {
                 if (!context.SelectedTags.Overlaps(tags)) continue;
             }
 
-            string groupKey = "All";
-            if (context.CurrentGrouping == GroupingMode.NativeCategory) {
-                groupKey = string.IsNullOrEmpty(emote.Category) ? "Uncategorized" : emote.Category;
-            }
-            else if (context.CurrentGrouping == GroupingMode.CustomGroup) {
-                groupKey = string.IsNullOrEmpty(customGroup) ? "Ungrouped" : customGroup;
-            }
+            string groupKey = this.localization.Translate("browser_all");
+
+            if (context.CurrentGrouping == GroupingMode.NativeCategory) groupKey = string.IsNullOrEmpty(emote.Category) ? this.localization.Translate("browser_uncategorized") : emote.Category;
+            else if (context.CurrentGrouping == GroupingMode.CustomGroup) groupKey = string.IsNullOrEmpty(customGroup) ? this.localization.Translate("browser_ungrouped") : customGroup;
 
             if (!groupedEmotes.ContainsKey(groupKey)) groupedEmotes[groupKey] = new List<EmoteDisplayData>();
 

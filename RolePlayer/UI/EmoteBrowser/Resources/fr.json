@@ -44,5 +44,7 @@
   "browser_col_name": "Nom",
   "browser_col_command": "Commande",
   "browser_col_action": "Action",
-  "browser_col_tag": "Tag"
+  "browser_col_tag": "Tag",
+  "browser_uncategorized": "Non catégorisé",
+  "browser_ungrouped": "Sans groupe"
 }

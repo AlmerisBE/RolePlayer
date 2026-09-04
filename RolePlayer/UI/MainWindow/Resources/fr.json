@@ -66,5 +66,6 @@
   "config_tag_tooltip_add": "Ajouter le tag",
   "config_tag_del_title": "Supprimer le Tag",
   "config_tag_del_desc": "Voulez-vous supprimer le tag '{0}' ?",
-  "config_tag_del_warn": "Ce tag sera retiré de toutes les emotes."
+  "config_tag_del_warn": "Ce tag sera retiré de toutes les emotes.",
+  "config_tag_col_name": "Nom du tag"
 }

@@ -44,5 +44,7 @@
   "browser_col_name": "名前",
   "browser_col_command": "コマンド",
   "browser_col_action": "アクション",
-  "browser_col_tag": "タグ"
+  "browser_col_tag": "タグ",
+  "browser_uncategorized": "未分類",
+  "browser_ungrouped": "グループなし"
 }
