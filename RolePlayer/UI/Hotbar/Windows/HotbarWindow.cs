@@ -85,11 +85,13 @@ public class HotbarWindow : Window {
             }
 
             var displayedEmotes = resolvedEmotes.Skip(this.currentPage * MaxItemsPerPage).Take(MaxItemsPerPage).ToList();
-
-            // Rendu strict basé sur le layout, prévenant la rétraction de la fenêtre
             int maxColumns = this.GetColumnsForLayout(this.config.Layout);
 
             if (ImGui.BeginTable($"HotbarGrid_{this.config.Id}", maxColumns, ImGuiTableFlags.SizingFixedFit)) {
+                for (int col = 0; col < maxColumns; col++) {
+                    ImGui.TableSetupColumn($"col_{col}", ImGuiTableColumnFlags.WidthFixed, IconSize);
+                }
+
                 for (int i = 0; i < displayedEmotes.Count; i++) {
                     if (i % maxColumns == 0) {
                         ImGui.TableNextRow();

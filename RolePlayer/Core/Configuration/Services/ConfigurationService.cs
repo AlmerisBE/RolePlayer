@@ -1,5 +1,6 @@
 ﻿namespace RolePlayer.Core.Configuration.Services;
 
+using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using RolePlayer.Core.Configuration.Contracts;
@@ -11,6 +12,7 @@ public class ConfigurationService : IConfigurationService, IDisposable {
     private IDalamudPluginInterface pluginInterface;
     private IObjectTable objectTable;
     private IFramework framework;
+    private ICondition condition;
 
     private PluginConfiguration config;
     private CharacterProfile defaultProfile = new();
@@ -18,10 +20,11 @@ public class ConfigurationService : IConfigurationService, IDisposable {
 
     public event Action? ProfileLoaded;
 
-    public ConfigurationService(IDalamudPluginInterface pluginInterface, IObjectTable objectTable, IFramework framework) {
+    public ConfigurationService(IDalamudPluginInterface pluginInterface, IObjectTable objectTable, IFramework framework, ICondition condition) {
         this.pluginInterface = pluginInterface;
         this.objectTable = objectTable;
         this.framework = framework;
+        this.condition = condition;
 
         this.config = this.pluginInterface.GetPluginConfig() as PluginConfiguration ?? new PluginConfiguration();
         if (this.config.Profiles == null) {
@@ -32,6 +35,11 @@ public class ConfigurationService : IConfigurationService, IDisposable {
     }
 
     private void OnFrameworkUpdate(IFramework fw) {
+        bool isLoading = this.condition[ConditionFlag.BetweenAreas] || this.condition[ConditionFlag.BetweenAreas51];
+        if (isLoading) {
+            return;
+        }
+
         try {
             var localPlayer = this.objectTable.LocalPlayer;
             if (localPlayer == null || localPlayer.Name == null) {

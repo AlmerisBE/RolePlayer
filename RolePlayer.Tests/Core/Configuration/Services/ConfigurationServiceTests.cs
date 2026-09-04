@@ -14,13 +14,15 @@ public class ConfigurationServiceTests {
         var mockPluginInterface = Substitute.For<IDalamudPluginInterface>();
         var mockObjectTable = Substitute.For<IObjectTable>();
         var mockFramework = Substitute.For<IFramework>();
+        var mockCondition = Substitute.For<ICondition>();
+
         var existingConfig = new PluginConfiguration {
             Version = 1
         };
 
         mockPluginInterface.GetPluginConfig().Returns(existingConfig);
 
-        var service = new ConfigurationService(mockPluginInterface, mockObjectTable, mockFramework);
+        var service = new ConfigurationService(mockPluginInterface, mockObjectTable, mockFramework, mockCondition);
         var config = service.GetConfig();
 
         Assert.NotNull(config);
@@ -32,9 +34,10 @@ public class ConfigurationServiceTests {
         var mockPluginInterface = Substitute.For<IDalamudPluginInterface>();
         var mockObjectTable = Substitute.For<IObjectTable>();
         var mockFramework = Substitute.For<IFramework>();
+        var mockCondition = Substitute.For<ICondition>();
         mockPluginInterface.GetPluginConfig().Returns((IPluginConfiguration)null!);
 
-        var service = new ConfigurationService(mockPluginInterface, mockObjectTable, mockFramework);
+        var service = new ConfigurationService(mockPluginInterface, mockObjectTable, mockFramework, mockCondition);
         var config = service.GetConfig();
 
         Assert.NotNull(config);
@@ -46,7 +49,9 @@ public class ConfigurationServiceTests {
         var mockPluginInterface = Substitute.For<IDalamudPluginInterface>();
         var mockObjectTable = Substitute.For<IObjectTable>();
         var mockFramework = Substitute.For<IFramework>();
-        var service = new ConfigurationService(mockPluginInterface, mockObjectTable, mockFramework);
+        var mockCondition = Substitute.For<ICondition>();
+
+        var service = new ConfigurationService(mockPluginInterface, mockObjectTable, mockFramework, mockCondition);
         var config = service.GetConfig();
 
         config.Version = 2;

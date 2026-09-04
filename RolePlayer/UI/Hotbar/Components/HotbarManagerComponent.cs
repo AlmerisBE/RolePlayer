@@ -24,9 +24,11 @@ public class HotbarManagerComponent : IDisposable {
     private IPlayerStateProvider playerStateProvider;
     private IModStateProvider modStateProvider;
     private ICondition condition;
+    private IFramework framework;
 
     private WindowSystem windowSystem;
     private List<EmoteDisplayData> sharedCache = new();
+    private DateTime? pendingRebuildTime = null;
 
     public HotbarManagerComponent(
         IDalamudPluginInterface pluginInterface,
@@ -38,7 +40,8 @@ public class HotbarManagerComponent : IDisposable {
         IEmoteRepository emoteRepository,
         IPlayerStateProvider playerStateProvider,
         IModStateProvider modStateProvider,
-        ICondition condition) {
+        ICondition condition,
+        IFramework framework) {
 
         this.pluginInterface = pluginInterface;
         this.configService = configService;
@@ -50,6 +53,7 @@ public class HotbarManagerComponent : IDisposable {
         this.playerStateProvider = playerStateProvider;
         this.modStateProvider = modStateProvider;
         this.condition = condition;
+        this.framework = framework;
 
         this.windowSystem = new WindowSystem("RolePlayer_Hotbars");
         this.pluginInterface.UiBuilder.Draw += this.windowSystem.Draw;
@@ -57,8 +61,23 @@ public class HotbarManagerComponent : IDisposable {
         this.configService.ProfileLoaded += this.OnProfileLoaded;
         this.contextService.ContextChanged += this.OnContextChanged;
 
+        this.playerStateProvider.PlayerStateValid += this.OnPlayerStateValid;
+        this.framework.Update += this.OnFrameworkUpdate;
+
         this.RebuildCache();
         this.RefreshWindows();
+    }
+
+    private void OnFrameworkUpdate(IFramework fw) {
+        if (this.pendingRebuildTime.HasValue && DateTime.Now >= this.pendingRebuildTime.Value) {
+            this.pendingRebuildTime = null;
+            this.RebuildCache();
+            this.RefreshWindows();
+        }
+    }
+
+    private void OnPlayerStateValid() {
+        this.pendingRebuildTime = DateTime.Now.AddSeconds(2);
     }
 
     private void OnProfileLoaded() {
@@ -125,6 +144,8 @@ public class HotbarManagerComponent : IDisposable {
         this.modStateProvider.ModStateChanged -= this.RebuildCache;
         this.configService.ProfileLoaded -= this.OnProfileLoaded;
         this.contextService.ContextChanged -= this.OnContextChanged;
+        this.playerStateProvider.PlayerStateValid -= this.OnPlayerStateValid;
+        this.framework.Update -= this.OnFrameworkUpdate;
         this.windowSystem.RemoveAllWindows();
     }
 }
