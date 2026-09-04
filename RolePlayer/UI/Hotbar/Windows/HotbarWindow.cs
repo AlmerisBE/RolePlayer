@@ -86,15 +86,12 @@ public class HotbarWindow : Window {
 
             var displayedEmotes = resolvedEmotes.Skip(this.currentPage * MaxItemsPerPage).Take(MaxItemsPerPage).ToList();
 
+            // Rendu strict basé sur le layout, prévenant la rétraction de la fenêtre
             int maxColumns = this.GetColumnsForLayout(this.config.Layout);
-            int actualColumns = Math.Min(maxColumns, displayedEmotes.Count);
-            if (actualColumns <= 0) {
-                actualColumns = 1;
-            }
 
-            if (ImGui.BeginTable($"HotbarGrid_{this.config.Id}", actualColumns, ImGuiTableFlags.SizingFixedFit)) {
+            if (ImGui.BeginTable($"HotbarGrid_{this.config.Id}", maxColumns, ImGuiTableFlags.SizingFixedFit)) {
                 for (int i = 0; i < displayedEmotes.Count; i++) {
-                    if (i % actualColumns == 0) {
+                    if (i % maxColumns == 0) {
                         ImGui.TableNextRow();
                     }
 

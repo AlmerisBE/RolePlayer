@@ -1,6 +1,7 @@
 ﻿namespace RolePlayer.UI.EmoteBrowser.Contracts;
 
 public interface IPlayerStateProvider {
+    bool IsPlayerValid { get; }
     bool IsEmoteUnlocked(uint emoteId);
     bool IsEmoteActive(uint emoteId);
     uint GetActiveEmoteId();

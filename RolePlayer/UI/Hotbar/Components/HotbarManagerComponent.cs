@@ -79,6 +79,10 @@ public class HotbarManagerComponent : IDisposable {
     }
 
     private void RebuildCache() {
+        if (!this.playerStateProvider.IsPlayerValid) {
+            return;
+        }
+
         var baseEmotes = this.emoteRepository.GetBaseEmotes().ToList();
         var newCache = new List<EmoteDisplayData>();
 

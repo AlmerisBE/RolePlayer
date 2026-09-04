@@ -10,6 +10,7 @@ public class PlayerStateProvider : IPlayerStateProvider {
     private IFramework framework;
 
     private bool isPlayerValid = false;
+    public bool IsPlayerValid => this.isPlayerValid;
 
     public PlayerStateProvider(IObjectTable objectTable, IFramework framework) {
         this.objectTable = objectTable;
