@@ -10,6 +10,7 @@ using RolePlayer.UI.EmoteBrowser.Contracts;
 using RolePlayer.UI.EmoteBrowser.Models;
 using RolePlayer.UI.Hotbar.Contracts;
 using RolePlayer.UI.Hotbar.Models;
+using RolePlayer.UI.Localization.Contracts;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,6 +23,7 @@ public class HotbarWindow : Window {
     private ITextureProvider textureProvider;
     private Func<IEnumerable<EmoteDisplayData>> emoteCacheProvider;
     private Func<bool> shouldHideHotbars;
+    private ILocalizationService localization;
     private int currentPage = 0;
     private const int MaxItemsPerPage = 16;
 
@@ -33,7 +35,8 @@ public class HotbarWindow : Window {
         IEmoteExecutionService executionService,
         ITextureProvider textureProvider,
         Func<IEnumerable<EmoteDisplayData>> emoteCacheProvider,
-        Func<bool> shouldHideHotbars)
+        Func<bool> shouldHideHotbars,
+        ILocalizationService localization)
         : base($"RolePlayer_Hotbar_{config.Id}", ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.AlwaysAutoResize) {
 
         this.config = config;
@@ -42,6 +45,7 @@ public class HotbarWindow : Window {
         this.textureProvider = textureProvider;
         this.emoteCacheProvider = emoteCacheProvider;
         this.shouldHideHotbars = shouldHideHotbars;
+        this.localization = localization;
 
         this.SizeCondition = ImGuiCond.Always;
         this.BgAlpha = 0.7f;
@@ -51,9 +55,7 @@ public class HotbarWindow : Window {
     public override void PreDraw() {
         if (this.config.IsLocked) {
             this.Flags |= ImGuiWindowFlags.NoMove;
-            if (this.config.PositionInitialized) {
-                ImGui.SetNextWindowPos(this.config.AnchorPosition, ImGuiCond.Always, this.GetPivot(this.config.Anchor));
-            }
+            if (this.config.PositionInitialized) ImGui.SetNextWindowPos(this.config.AnchorPosition, ImGuiCond.Always, this.GetPivot(this.config.Anchor));
         }
         else {
             this.Flags &= ~ImGuiWindowFlags.NoMove;
@@ -64,26 +66,16 @@ public class HotbarWindow : Window {
     }
 
     public override void Draw() {
-        if (!this.config.IsVisible) {
-            return;
-        }
-
-        if (this.shouldHideHotbars()) {
-            return;
-        }
+        if (!this.config.IsVisible) return;
+        if (this.shouldHideHotbars()) return;
 
         var allEmotes = this.emoteCacheProvider();
         var resolvedEmotes = this.resolverService.ResolveEmotesForHotbar(this.config, allEmotes);
 
         if (resolvedEmotes.Count > 0) {
             int totalPages = (int)Math.Ceiling(resolvedEmotes.Count / (double)MaxItemsPerPage);
-            if (this.currentPage >= totalPages && totalPages > 0) {
-                this.currentPage = totalPages - 1;
-            }
-
-            if (totalPages == 0) {
-                this.currentPage = 0;
-            }
+            if (this.currentPage >= totalPages && totalPages > 0) this.currentPage = totalPages - 1;
+            if (totalPages == 0) this.currentPage = 0;
 
             var displayedEmotes = resolvedEmotes.Skip(this.currentPage * MaxItemsPerPage).Take(MaxItemsPerPage).ToList();
 
@@ -94,14 +86,10 @@ public class HotbarWindow : Window {
             ImGui.PushStyleColor(ImGuiCol.Button, Vector4.Zero);
 
             if (ImGui.BeginTable($"HotbarGrid_{this.config.Id}", maxColumns, ImGuiTableFlags.SizingFixedFit)) {
-                for (int col = 0; col < maxColumns; col++) {
-                    ImGui.TableSetupColumn($"col_{col}", ImGuiTableColumnFlags.WidthFixed, columnWidth);
-                }
+                for (int col = 0; col < maxColumns; col++) ImGui.TableSetupColumn($"col_{col}", ImGuiTableColumnFlags.WidthFixed, columnWidth);
 
                 for (int i = 0; i < displayedEmotes.Count; i++) {
-                    if (i % maxColumns == 0) {
-                        ImGui.TableNextRow();
-                    }
+                    if (i % maxColumns == 0) ImGui.TableNextRow();
 
                     ImGui.TableNextColumn();
                     this.DrawEmoteIcon(displayedEmotes[i]);
@@ -112,9 +100,7 @@ public class HotbarWindow : Window {
             ImGui.PopStyleColor();
             ImGui.PopStyleVar();
 
-            if (totalPages > 1) {
-                this.DrawPagination(totalPages);
-            }
+            if (totalPages > 1) this.DrawPagination(totalPages);
         }
 
         if (!this.config.IsLocked || !this.config.PositionInitialized) {
@@ -169,9 +155,7 @@ public class HotbarWindow : Window {
                 ImGui.PushID($"emote_{emote.Id}");
                 var cursorPos = ImGui.GetCursorScreenPos();
 
-                if (ImGui.ImageButton(iconWrap.Handle, new Vector2(IconSize, IconSize))) {
-                    this.executionService.ExecuteEmote(emote.Id);
-                }
+                if (ImGui.ImageButton(iconWrap.Handle, new Vector2(IconSize, IconSize))) this.executionService.ExecuteEmote(emote.Id);
 
                 if (emote.HasVariations) {
                     var drawList = ImGui.GetWindowDrawList();
@@ -187,10 +171,8 @@ public class HotbarWindow : Window {
                 }
 
                 if (ImGui.IsItemHovered()) {
-                    string tooltipText = emote.IsModded ? $"★ {emote.Name}\nMod: {emote.ModName}\n{emote.LocalizedCommand}" : $"{emote.Name}\n{emote.LocalizedCommand}";
-                    if (emote.HasVariations) {
-                        tooltipText += "\n(Click again to change pose)";
-                    }
+                    string tooltipText = emote.IsModded ? $"★ {emote.Name}\n{this.localization.Translate("hotbar_tooltip_mod")} {emote.ModName}\n{emote.LocalizedCommand}" : $"{emote.Name}\n{emote.LocalizedCommand}";
+                    if (emote.HasVariations) tooltipText += $"\n{this.localization.Translate("hotbar_tooltip_variation")}";
 
                     ImGui.SetTooltip(tooltipText);
                 }
@@ -203,10 +185,7 @@ public class HotbarWindow : Window {
 
     private void DrawPagination(int totalPages) {
         ImGui.PushFont(UiBuilder.IconFont);
-        if (ImGui.Button(FontAwesomeIcon.ChevronLeft.ToIconString()) && this.currentPage > 0) {
-            this.currentPage--;
-        }
-
+        if (ImGui.Button(FontAwesomeIcon.ChevronLeft.ToIconString()) && this.currentPage > 0) this.currentPage--;
         ImGui.PopFont();
 
         ImGui.SameLine();
@@ -214,10 +193,7 @@ public class HotbarWindow : Window {
         ImGui.SameLine();
 
         ImGui.PushFont(UiBuilder.IconFont);
-        if (ImGui.Button(FontAwesomeIcon.ChevronRight.ToIconString()) && this.currentPage < totalPages - 1) {
-            this.currentPage++;
-        }
-
+        if (ImGui.Button(FontAwesomeIcon.ChevronRight.ToIconString()) && this.currentPage < totalPages - 1) this.currentPage++;
         ImGui.PopFont();
     }
 }

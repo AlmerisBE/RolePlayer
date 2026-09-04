@@ -1,0 +1,9 @@
+{
+  "main_status_tooltip_emote": "Open native Emote window",
+  "main_status_tooltip_context": "Switch Active Context",
+  "main_status_unlocked": "{0} / {1} unlocked",
+  "main_general_title": "General Settings",
+  "main_general_enable_hotbars": "Enable Hotbars (Master Switch)",
+  "main_general_enable_hotbars_tooltip": "Toggle visibility for all RolePlayer hotbars globally.",
+  "main_general_hotkey_title": "Global Hotkey to Toggle Main Window"
+}

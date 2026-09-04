@@ -4,11 +4,14 @@ using Microsoft.Extensions.DependencyInjection;
 using RolePlayer.Core.Framework;
 using RolePlayer.UI.Hotbar.Components;
 using RolePlayer.UI.Hotbar.Contracts;
+using RolePlayer.UI.Hotbar.Providers;
 using RolePlayer.UI.Hotbar.Services;
+using RolePlayer.UI.Localization.Contracts;
 
 public class HotbarFeature : IFeatureModule {
     public void RegisterServices(IServiceCollection services) {
         services.AddSingleton<IHotbarResolverService, HotbarResolverService>();
+        services.AddSingleton<ILocalizationProvider, HotbarLocalizationProvider>();
         services.AddSingleton<HotbarManagerComponent>();
     }
 }

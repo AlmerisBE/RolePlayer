@@ -3,37 +3,38 @@
 using Dalamud.Bindings.ImGui;
 using Dalamud.Game.ClientState.Keys;
 using RolePlayer.Core.Configuration.Contracts;
+using RolePlayer.UI.Localization.Contracts;
 using System;
 
 public class GeneralConfigSubTab {
     private IConfigurationService configService;
+    private ILocalizationService localization;
 
-    public GeneralConfigSubTab(IConfigurationService configService) {
+    public GeneralConfigSubTab(IConfigurationService configService, ILocalizationService localization) {
         this.configService = configService;
+        this.localization = localization;
     }
 
     public void Draw() {
         var config = this.configService.GetConfig();
         bool changed = false;
 
-        ImGui.Text("General Settings");
+        ImGui.Text(this.localization.Translate("main_general_title"));
         ImGui.Separator();
         ImGui.Spacing();
 
         bool enableHotbars = config.EnableHotbars;
-        if (ImGui.Checkbox("Enable Hotbars (Master Switch)##enableHotbars", ref enableHotbars)) {
+        if (ImGui.Checkbox($"{this.localization.Translate("main_general_enable_hotbars")}##enableHotbars", ref enableHotbars)) {
             config.EnableHotbars = enableHotbars;
             changed = true;
         }
-        if (ImGui.IsItemHovered()) {
-            ImGui.SetTooltip("Toggle visibility for all RolePlayer hotbars globally.");
-        }
+        if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("main_general_enable_hotbars_tooltip"));
 
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
 
-        ImGui.Text("Global Hotkey to Toggle Main Window");
+        ImGui.Text(this.localization.Translate("main_general_hotkey_title"));
         ImGui.Spacing();
 
         bool ctrl = config.HotkeyCtrl;
@@ -68,8 +69,6 @@ public class GeneralConfigSubTab {
             ImGui.EndCombo();
         }
 
-        if (changed) {
-            this.configService.Save();
-        }
+        if (changed) this.configService.Save();
     }
 }

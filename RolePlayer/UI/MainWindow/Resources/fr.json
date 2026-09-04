@@ -1,0 +1,9 @@
+{
+  "main_status_tooltip_emote": "Ouvrir la fenêtre d'Emotes native",
+  "main_status_tooltip_context": "Changer le contexte actif",
+  "main_status_unlocked": "{0} / {1} débloquées",
+  "main_general_title": "Paramètres Généraux",
+  "main_general_enable_hotbars": "Activer les barres de raccourcis (Interrupteur principal)",
+  "main_general_enable_hotbars_tooltip": "Bascule la visibilité de toutes les barres RolePlayer globalement.",
+  "main_general_hotkey_title": "Raccourci global pour ouvrir la fenêtre principale"
+}

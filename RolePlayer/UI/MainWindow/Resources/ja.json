@@ -1,0 +1,9 @@
+{
+  "main_status_tooltip_emote": "標準のエモートウィンドウを開く",
+  "main_status_tooltip_context": "アクティブなコンテキストを切り替える",
+  "main_status_unlocked": "{0} / {1} 取得済み",
+  "main_general_title": "一般設定",
+  "main_general_enable_hotbars": "ホットバーを有効にする（マスタースイッチ）",
+  "main_general_enable_hotbars_tooltip": "RolePlayerの全ホットバーの表示をグローバルに切り替えます。",
+  "main_general_hotkey_title": "メインウィンドウを開閉するグローバルホットキー"
+}

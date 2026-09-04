@@ -1,0 +1,9 @@
+{
+  "main_status_tooltip_emote": "Standard-Emote-Fenster öffnen",
+  "main_status_tooltip_context": "Aktiven Kontext wechseln",
+  "main_status_unlocked": "{0} / {1} freigeschaltet",
+  "main_general_title": "Allgemeine Einstellungen",
+  "main_general_enable_hotbars": "Aktionsleisten aktivieren (Hauptschalter)",
+  "main_general_enable_hotbars_tooltip": "Schaltet die Sichtbarkeit aller RolePlayer-Leisten global um.",
+  "main_general_hotkey_title": "Globaler Hotkey für das Hauptfenster"
+}
