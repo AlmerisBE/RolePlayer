@@ -1,0 +1,16 @@
+{
+  "browser_search_hint": "Suche nach Name oder Befehl...",
+  "browser_group_by": "Gruppieren nach:",
+  "browser_native_category": "Standardkategorie",
+  "browser_custom_group": "Benutzerdefinierte Gruppe",
+  "browser_none": "Keine",
+  "browser_show_modded": "Nur Gemoddete",
+  "browser_unlock_status": "Status:",
+  "browser_all": "Alle",
+  "browser_unlocked": "Freigeschaltet",
+  "browser_locked": "Gesperrt",
+  "browser_categories": "Kategorien",
+  "browser_groups": "Gruppen",
+  "browser_tags": "Tags",
+  "browser_tooltip_filters": "Erweiterte Filter umschalten"
+}

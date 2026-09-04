@@ -1,0 +1,16 @@
+{
+  "browser_search_hint": "Search by name or command...",
+  "browser_group_by": "Group By:",
+  "browser_native_category": "Native Category",
+  "browser_custom_group": "Custom Group",
+  "browser_none": "None",
+  "browser_show_modded": "Show Modded Only",
+  "browser_unlock_status": "Unlock Status",
+  "browser_all": "All",
+  "browser_unlocked": "Unlocked",
+  "browser_locked": "Locked",
+  "browser_categories": "Categories",
+  "browser_groups": "Groups",
+  "browser_tags": "Tags",
+  "browser_tooltip_filters": "Toggle Advanced Filters"
+}

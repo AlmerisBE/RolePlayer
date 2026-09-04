@@ -1,0 +1,16 @@
+{
+  "browser_search_hint": "名前またはコマンドで検索...",
+  "browser_group_by": "グループ化:",
+  "browser_native_category": "基本カテゴリ",
+  "browser_custom_group": "カスタムグループ",
+  "browser_none": "なし",
+  "browser_show_modded": "MODのみ表示",
+  "browser_unlock_status": "取得状況:",
+  "browser_all": "すべて",
+  "browser_unlocked": "取得済み",
+  "browser_locked": "未取得",
+  "browser_categories": "カテゴリー",
+  "browser_groups": "グループ",
+  "browser_tags": "タグ",
+  "browser_tooltip_filters": "詳細フィルターを切り替える"
+}

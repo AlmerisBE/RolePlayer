@@ -5,6 +5,7 @@ using Dalamud.Interface;
 using RolePlayer.Core.Configuration.Contracts;
 using RolePlayer.UI.EmoteBrowser.Contracts;
 using RolePlayer.UI.EmoteBrowser.Models;
+using RolePlayer.UI.Localization.Contracts;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -13,6 +14,7 @@ public class EmoteFilterComponent {
     private IContextManagementService contextService;
     private IGroupManagementService groupManagementService;
     private ITagManagementService tagManagementService;
+    private ILocalizationService localization;
 
     public string SearchQuery = string.Empty;
     private int sortColumn = -1;
@@ -22,12 +24,14 @@ public class EmoteFilterComponent {
         IConfigurationService configurationService,
         IContextManagementService contextService,
         IGroupManagementService groupManagementService,
-        ITagManagementService tagManagementService) {
+        ITagManagementService tagManagementService,
+        ILocalizationService localization) {
 
         this.configurationService = configurationService;
         this.contextService = contextService;
         this.groupManagementService = groupManagementService;
         this.tagManagementService = tagManagementService;
+        this.localization = localization;
     }
 
     public bool Draw(List<string> availableCategories) {
@@ -40,7 +44,7 @@ public class EmoteFilterComponent {
         ImGui.PopFont();
 
         ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - filterIconWidth - ImGui.GetStyle().ItemSpacing.X);
-        if (ImGui.InputTextWithHint("##SearchEmotes", "Search by name or command...", ref this.SearchQuery, 128)) filtersChanged = true;
+        if (ImGui.InputTextWithHint("##SearchEmotes", this.localization.Translate("browser_search_hint"), ref this.SearchQuery, 128)) filtersChanged = true;
 
         ImGui.SameLine();
 
@@ -57,37 +61,36 @@ public class EmoteFilterComponent {
 
         if (isFilterActive) ImGui.PopStyleColor();
 
-        if (ImGui.IsItemHovered()) ImGui.SetTooltip("Toggle Advanced Filters");
+        if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("browser_tooltip_filters"));
 
         if (context.ShowFilters) {
             ImGui.Spacing();
             ImGui.Separator();
             ImGui.Spacing();
 
-            // Line 1: Group By (Takes full remaining width)
             ImGui.AlignTextToFramePadding();
-            ImGui.Text("Group By:");
+            ImGui.Text(this.localization.Translate("browser_group_by"));
             ImGui.SameLine();
             ImGui.SetNextItemWidth(-1f);
 
             string currentGroupLabel = context.CurrentGrouping switch {
-                GroupingMode.NativeCategory => "Native Category",
-                GroupingMode.CustomGroup => "Custom Group",
-                _ => "None"
+                GroupingMode.NativeCategory => this.localization.Translate("browser_native_category"),
+                GroupingMode.CustomGroup => this.localization.Translate("browser_custom_group"),
+                _ => this.localization.Translate("browser_none")
             };
 
             if (ImGui.BeginCombo("##GroupingMode", currentGroupLabel)) {
-                if (ImGui.Selectable("None", context.CurrentGrouping == GroupingMode.None)) {
+                if (ImGui.Selectable(this.localization.Translate("browser_none"), context.CurrentGrouping == GroupingMode.None)) {
                     context.CurrentGrouping = GroupingMode.None;
                     this.configurationService.Save();
                     filtersChanged = true;
                 }
-                if (ImGui.Selectable("Native Category", context.CurrentGrouping == GroupingMode.NativeCategory)) {
+                if (ImGui.Selectable(this.localization.Translate("browser_native_category"), context.CurrentGrouping == GroupingMode.NativeCategory)) {
                     context.CurrentGrouping = GroupingMode.NativeCategory;
                     this.configurationService.Save();
                     filtersChanged = true;
                 }
-                if (ImGui.Selectable("Custom Group", context.CurrentGrouping == GroupingMode.CustomGroup)) {
+                if (ImGui.Selectable(this.localization.Translate("browser_custom_group"), context.CurrentGrouping == GroupingMode.CustomGroup)) {
                     context.CurrentGrouping = GroupingMode.CustomGroup;
                     this.configurationService.Save();
                     filtersChanged = true;
@@ -95,9 +98,8 @@ public class EmoteFilterComponent {
                 ImGui.EndCombo();
             }
 
-            // Line 2: Modded Checkbox alongside Unlock Status
             bool showModded = context.ShowModdedOnly;
-            if (ImGui.Checkbox("Show Modded Only", ref showModded)) {
+            if (ImGui.Checkbox(this.localization.Translate("browser_show_modded"), ref showModded)) {
                 context.ShowModdedOnly = showModded;
                 this.configurationService.Save();
                 filtersChanged = true;
@@ -105,22 +107,28 @@ public class EmoteFilterComponent {
 
             ImGui.SameLine();
             ImGui.AlignTextToFramePadding();
-            ImGui.Text("Unlock:");
+            ImGui.Text(this.localization.Translate("browser_unlock_status"));
             ImGui.SameLine();
             ImGui.SetNextItemWidth(-1f);
 
-            if (ImGui.BeginCombo("##UnlockStatus", context.UnlockFilter.ToString())) {
-                if (ImGui.Selectable("All", context.UnlockFilter == UnlockFilterMode.All)) {
+            string currentUnlockLabel = context.UnlockFilter switch {
+                UnlockFilterMode.Unlocked => this.localization.Translate("browser_unlocked"),
+                UnlockFilterMode.Locked => this.localization.Translate("browser_locked"),
+                _ => this.localization.Translate("browser_all")
+            };
+
+            if (ImGui.BeginCombo("##UnlockStatus", currentUnlockLabel)) {
+                if (ImGui.Selectable(this.localization.Translate("browser_all"), context.UnlockFilter == UnlockFilterMode.All)) {
                     context.UnlockFilter = UnlockFilterMode.All;
                     this.configurationService.Save();
                     filtersChanged = true;
                 }
-                if (ImGui.Selectable("Unlocked", context.UnlockFilter == UnlockFilterMode.Unlocked)) {
+                if (ImGui.Selectable(this.localization.Translate("browser_unlocked"), context.UnlockFilter == UnlockFilterMode.Unlocked)) {
                     context.UnlockFilter = UnlockFilterMode.Unlocked;
                     this.configurationService.Save();
                     filtersChanged = true;
                 }
-                if (ImGui.Selectable("Locked", context.UnlockFilter == UnlockFilterMode.Locked)) {
+                if (ImGui.Selectable(this.localization.Translate("browser_locked"), context.UnlockFilter == UnlockFilterMode.Locked)) {
                     context.UnlockFilter = UnlockFilterMode.Locked;
                     this.configurationService.Save();
                     filtersChanged = true;
@@ -130,11 +138,10 @@ public class EmoteFilterComponent {
 
             ImGui.Spacing();
 
-            // Line 3: Multi-select tables
             if (ImGui.BeginTable("FiltersLayoutTable", 3, ImGuiTableFlags.SizingStretchProp)) {
-                ImGui.TableSetupColumn("Categories");
-                ImGui.TableSetupColumn("Groups");
-                ImGui.TableSetupColumn("Tags");
+                ImGui.TableSetupColumn(this.localization.Translate("browser_categories"));
+                ImGui.TableSetupColumn(this.localization.Translate("browser_groups"));
+                ImGui.TableSetupColumn(this.localization.Translate("browser_tags"));
                 ImGui.TableHeadersRow();
 
                 ImGui.TableNextRow();
@@ -169,12 +176,12 @@ public class EmoteFilterComponent {
     }
 
     private void DrawMultiSelectCombo(string id, List<string> items, HashSet<string> selectedItems, ref bool changed) {
-        var preview = selectedItems.Count == 0 ? "All" : $"{selectedItems.Count} selected";
+        var preview = selectedItems.Count == 0 ? this.localization.Translate("browser_all") : $"{selectedItems.Count} selected";
         ImGui.SetNextItemWidth(-1f);
 
         if (ImGui.BeginCombo(id, preview)) {
             bool allSelected = selectedItems.Count == 0;
-            if (ImGui.Checkbox("All", ref allSelected)) {
+            if (ImGui.Checkbox(this.localization.Translate("browser_all"), ref allSelected)) {
                 selectedItems.Clear();
                 changed = true;
             }
