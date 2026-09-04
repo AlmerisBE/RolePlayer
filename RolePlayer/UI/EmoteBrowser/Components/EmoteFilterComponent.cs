@@ -46,7 +46,6 @@ public class EmoteFilterComponent {
 
         ImGui.SameLine();
 
-        // Snapshot the visual state for the current frame to prevent ImGui push/pop mismatch
         bool isFilterActive = context.ShowFilters;
 
         if (isFilterActive) {
@@ -109,6 +108,27 @@ public class EmoteFilterComponent {
                 context.ShowModdedOnly = showModded;
                 this.configurationService.Save();
                 filtersChanged = true;
+            }
+
+            ImGui.SameLine();
+            ImGui.SetNextItemWidth(120f);
+            if (ImGui.BeginCombo("Unlock Status", context.UnlockFilter.ToString())) {
+                if (ImGui.Selectable("All", context.UnlockFilter == UnlockFilterMode.All)) {
+                    context.UnlockFilter = UnlockFilterMode.All;
+                    this.configurationService.Save();
+                    filtersChanged = true;
+                }
+                if (ImGui.Selectable("Unlocked", context.UnlockFilter == UnlockFilterMode.Unlocked)) {
+                    context.UnlockFilter = UnlockFilterMode.Unlocked;
+                    this.configurationService.Save();
+                    filtersChanged = true;
+                }
+                if (ImGui.Selectable("Locked", context.UnlockFilter == UnlockFilterMode.Locked)) {
+                    context.UnlockFilter = UnlockFilterMode.Locked;
+                    this.configurationService.Save();
+                    filtersChanged = true;
+                }
+                ImGui.EndCombo();
             }
 
             ImGui.Spacing();
@@ -198,6 +218,14 @@ public class EmoteFilterComponent {
                 continue;
             }
 
+            if (context.UnlockFilter == UnlockFilterMode.Unlocked && !emote.IsUnlocked) {
+                continue;
+            }
+
+            if (context.UnlockFilter == UnlockFilterMode.Locked && emote.IsUnlocked) {
+                continue;
+            }
+
             if (hasSearch) {
                 bool matchesName = emote.Name.ToLowerInvariant().Contains(query);
                 bool matchesCmd = emote.LocalizedCommand.ToLowerInvariant().Contains(query);
@@ -244,6 +272,7 @@ public class EmoteFilterComponent {
 
         foreach (var key in groupedEmotes.Keys.ToList()) {
             var list = groupedEmotes[key];
+
             if (this.sortColumn == 1) {
                 list = this.sortDescending ? list.OrderByDescending(e => e.Name).ToList() : list.OrderBy(e => e.Name).ToList();
             }

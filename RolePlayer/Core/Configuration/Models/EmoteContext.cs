@@ -18,6 +18,7 @@ public class EmoteContext {
 
     public bool ShowFilters { get; set; } = false;
     public bool ShowModdedOnly { get; set; } = false;
+    public UnlockFilterMode UnlockFilter { get; set; } = UnlockFilterMode.All;
     public GroupingMode CurrentGrouping { get; set; } = GroupingMode.NativeCategory;
     public HashSet<string> SelectedCategories { get; set; } = new();
     public HashSet<string> SelectedGroups { get; set; } = new();
