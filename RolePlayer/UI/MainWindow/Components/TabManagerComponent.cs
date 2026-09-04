@@ -15,7 +15,7 @@ public class TabManagerComponent {
     }
 
     public void Draw() {
-        if (ImGui.BeginTabBar("MainTabBar", ImGuiTabBarFlags.Reorderable)) {
+        if (ImGui.BeginTabBar("MainTabBar", ImGuiTabBarFlags.None)) {
             foreach (var tab in this.tabs) {
                 if (ImGui.BeginTabItem(tab.TabName)) {
                     this.ActiveTab = tab;

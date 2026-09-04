@@ -51,6 +51,8 @@
   "config_hb_del_title": "Supprimer la Barre",
   "config_hb_del_desc": "Voulez-vous vraiment supprimer '{0}' ?",
   "config_hb_del_warn": "Cette action est irréversible.",
+  "config_hb_scale": "Échelle",
+  "config_hb_always_on_top": "Toujours au premier plan",
   "config_ctx_create": "Créer un Contexte",
   "config_ctx_name_hint": "Nom du contexte",
   "config_ctx_clone_none": "Cloner depuis (Aucun)",

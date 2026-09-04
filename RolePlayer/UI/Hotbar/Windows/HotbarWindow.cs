@@ -27,7 +27,7 @@ public class HotbarWindow : Window {
     private int currentPage = 0;
     private const int MaxItemsPerPage = 16;
 
-    private const float IconSize = 41f;
+    private const float BaseIconSize = 41f;
 
     public HotbarWindow(
         HotbarConfig config,
@@ -80,7 +80,10 @@ public class HotbarWindow : Window {
             var displayedEmotes = resolvedEmotes.Skip(this.currentPage * MaxItemsPerPage).Take(MaxItemsPerPage).ToList();
 
             int maxColumns = this.GetColumnsForLayout(this.config.Layout);
-            float columnWidth = IconSize;
+
+            // Calcul de la taille de l'icône et de la colonne en fonction du Scale
+            float currentIconSize = BaseIconSize * this.config.Scale;
+            float columnWidth = currentIconSize;
 
             ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, Vector2.Zero);
             ImGui.PushStyleColor(ImGuiCol.Button, Vector4.Zero);
@@ -92,7 +95,7 @@ public class HotbarWindow : Window {
                     if (i % maxColumns == 0) ImGui.TableNextRow();
 
                     ImGui.TableNextColumn();
-                    this.DrawEmoteIcon(displayedEmotes[i]);
+                    this.DrawEmoteIcon(displayedEmotes[i], currentIconSize);
                 }
                 ImGui.EndTable();
             }
@@ -146,7 +149,7 @@ public class HotbarWindow : Window {
         };
     }
 
-    private void DrawEmoteIcon(EmoteDisplayData emote) {
+    private void DrawEmoteIcon(EmoteDisplayData emote, float currentIconSize) {
         try {
             var lookup = new GameIconLookup { IconId = emote.IconId, HiRes = false };
             var iconWrap = this.textureProvider.GetFromGameIcon(lookup).GetWrapOrDefault();
@@ -155,7 +158,7 @@ public class HotbarWindow : Window {
                 ImGui.PushID($"emote_{emote.Id}");
                 var cursorPos = ImGui.GetCursorScreenPos();
 
-                if (ImGui.ImageButton(iconWrap.Handle, new Vector2(IconSize, IconSize))) this.executionService.ExecuteEmote(emote.Id);
+                if (ImGui.ImageButton(iconWrap.Handle, new Vector2(currentIconSize, currentIconSize))) this.executionService.ExecuteEmote(emote.Id);
 
                 if (emote.HasVariations) {
                     var drawList = ImGui.GetWindowDrawList();
@@ -164,7 +167,7 @@ public class HotbarWindow : Window {
                     var textSize = ImGui.CalcTextSize(indicatorText);
                     ImGui.PopFont();
 
-                    var indicatorPos = new Vector2(cursorPos.X + IconSize - textSize.X - 2f, cursorPos.Y + IconSize - textSize.Y - 2f);
+                    var indicatorPos = new Vector2(cursorPos.X + currentIconSize - textSize.X - 2f, cursorPos.Y + currentIconSize - textSize.Y - 2f);
 
                     drawList.AddText(UiBuilder.IconFont, ImGui.GetFontSize(), new Vector2(indicatorPos.X + 1, indicatorPos.Y + 1), 0xFF000000, indicatorText);
                     drawList.AddText(UiBuilder.IconFont, ImGui.GetFontSize(), indicatorPos, 0xFF40DD40, indicatorText);

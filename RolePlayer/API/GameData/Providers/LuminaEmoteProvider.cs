@@ -25,21 +25,17 @@ public class LuminaEmoteProvider : IEmoteRepository {
         var emoteSheet = this.dataManager.GetExcelSheet<Emote>();
         var textCommandSheetEn = this.dataManager.GetExcelSheet<TextCommand>(ClientLanguage.English);
 
-        if (emoteSheet == null) {
-            return Enumerable.Empty<EmoteDisplayData>();
-        }
+        if (emoteSheet == null) return Enumerable.Empty<EmoteDisplayData>();
 
         return emoteSheet
-            .Where(e => !string.IsNullOrEmpty(e.Name.ToString()))
+            .Where(e => !string.IsNullOrEmpty(e.Name.ToString()) && e.Icon != 0)
             .Select(e => {
                 var localizedCommand = e.TextCommand.IsValid ? e.TextCommand.Value.Command.ToString() : string.Empty;
                 var englishCommand = string.Empty;
 
                 if (e.TextCommand.IsValid && textCommandSheetEn != null) {
                     var enRow = textCommandSheetEn.GetRowOrDefault(e.TextCommand.RowId);
-                    if (enRow.HasValue) {
-                        englishCommand = enRow.Value.Command.ToString();
-                    }
+                    if (enRow.HasValue) englishCommand = enRow.Value.Command.ToString();
                 }
 
                 return new EmoteDisplayData {

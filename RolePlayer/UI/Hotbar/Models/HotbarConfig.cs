@@ -21,6 +21,9 @@ public class HotbarConfig {
     public Vector2 AnchorPosition { get; set; } = Vector2.Zero;
     public bool PositionInitialized { get; set; } = false;
 
+    public float Scale { get; set; } = 1.0f;
+    public bool AlwaysOnTop { get; set; } = false;
+
     public List<uint> ManualEmoteIds { get; set; } = new();
 
     public string SearchQuery { get; set; } = string.Empty;
