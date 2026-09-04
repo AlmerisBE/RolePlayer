@@ -24,7 +24,9 @@ public class HotbarWindow : Window {
     private Func<bool> shouldHideHotbars;
     private int currentPage = 0;
     private const int MaxItemsPerPage = 16;
-    private const float IconSize = 40f;
+
+    // Ajustement à 44f pour correspondre exactement à la taille d'une icône de barre d'action FFXIV native (à 100% de scale)
+    private const float IconSize = 44f;
 
     public HotbarWindow(
         HotbarConfig config,
@@ -58,7 +60,8 @@ public class HotbarWindow : Window {
             this.Flags &= ~ImGuiWindowFlags.NoMove;
         }
 
-        ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(4f, 4f));
+        // Réduction du WindowPadding à 2f pour resserrer la hitbox autour de la barre
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(2f, 2f));
         ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(2f, 2f));
     }
 
@@ -87,11 +90,8 @@ public class HotbarWindow : Window {
             var displayedEmotes = resolvedEmotes.Skip(this.currentPage * MaxItemsPerPage).Take(MaxItemsPerPage).ToList();
 
             int maxColumns = this.GetColumnsForLayout(this.config.Layout);
-
-            // La largeur de la colonne est maintenant exactement la taille de l'icône car le padding est supprimé
             float columnWidth = IconSize;
 
-            // Suppression du padding interne et du fond gris pour obtenir un rendu "natif FFXIV"
             ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, Vector2.Zero);
             ImGui.PushStyleColor(ImGuiCol.Button, Vector4.Zero);
 
@@ -111,7 +111,6 @@ public class HotbarWindow : Window {
                 ImGui.EndTable();
             }
 
-            // Restauration des styles par défaut AVANT de dessiner la pagination
             ImGui.PopStyleColor();
             ImGui.PopStyleVar();
 
