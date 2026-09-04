@@ -11,6 +11,7 @@ public class ConfigurationTab : IEmoteBrowserTab, IDisposable {
 
     public bool IsSidePanelOpen => this.isHotbarTabActive && this.hotbarConfigSubTab.IsSidePanelOpen;
 
+    private GeneralConfigSubTab generalConfigSubTab;
     private HotbarConfigSubTab hotbarConfigSubTab;
     private GroupsConfigSubTab groupsConfigSubTab;
     private TagsConfigSubTab tagsConfigSubTab;
@@ -19,11 +20,13 @@ public class ConfigurationTab : IEmoteBrowserTab, IDisposable {
     private bool isHotbarTabActive = true;
 
     public ConfigurationTab(
+        GeneralConfigSubTab generalConfigSubTab,
         HotbarConfigSubTab hotbarConfigSubTab,
         GroupsConfigSubTab groupsConfigSubTab,
         TagsConfigSubTab tagsConfigSubTab,
         ContextsConfigSubTab contextsConfigSubTab) {
 
+        this.generalConfigSubTab = generalConfigSubTab;
         this.hotbarConfigSubTab = hotbarConfigSubTab;
         this.groupsConfigSubTab = groupsConfigSubTab;
         this.tagsConfigSubTab = tagsConfigSubTab;
@@ -32,6 +35,12 @@ public class ConfigurationTab : IEmoteBrowserTab, IDisposable {
 
     public void Draw() {
         if (ImGui.BeginTabBar("ConfigurationTabBar")) {
+            if (ImGui.BeginTabItem("General")) {
+                this.isHotbarTabActive = false;
+                this.generalConfigSubTab.Draw();
+                ImGui.EndTabItem();
+            }
+
             if (ImGui.BeginTabItem("Contexts")) {
                 this.isHotbarTabActive = false;
                 this.contextsConfigSubTab.Draw();

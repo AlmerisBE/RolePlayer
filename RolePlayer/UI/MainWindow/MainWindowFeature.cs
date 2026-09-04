@@ -19,6 +19,7 @@ public class MainWindowFeature : IFeatureModule {
         services.AddSingleton<StatusBarComponent>();
         services.AddSingleton<MainLayoutComponent>();
 
+        services.AddSingleton<GeneralConfigSubTab>();
         services.AddSingleton<HotbarConfigSubTab>();
         services.AddSingleton<GroupsConfigSubTab>();
         services.AddSingleton<TagsConfigSubTab>();
