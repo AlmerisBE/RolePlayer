@@ -20,6 +20,11 @@
   "config_common_yes_delete": "はい、削除します",
   "config_common_none": "なし",
   "config_common_all": "すべて",
+  "config_common_selected": "選択済み",
+  "config_common_categories": "カテゴリー",
+  "config_common_groups": "グループ",
+  "config_common_tags": "タグ",
+  "config_tag_col_name": "タグ名",
   "config_hb_manage": "ホットバー管理",
   "config_hb_create": "新規作成",
   "config_hb_no_hotbars": "ホットバーがありません。",
@@ -35,6 +40,8 @@
   "config_hb_layout": "レイアウト",
   "config_hb_anchor": "アンカー",
   "config_hb_pop_mode": "登録モード",
+  "config_hb_pop_manual": "手動",
+  "config_hb_pop_dynamic": "ダイナミック",
   "config_hb_dyn_filters": "ダイナミックフィルター",
   "config_hb_search": "検索...",
   "config_hb_modded_only": "MODのみ",
@@ -66,6 +73,5 @@
   "config_tag_tooltip_add": "追加",
   "config_tag_del_title": "削除確認",
   "config_tag_del_desc": "'{0}' を削除しますか？",
-  "config_tag_del_warn": "すべてのエモートからタグが削除されます。",
-  "config_tag_col_name": "タグ名"
+  "config_tag_del_warn": "すべてのエモートからタグが削除されます。"
 }

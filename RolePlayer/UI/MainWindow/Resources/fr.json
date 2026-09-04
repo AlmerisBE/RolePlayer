@@ -20,6 +20,11 @@
   "config_common_yes_delete": "Oui, supprimer",
   "config_common_none": "Aucun",
   "config_common_all": "Tous",
+  "config_common_selected": "sélectionné(s)",
+  "config_common_categories": "Catégories",
+  "config_common_groups": "Groupes",
+  "config_common_tags": "Tags",
+  "config_tag_col_name": "Nom du tag",
   "config_hb_manage": "Gestion des Barres",
   "config_hb_create": "Créer une Barre",
   "config_hb_no_hotbars": "Aucune barre créée.",
@@ -35,6 +40,8 @@
   "config_hb_layout": "Disposition",
   "config_hb_anchor": "Ancrage",
   "config_hb_pop_mode": "Remplissage",
+  "config_hb_pop_manual": "Manuel",
+  "config_hb_pop_dynamic": "Dynamique",
   "config_hb_dyn_filters": "Filtres Dynamiques",
   "config_hb_search": "Rechercher...",
   "config_hb_modded_only": "Moddées Uniq.",
@@ -66,6 +73,5 @@
   "config_tag_tooltip_add": "Ajouter le tag",
   "config_tag_del_title": "Supprimer le Tag",
   "config_tag_del_desc": "Voulez-vous supprimer le tag '{0}' ?",
-  "config_tag_del_warn": "Ce tag sera retiré de toutes les emotes.",
-  "config_tag_col_name": "Nom du tag"
+  "config_tag_del_warn": "Ce tag sera retiré de toutes les emotes."
 }

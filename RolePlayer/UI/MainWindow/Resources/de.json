@@ -20,6 +20,11 @@
   "config_common_yes_delete": "Ja, Löschen",
   "config_common_none": "Keine",
   "config_common_all": "Alle",
+  "config_common_selected": "ausgewählt",
+  "config_common_categories": "Kategorien",
+  "config_common_groups": "Gruppen",
+  "config_common_tags": "Tags",
+  "config_tag_col_name": "Tag-Name",
   "config_hb_manage": "Leistenverwaltung",
   "config_hb_create": "Neue Leiste",
   "config_hb_no_hotbars": "Keine Leisten.",
@@ -35,6 +40,8 @@
   "config_hb_layout": "Layout",
   "config_hb_anchor": "Anker",
   "config_hb_pop_mode": "Füllmethode",
+  "config_hb_pop_manual": "Manuell",
+  "config_hb_pop_dynamic": "Dynamisch",
   "config_hb_dyn_filters": "Dynamische Filter",
   "config_hb_search": "Suchen...",
   "config_hb_modded_only": "Nur Gemoddete",
@@ -66,6 +73,5 @@
   "config_tag_tooltip_add": "Tag hinzufügen",
   "config_tag_del_title": "Tag löschen",
   "config_tag_del_desc": "Tag '{0}' wirklich löschen?",
-  "config_tag_del_warn": "Entfernt den Tag von allen Emotes.",
-  "config_tag_col_name": "Tag-Name"
+  "config_tag_del_warn": "Entfernt den Tag von allen Emotes."
 }

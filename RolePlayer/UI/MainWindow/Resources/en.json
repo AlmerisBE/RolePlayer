@@ -20,6 +20,11 @@
   "config_common_yes_delete": "Yes, Delete",
   "config_common_none": "None",
   "config_common_all": "All",
+  "config_common_selected": "selected",
+  "config_common_categories": "Categories",
+  "config_common_groups": "Groups",
+  "config_common_tags": "Tags",
+  "config_tag_col_name": "Tag Name",
   "config_hb_manage": "Hotbar Management",
   "config_hb_create": "Create New Hotbar",
   "config_hb_no_hotbars": "No hotbars created yet.",
@@ -35,6 +40,8 @@
   "config_hb_layout": "Layout",
   "config_hb_anchor": "Anchor",
   "config_hb_pop_mode": "Population Mode",
+  "config_hb_pop_manual": "Manual",
+  "config_hb_pop_dynamic": "Dynamic",
   "config_hb_dyn_filters": "Dynamic Filters",
   "config_hb_search": "Search emotes...",
   "config_hb_modded_only": "Modded Only",
@@ -66,6 +73,5 @@
   "config_tag_tooltip_add": "Add Tag",
   "config_tag_del_title": "Delete Tag Confirmation",
   "config_tag_del_desc": "Are you sure you want to delete the tag '{0}'?",
-  "config_tag_del_warn": "This will remove the tag from all associated emotes.",
-  "config_tag_col_name": "Tag Name"
+  "config_tag_del_warn": "This will remove the tag from all associated emotes."
 }

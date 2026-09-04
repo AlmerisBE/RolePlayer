@@ -90,7 +90,8 @@ public class HotbarConfigSubTab {
                 if (ImGui.Selectable($"{hotbar.Name}##sel_{hotbar.Id}", isSelected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowItemOverlap)) this.selectedHotbar = hotbar;
 
                 ImGui.TableNextColumn();
-                ImGui.Text(hotbar.PopulationMode.ToString());
+                string popModeStr = hotbar.PopulationMode == HotbarPopulationMode.Manual ? this.localization.Translate("config_hb_pop_manual") : this.localization.Translate("config_hb_pop_dynamic");
+                ImGui.Text(popModeStr);
 
                 ImGui.TableNextColumn();
                 int count = this.hotbarResolver.ResolveEmotesForHotbar(hotbar, this.hotbarManager.GetEmoteCache()).Count;
@@ -162,9 +163,7 @@ public class HotbarConfigSubTab {
             this.selectedHotbar.IsLocked = !this.selectedHotbar.IsLocked;
             configChanged = true;
         }
-        if (ImGui.IsItemHovered()) {
-            ImGui.SetTooltip("Toggle Position Lock");
-        }
+        if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_hb_tooltip_lock"));
 
         ImGui.SameLine();
         ImGui.SetCursorPosX(ImGui.GetWindowContentRegionMax().X - 30f);
@@ -219,7 +218,7 @@ public class HotbarConfigSubTab {
             ImGui.EndCombo();
         }
 
-        if (ImGui.BeginCombo("Anchor", this.selectedHotbar.Anchor.ToString())) {
+        if (ImGui.BeginCombo(this.localization.Translate("config_hb_anchor"), this.selectedHotbar.Anchor.ToString())) {
             foreach (HotbarAnchor anchor in Enum.GetValues(typeof(HotbarAnchor))) {
                 if (ImGui.Selectable(anchor.ToString(), this.selectedHotbar.Anchor == anchor)) {
                     this.selectedHotbar.Anchor = anchor;
@@ -230,9 +229,13 @@ public class HotbarConfigSubTab {
             ImGui.EndCombo();
         }
 
-        if (ImGui.BeginCombo("Population Mode", this.selectedHotbar.PopulationMode.ToString())) {
+        string currentPopModeStr = this.selectedHotbar.PopulationMode == HotbarPopulationMode.Manual ? this.localization.Translate("config_hb_pop_manual") : this.localization.Translate("config_hb_pop_dynamic");
+
+        if (ImGui.BeginCombo(this.localization.Translate("config_hb_pop_mode"), currentPopModeStr)) {
             foreach (HotbarPopulationMode mode in Enum.GetValues(typeof(HotbarPopulationMode))) {
-                if (ImGui.Selectable(mode.ToString(), this.selectedHotbar.PopulationMode == mode)) {
+                string modeStr = mode == HotbarPopulationMode.Manual ? this.localization.Translate("config_hb_pop_manual") : this.localization.Translate("config_hb_pop_dynamic");
+
+                if (ImGui.Selectable(modeStr, this.selectedHotbar.PopulationMode == mode)) {
                     this.selectedHotbar.PopulationMode = mode;
                     configChanged = true;
                 }
@@ -261,13 +264,13 @@ public class HotbarConfigSubTab {
             ImGui.Spacing();
 
             var categories = this.hotbarManager.GetEmoteCache().Select(e => e.Category).Where(c => !string.IsNullOrEmpty(c)).Distinct().ToList();
-            this.DrawMultiSelectCombo("Categories", categories, this.selectedHotbar.SelectedCategories, ref configChanged);
+            this.DrawMultiSelectCombo(this.localization.Translate("config_common_categories"), categories, this.selectedHotbar.SelectedCategories, ref configChanged);
 
             var groups = context.EmoteGroups.Select(g => g.Name).ToList();
-            this.DrawMultiSelectCombo("Groups", groups, this.selectedHotbar.SelectedGroups, ref configChanged);
+            this.DrawMultiSelectCombo(this.localization.Translate("config_common_groups"), groups, this.selectedHotbar.SelectedGroups, ref configChanged);
 
             var tags = context.AvailableTags.ToList();
-            this.DrawMultiSelectCombo("Tags", tags, this.selectedHotbar.SelectedTags, ref configChanged);
+            this.DrawMultiSelectCombo(this.localization.Translate("config_common_tags"), tags, this.selectedHotbar.SelectedTags, ref configChanged);
         }
         else {
             ImGui.Text(this.localization.Translate("config_hb_manual_pop"));
@@ -326,22 +329,15 @@ public class HotbarConfigSubTab {
         ImGui.Spacing();
 
         int totalEmotes = resolvedEmotes.Count;
-        if (totalEmotes == 0) {
-            return;
-        }
+        if (totalEmotes == 0) return;
 
-        // Calcul dynamique des colonnes pour utiliser toute la largeur
         float availWidth = ImGui.GetContentRegionAvail().X;
-        int cols = (int)(availWidth / 36f); // 32f image + 4f padding
-        if (cols < 1) {
-            cols = 1;
-        }
+        int cols = (int)(availWidth / 36f);
+        if (cols < 1) cols = 1;
 
         if (ImGui.BeginTable("PreviewGrid", cols, ImGuiTableFlags.SizingFixedFit)) {
             for (int i = 0; i < totalEmotes; i++) {
-                if (i % cols == 0) {
-                    ImGui.TableNextRow();
-                }
+                if (i % cols == 0) ImGui.TableNextRow();
 
                 ImGui.TableNextColumn();
 
@@ -353,9 +349,7 @@ public class HotbarConfigSubTab {
 
                         if (iconWrap != null) {
                             ImGui.Image(iconWrap.Handle, new Vector2(32, 32));
-                            if (ImGui.IsItemHovered()) {
-                                ImGui.SetTooltip(emote.Name);
-                            }
+                            if (ImGui.IsItemHovered()) ImGui.SetTooltip(emote.Name);
                         }
                     }
                     catch (IconNotFoundException) { }
@@ -366,11 +360,11 @@ public class HotbarConfigSubTab {
     }
 
     private void DrawMultiSelectCombo(string label, List<string> items, HashSet<string> selectedItems, ref bool changed) {
-        var preview = selectedItems.Count == 0 ? "All" : $"{selectedItems.Count} selected";
+        var preview = selectedItems.Count == 0 ? this.localization.Translate("config_common_all") : $"{selectedItems.Count} {this.localization.Translate("config_common_selected")}";
 
         if (ImGui.BeginCombo(label, preview)) {
             bool allSelected = selectedItems.Count == 0;
-            if (ImGui.Checkbox("All", ref allSelected)) {
+            if (ImGui.Checkbox(this.localization.Translate("config_common_all"), ref allSelected)) {
                 selectedItems.Clear();
                 changed = true;
             }
@@ -380,12 +374,8 @@ public class HotbarConfigSubTab {
             foreach (var item in items) {
                 bool isSelected = selectedItems.Contains(item);
                 if (ImGui.Checkbox(item, ref isSelected)) {
-                    if (isSelected) {
-                        selectedItems.Add(item);
-                    }
-                    else {
-                        selectedItems.Remove(item);
-                    }
+                    if (isSelected) selectedItems.Add(item);
+                    else selectedItems.Remove(item);
 
                     changed = true;
                 }
