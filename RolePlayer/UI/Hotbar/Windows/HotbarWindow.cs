@@ -85,11 +85,16 @@ public class HotbarWindow : Window {
             }
 
             var displayedEmotes = resolvedEmotes.Skip(this.currentPage * MaxItemsPerPage).Take(MaxItemsPerPage).ToList();
+
             int maxColumns = this.GetColumnsForLayout(this.config.Layout);
 
+            // Calcul de la largeur réelle du bouton incluant l'espacement du rendu ImGui
+            float columnWidth = IconSize + (ImGui.GetStyle().FramePadding.X * 2f);
+
             if (ImGui.BeginTable($"HotbarGrid_{this.config.Id}", maxColumns, ImGuiTableFlags.SizingFixedFit)) {
+                // Application de la largeur calculée pour éviter toute coupure d'affichage
                 for (int col = 0; col < maxColumns; col++) {
-                    ImGui.TableSetupColumn($"col_{col}", ImGuiTableColumnFlags.WidthFixed, IconSize);
+                    ImGui.TableSetupColumn($"col_{col}", ImGuiTableColumnFlags.WidthFixed, columnWidth);
                 }
 
                 for (int i = 0; i < displayedEmotes.Count; i++) {
