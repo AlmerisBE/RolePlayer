@@ -20,7 +20,7 @@ public class MainWindow : Window, IDisposable {
         StatusBarComponent statusBar,
         MainLayoutComponent layoutManager,
         IClientState clientState)
-        : base($"RolePlayer v{pluginInterface.Manifest.AssemblyVersion}", ImGuiWindowFlags.None) {
+        : base($"RolePlayer v{pluginInterface.Manifest.AssemblyVersion}", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse) {
 
         this.tabManager = tabManager;
         this.statusBar = statusBar;
@@ -42,7 +42,7 @@ public class MainWindow : Window, IDisposable {
             isPanelOpen: isPanelOpen
         );
 
-        Dalamud.Bindings.ImGui.ImGui.Separator();
+        ImGui.Separator();
         this.statusBar.Draw();
     }
 

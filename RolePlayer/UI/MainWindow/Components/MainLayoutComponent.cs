@@ -34,7 +34,9 @@ public class MainLayoutComponent {
         }
 
         var contentWidth = isPanelOpen ? -panelTotalWidth : 0;
-        var footerHeight = ImGui.GetFrameHeightWithSpacing();
+
+        // Calcul précis de l'espace requis par le pied de page (Separator + StatusBar + Espacements)
+        var footerHeight = ImGui.GetFrameHeight() + ImGui.GetStyle().ItemSpacing.Y * 2f + ImGui.GetStyle().WindowPadding.Y + 1f;
 
         if (ImGui.BeginChild("MainContent", new Vector2(contentWidth, -footerHeight), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)) {
             drawMainContent();
