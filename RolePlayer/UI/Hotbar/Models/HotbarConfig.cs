@@ -10,6 +10,10 @@ public class HotbarConfig {
     public string Name { get; set; } = "New Hotbar";
     public bool IsVisible { get; set; } = false;
     public bool IsLocked { get; set; } = false;
+
+    public bool HideInCombat { get; set; } = false;
+    public bool HideInDuty { get; set; } = false;
+
     public HotbarLayout Layout { get; set; } = HotbarLayout.Grid16x1;
     public HotbarPopulationMode PopulationMode { get; set; } = HotbarPopulationMode.Manual;
 

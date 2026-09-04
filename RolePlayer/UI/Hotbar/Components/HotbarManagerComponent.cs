@@ -8,6 +8,7 @@ using RolePlayer.Core.Configuration.Contracts;
 using RolePlayer.UI.EmoteBrowser.Contracts;
 using RolePlayer.UI.EmoteBrowser.Models;
 using RolePlayer.UI.Hotbar.Contracts;
+using RolePlayer.UI.Hotbar.Models;
 using RolePlayer.UI.Hotbar.Windows;
 using System;
 using System.Collections.Generic;
@@ -90,11 +91,20 @@ public class HotbarManagerComponent : IDisposable {
         this.RefreshWindows();
     }
 
-    private bool ShouldHideHotbars() {
-        return this.condition[ConditionFlag.InCombat] ||
-               this.condition[ConditionFlag.BoundByDuty] ||
-               this.condition[ConditionFlag.BoundByDuty56] ||
-               this.condition[ConditionFlag.WatchingCutscene];
+    private bool EvaluateHotbarVisibility(HotbarConfig config) {
+        if (this.condition[ConditionFlag.WatchingCutscene]) {
+            return true;
+        }
+
+        if (config.HideInCombat && this.condition[ConditionFlag.InCombat]) {
+            return true;
+        }
+
+        if (config.HideInDuty && (this.condition[ConditionFlag.BoundByDuty] || this.condition[ConditionFlag.BoundByDuty56])) {
+            return true;
+        }
+
+        return false;
     }
 
     private void RebuildCache() {
@@ -133,7 +143,7 @@ public class HotbarManagerComponent : IDisposable {
                 this.executionService,
                 this.textureProvider,
                 () => this.sharedCache,
-                this.ShouldHideHotbars
+                () => this.EvaluateHotbarVisibility(hotbarConfig)
             );
             this.windowSystem.AddWindow(window);
         }

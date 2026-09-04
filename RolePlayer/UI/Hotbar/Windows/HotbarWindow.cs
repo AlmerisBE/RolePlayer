@@ -25,8 +25,7 @@ public class HotbarWindow : Window {
     private int currentPage = 0;
     private const int MaxItemsPerPage = 16;
 
-    // Ajustement à 44f pour correspondre exactement à la taille d'une icône de barre d'action FFXIV native (à 100% de scale)
-    private const float IconSize = 44f;
+    private const float IconSize = 41f;
 
     public HotbarWindow(
         HotbarConfig config,
@@ -60,9 +59,8 @@ public class HotbarWindow : Window {
             this.Flags &= ~ImGuiWindowFlags.NoMove;
         }
 
-        // Réduction du WindowPadding à 2f pour resserrer la hitbox autour de la barre
-        ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(2f, 2f));
-        ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(2f, 2f));
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(3f, 3f));
+        ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(4f, 4f));
     }
 
     public override void Draw() {

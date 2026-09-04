@@ -187,6 +187,26 @@ public class HotbarConfigSubTab {
 
         ImGui.Spacing();
 
+        ImGui.TextDisabled("Auto-Hide Settings");
+
+        bool hideCombat = this.selectedHotbar.HideInCombat;
+        if (ImGui.Checkbox("Combat##hideCombat", ref hideCombat)) {
+            this.selectedHotbar.HideInCombat = hideCombat;
+            configChanged = true;
+        }
+
+        ImGui.SameLine();
+
+        bool hideDuty = this.selectedHotbar.HideInDuty;
+        if (ImGui.Checkbox("Duty / Instance##hideDuty", ref hideDuty)) {
+            this.selectedHotbar.HideInDuty = hideDuty;
+            configChanged = true;
+        }
+
+        ImGui.Spacing();
+        ImGui.Separator();
+        ImGui.Spacing();
+
         string name = this.selectedHotbar.Name;
         if (ImGui.InputText("Name", ref name, 64)) {
             this.selectedHotbar.Name = name;
