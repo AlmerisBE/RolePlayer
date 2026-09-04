@@ -6,6 +6,8 @@ root = true
 indent_style = space
 indent_size = 4
 tab_width = 4
+# Enforce braces only for multi-line control flow blocks
+csharp_prefer_braces = when_multiline:warning
 
 # File-scoped namespaces (enforces namespace MyNamespace; without braces)
 csharp_style_namespace_declarations = file_scoped:warning
