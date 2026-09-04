@@ -14,6 +14,7 @@ using RolePlayer.UI.EmoteBrowser.Contracts;
 using RolePlayer.UI.EmoteBrowser.Models;
 using RolePlayer.UI.Hotbar.Components;
 using RolePlayer.UI.Hotbar.Models;
+using RolePlayer.UI.Localization.Contracts;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -45,8 +46,9 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
     private bool needsRefresh = false;
     private bool needsFilterApply = false;
     private bool isRefreshing = false;
+    private ILocalizationService localization;
 
-    public string TabName => "All Emotes";
+    public string TabName => this.localization.Translate("browser_tab_all_emotes");
     public int SortOrder => 0;
     public bool IsSidePanelOpen => this.selectionState.SelectedEmote != null;
 
@@ -65,7 +67,8 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
         ITagManagementService tagManagementService,
         HotbarManagerComponent hotbarManager,
         EmoteFilterComponent filterComponent,
-        EmoteDetailsPanel detailsPanel) {
+        EmoteDetailsPanel detailsPanel,
+        ILocalizationService localization) {
 
         this.emoteRepository = emoteRepository;
         this.playerStateProvider = playerStateProvider;
@@ -82,6 +85,7 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
         this.hotbarManager = hotbarManager;
         this.filterComponent = filterComponent;
         this.detailsPanel = detailsPanel;
+        this.localization = localization;
 
         this.modStateProvider.ModStateChanged += this.OnModStateChanged;
         this.playerStateProvider.PlayerStateValid += this.OnPlayerStateValid;
@@ -225,33 +229,22 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
 
     private void DrawContextMenu(EmoteDisplayData emote, EmoteContext context) {
         if (ImGui.BeginPopupContextItem($"EmoteContextMenu_{emote.Id}")) {
-            if (ImGui.MenuItem("Copy Command")) {
-                ImGui.SetClipboardText(emote.LocalizedCommand);
-            }
+            if (ImGui.MenuItem(this.localization.Translate("browser_ctx_copy"))) ImGui.SetClipboardText(emote.LocalizedCommand);
 
-            if (ImGui.MenuItem("Execute Emote", "", false, emote.IsUnlocked)) {
-                this.executionService.ExecuteEmote(emote.Id);
-            }
+            if (ImGui.MenuItem(this.localization.Translate("browser_ctx_execute"), "", false, emote.IsUnlocked)) this.executionService.ExecuteEmote(emote.Id);
 
             ImGui.Separator();
 
-            if (ImGui.BeginMenu("Assign to Hotbar")) {
+            if (ImGui.BeginMenu(this.localization.Translate("browser_ctx_assign_hotbar"))) {
                 var manualHotbars = context.Hotbars.Where(h => h.PopulationMode == HotbarPopulationMode.Manual).ToList();
-                if (!manualHotbars.Any()) {
-                    ImGui.MenuItem("No static hotbars available", "", false, false);
-                }
+                if (!manualHotbars.Any()) ImGui.MenuItem(this.localization.Translate("browser_ctx_no_hotbars"), "", false, false);
 
                 bool hotbarChanged = false;
                 foreach (var hotbar in manualHotbars) {
                     bool isInHotbar = hotbar.ManualEmoteIds.Contains(emote.Id);
                     if (ImGui.MenuItem(hotbar.Name, "", isInHotbar)) {
-                        if (isInHotbar) {
-                            hotbar.ManualEmoteIds.Remove(emote.Id);
-                        }
-                        else {
-                            hotbar.ManualEmoteIds.Add(emote.Id);
-                        }
-
+                        if (isInHotbar) hotbar.ManualEmoteIds.Remove(emote.Id);
+                        else hotbar.ManualEmoteIds.Add(emote.Id);
                         hotbarChanged = true;
                     }
                 }
@@ -263,11 +256,11 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
                 ImGui.EndMenu();
             }
 
-            if (ImGui.BeginMenu("Assign Group")) {
+            if (ImGui.BeginMenu(this.localization.Translate("browser_ctx_assign_group"))) {
                 bool groupChanged = false;
                 var currentGroup = this.groupManagementService.GetGroupForEmote(emote.Id);
 
-                if (ImGui.MenuItem("None", "", string.IsNullOrEmpty(currentGroup))) {
+                if (ImGui.MenuItem(this.localization.Translate("browser_ctx_none"), "", string.IsNullOrEmpty(currentGroup))) {
                     this.groupManagementService.RemoveEmoteFromGroup(emote.Id);
                     groupChanged = true;
                 }
@@ -280,39 +273,26 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
                     }
                 }
 
-                if (groupChanged) {
-                    this.needsFilterApply = true;
-                }
-
+                if (groupChanged) this.needsFilterApply = true;
                 ImGui.EndMenu();
             }
 
-            if (ImGui.BeginMenu("Assign Tag")) {
+            if (ImGui.BeginMenu(this.localization.Translate("browser_ctx_assign_tag"))) {
                 bool tagChanged = false;
                 var currentTags = this.tagManagementService.GetTagsForEmote(emote.Id).ToList();
 
-                if (!context.AvailableTags.Any()) {
-                    ImGui.MenuItem("No tags available", "", false, false);
-                }
+                if (!context.AvailableTags.Any()) ImGui.MenuItem(this.localization.Translate("browser_ctx_no_tags"), "", false, false);
 
                 foreach (var tag in context.AvailableTags) {
                     bool hasTag = currentTags.Contains(tag);
                     if (ImGui.MenuItem(tag, "", hasTag)) {
-                        if (hasTag) {
-                            this.tagManagementService.RemoveTagFromEmote(emote.Id, tag);
-                        }
-                        else {
-                            this.tagManagementService.AddTagToEmote(emote.Id, tag);
-                        }
-
+                        if (hasTag) this.tagManagementService.RemoveTagFromEmote(emote.Id, tag);
+                        else this.tagManagementService.AddTagToEmote(emote.Id, tag);
                         tagChanged = true;
                     }
                 }
 
-                if (tagChanged) {
-                    this.needsFilterApply = true;
-                }
-
+                if (tagChanged) this.needsFilterApply = true;
                 ImGui.EndMenu();
             }
 

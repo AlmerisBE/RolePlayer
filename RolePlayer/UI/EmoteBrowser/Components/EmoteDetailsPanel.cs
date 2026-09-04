@@ -6,6 +6,7 @@ using RolePlayer.Core.Configuration.Contracts;
 using RolePlayer.UI.EmoteBrowser.Contracts;
 using RolePlayer.UI.Hotbar.Components;
 using RolePlayer.UI.Hotbar.Models;
+using RolePlayer.UI.Localization.Contracts;
 using System.Linq;
 using System.Numerics;
 
@@ -20,6 +21,7 @@ public class EmoteDetailsPanel {
     private IConfigurationService configurationService;
     private IContextManagementService contextService;
     private HotbarManagerComponent hotbarManager;
+    private ILocalizationService localization;
 
     public EmoteDetailsPanel(
         IUnlockSourceProvider unlockSourceProvider,
@@ -31,7 +33,8 @@ public class EmoteDetailsPanel {
         IGroupManagementService groupManagementService,
         IConfigurationService configurationService,
         IContextManagementService contextService,
-        HotbarManagerComponent hotbarManager) {
+        HotbarManagerComponent hotbarManager,
+        ILocalizationService localization) {
 
         this.unlockSourceProvider = unlockSourceProvider;
         this.modStateProvider = modStateProvider;
@@ -43,13 +46,12 @@ public class EmoteDetailsPanel {
         this.configurationService = configurationService;
         this.contextService = contextService;
         this.hotbarManager = hotbarManager;
+        this.localization = localization;
     }
 
     public void Draw() {
         var emote = this.selectionState.SelectedEmote;
-        if (emote == null) {
-            return;
-        }
+        if (emote == null) return;
 
         string closeIcon = FontAwesomeIcon.Times.ToIconString();
         ImGui.PushFont(UiBuilder.IconFont);
@@ -82,16 +84,13 @@ public class EmoteDetailsPanel {
 
         ImGui.Spacing();
 
-        if (!string.IsNullOrEmpty(emote.Category)) {
-            ImGui.Text($"Category: {emote.Category}");
-        }
+        if (!string.IsNullOrEmpty(emote.Category)) ImGui.Text(this.localization.Translate("browser_details_category", emote.Category));
 
-        ImGui.Text($"Unlocked: {(emote.IsUnlocked ? "Yes" : "No")}");
+        string isUnlockedStr = emote.IsUnlocked ? this.localization.Translate("browser_details_yes") : this.localization.Translate("browser_details_no");
+        ImGui.Text(this.localization.Translate("browser_details_unlocked", isUnlockedStr));
 
         var modName = this.modStateProvider.GetModNameModifyingEmote(emote.Id);
-        if (!string.IsNullOrEmpty(modName)) {
-            ImGui.TextColored(new Vector4(0.2f, 0.8f, 0.2f, 1.0f), $"Modified by: {modName}");
-        }
+        if (!string.IsNullOrEmpty(modName)) ImGui.TextColored(new Vector4(0.2f, 0.8f, 0.2f, 1.0f), this.localization.Translate("browser_details_modified_by", modName));
 
         ImGui.Spacing();
 
@@ -100,12 +99,12 @@ public class EmoteDetailsPanel {
             ImGui.TableSetupColumn("Cmd", ImGuiTableColumnFlags.WidthStretch);
 
             ImGui.TableNextRow();
-            ImGui.TableNextColumn(); ImGui.TextDisabled("Command:");
+            ImGui.TableNextColumn(); ImGui.TextDisabled(this.localization.Translate("browser_details_command"));
             ImGui.TableNextColumn(); ImGui.TextUnformatted(emote.LocalizedCommand);
 
             if (!string.IsNullOrEmpty(emote.EnglishCommand) && emote.EnglishCommand != emote.LocalizedCommand) {
                 ImGui.TableNextRow();
-                ImGui.TableNextColumn(); ImGui.TextDisabled("English:");
+                ImGui.TableNextColumn(); ImGui.TextDisabled(this.localization.Translate("browser_details_english"));
                 ImGui.TableNextColumn(); ImGui.TextUnformatted(emote.EnglishCommand);
             }
             ImGui.EndTable();
@@ -116,12 +115,10 @@ public class EmoteDetailsPanel {
         ImGui.Spacing();
 
         if (emote.IsUnlocked) {
-            if (ImGui.Button("Execute Emote", new Vector2(-1, 30))) {
-                this.executionService.ExecuteEmote(emote.Id);
-            }
+            if (ImGui.Button(this.localization.Translate("browser_details_execute"), new Vector2(-1, 30))) this.executionService.ExecuteEmote(emote.Id);
         }
         else {
-            ImGui.TextDisabled("You have not unlocked this emote yet.");
+            ImGui.TextDisabled(this.localization.Translate("browser_details_not_unlocked"));
         }
 
         ImGui.Spacing();
@@ -146,19 +143,17 @@ public class EmoteDetailsPanel {
         ImGui.Separator();
         ImGui.Spacing();
 
-        if (ImGui.Button("Debug to Console", new Vector2(-1, 0))) {
-            this.debugService.LogEmoteDetails(emote.Id);
-        }
+        if (ImGui.Button(this.localization.Translate("browser_details_debug"), new Vector2(-1, 0))) this.debugService.LogEmoteDetails(emote.Id);
     }
 
     private void DrawStaticHotbarAssignment(uint emoteId) {
-        ImGui.TextDisabled("Static Hotbars:");
+        ImGui.TextDisabled(this.localization.Translate("browser_details_static_hotbars"));
 
         var context = this.contextService.GetCurrentContext();
         var manualHotbars = context.Hotbars.Where(h => h.PopulationMode == HotbarPopulationMode.Manual).ToList();
 
         if (!manualHotbars.Any()) {
-            ImGui.TextDisabled("No manual hotbars available.");
+            ImGui.TextDisabled(this.localization.Translate("browser_details_no_manual_hotbars"));
             return;
         }
 

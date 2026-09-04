@@ -9,6 +9,7 @@ using RolePlayer.Core.Configuration.Contracts;
 using RolePlayer.UI.Hotbar.Components;
 using RolePlayer.UI.Hotbar.Contracts;
 using RolePlayer.UI.Hotbar.Models;
+using RolePlayer.UI.Localization.Contracts;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,6 +21,7 @@ public class HotbarConfigSubTab {
     private HotbarManagerComponent hotbarManager;
     private IHotbarResolverService hotbarResolver;
     private ITextureProvider textureProvider;
+    private ILocalizationService localization;
 
     private HotbarConfig? selectedHotbar;
     private HotbarConfig? hotbarToDelete;
@@ -32,19 +34,21 @@ public class HotbarConfigSubTab {
         IContextManagementService contextService,
         HotbarManagerComponent hotbarManager,
         IHotbarResolverService hotbarResolver,
-        ITextureProvider textureProvider) {
+        ITextureProvider textureProvider,
+        ILocalizationService localization) {
 
         this.configService = configService;
         this.contextService = contextService;
         this.hotbarManager = hotbarManager;
         this.hotbarResolver = hotbarResolver;
         this.textureProvider = textureProvider;
+        this.localization = localization;
     }
 
     public void Draw() {
         var context = this.contextService.GetCurrentContext();
 
-        ImGui.Text("Hotbar Management");
+        ImGui.Text(this.localization.Translate("config_hb_manage"));
         ImGui.Separator();
         ImGui.Spacing();
 
@@ -54,7 +58,7 @@ public class HotbarConfigSubTab {
 
         ImGui.SameLine();
         ImGui.AlignTextToFramePadding();
-        ImGui.Text("Create New Hotbar");
+        ImGui.Text(this.localization.Translate("config_hb_create"));
 
         if (addClicked) {
             var newHotbar = new HotbarConfig { Name = $"Hotbar {context.Hotbars.Count + 1}" };
@@ -67,14 +71,14 @@ public class HotbarConfigSubTab {
         ImGui.Spacing();
 
         if (context.Hotbars.Count == 0) {
-            ImGui.TextDisabled("No hotbars created yet.");
+            ImGui.TextDisabled(this.localization.Translate("config_hb_no_hotbars"));
             return;
         }
 
         if (ImGui.BeginTable("HotbarsListTable", 3, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit)) {
-            ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch);
-            ImGui.TableSetupColumn("Type", ImGuiTableColumnFlags.WidthFixed, 100f);
-            ImGui.TableSetupColumn("Emotes", ImGuiTableColumnFlags.WidthFixed, 60f);
+            ImGui.TableSetupColumn(this.localization.Translate("config_common_name"), ImGuiTableColumnFlags.WidthStretch);
+            ImGui.TableSetupColumn(this.localization.Translate("config_hb_table_type"), ImGuiTableColumnFlags.WidthFixed, 100f);
+            ImGui.TableSetupColumn(this.localization.Translate("config_hb_table_emotes"), ImGuiTableColumnFlags.WidthFixed, 60f);
             ImGui.TableHeadersRow();
 
             foreach (var hotbar in context.Hotbars) {
@@ -83,9 +87,7 @@ public class HotbarConfigSubTab {
                 bool isSelected = this.selectedHotbar?.Id == hotbar.Id;
 
                 ImGui.TableNextColumn();
-                if (ImGui.Selectable($"{hotbar.Name}##sel_{hotbar.Id}", isSelected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowItemOverlap)) {
-                    this.selectedHotbar = hotbar;
-                }
+                if (ImGui.Selectable($"{hotbar.Name}##sel_{hotbar.Id}", isSelected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowItemOverlap)) this.selectedHotbar = hotbar;
 
                 ImGui.TableNextColumn();
                 ImGui.Text(hotbar.PopulationMode.ToString());
@@ -99,9 +101,7 @@ public class HotbarConfigSubTab {
     }
 
     public void DrawSidePanel() {
-        if (this.selectedHotbar == null) {
-            return;
-        }
+        if (this.selectedHotbar == null) return;
 
         var context = this.contextService.GetCurrentContext();
         bool configChanged = false;
@@ -120,7 +120,7 @@ public class HotbarConfigSubTab {
             ImGui.AlignTextToFramePadding();
             ImGui.SetWindowFontScale(1.3f);
 
-            string title = string.IsNullOrWhiteSpace(this.selectedHotbar.Name) ? "Hotbar Settings" : this.selectedHotbar.Name;
+            string title = string.IsNullOrWhiteSpace(this.selectedHotbar.Name) ? this.localization.Translate("config_hb_settings") : this.selectedHotbar.Name;
             ImGui.TextUnformatted(title);
             ImGui.SetWindowFontScale(1.0f);
 
@@ -149,9 +149,7 @@ public class HotbarConfigSubTab {
             this.selectedHotbar.IsVisible = !this.selectedHotbar.IsVisible;
             configChanged = true;
         }
-        if (ImGui.IsItemHovered()) {
-            ImGui.SetTooltip("Toggle Visibility");
-        }
+        if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_hb_tooltip_vis"));
 
         ImGui.SameLine();
 
@@ -181,16 +179,14 @@ public class HotbarConfigSubTab {
             this.hotbarToDelete = this.selectedHotbar;
             this.isDeleteDialogOpen = true;
         }
-        if (ImGui.IsItemHovered()) {
-            ImGui.SetTooltip("Delete Hotbar");
-        }
+        if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_hb_tooltip_del"));
 
         ImGui.Spacing();
 
-        ImGui.TextDisabled("Auto-Hide Settings");
+        ImGui.TextDisabled(this.localization.Translate("config_hb_auto_hide"));
 
         bool hideCombat = this.selectedHotbar.HideInCombat;
-        if (ImGui.Checkbox("Combat##hideCombat", ref hideCombat)) {
+        if (ImGui.Checkbox($"{this.localization.Translate("config_hb_combat")}##hideCombat", ref hideCombat)) {
             this.selectedHotbar.HideInCombat = hideCombat;
             configChanged = true;
         }
@@ -198,7 +194,7 @@ public class HotbarConfigSubTab {
         ImGui.SameLine();
 
         bool hideDuty = this.selectedHotbar.HideInDuty;
-        if (ImGui.Checkbox("Duty / Instance##hideDuty", ref hideDuty)) {
+        if (ImGui.Checkbox($"{this.localization.Translate("config_hb_duty")}##hideDuty", ref hideDuty)) {
             this.selectedHotbar.HideInDuty = hideDuty;
             configChanged = true;
         }
@@ -208,12 +204,12 @@ public class HotbarConfigSubTab {
         ImGui.Spacing();
 
         string name = this.selectedHotbar.Name;
-        if (ImGui.InputText("Name", ref name, 64)) {
+        if (ImGui.InputText(this.localization.Translate("config_common_name"), ref name, 64)) {
             this.selectedHotbar.Name = name;
             configChanged = true;
         }
 
-        if (ImGui.BeginCombo("Layout", this.selectedHotbar.Layout.ToString())) {
+        if (ImGui.BeginCombo(this.localization.Translate("config_hb_layout"), this.selectedHotbar.Layout.ToString())) {
             foreach (HotbarLayout layout in Enum.GetValues(typeof(HotbarLayout))) {
                 if (ImGui.Selectable(layout.ToString(), this.selectedHotbar.Layout == layout)) {
                     this.selectedHotbar.Layout = layout;
@@ -249,15 +245,15 @@ public class HotbarConfigSubTab {
         ImGui.Spacing();
 
         if (this.selectedHotbar.PopulationMode == HotbarPopulationMode.Dynamic) {
-            ImGui.Text("Dynamic Filters");
+            ImGui.Text(this.localization.Translate("config_hb_dyn_filters"));
             string searchQuery = this.selectedHotbar.SearchQuery;
-            if (ImGui.InputTextWithHint("##HotbarSearch", "Search emotes...", ref searchQuery, 128)) {
+            if (ImGui.InputTextWithHint("##HotbarSearch", this.localization.Translate("config_hb_search"), ref searchQuery, 128)) {
                 this.selectedHotbar.SearchQuery = searchQuery;
                 configChanged = true;
             }
 
             bool moddedOnly = this.selectedHotbar.ShowModdedOnly;
-            if (ImGui.Checkbox("Modded Only", ref moddedOnly)) {
+            if (ImGui.Checkbox(this.localization.Translate("config_hb_modded_only"), ref moddedOnly)) {
                 this.selectedHotbar.ShowModdedOnly = moddedOnly;
                 configChanged = true;
             }
@@ -274,8 +270,8 @@ public class HotbarConfigSubTab {
             this.DrawMultiSelectCombo("Tags", tags, this.selectedHotbar.SelectedTags, ref configChanged);
         }
         else {
-            ImGui.Text("Manual Population");
-            ImGui.TextDisabled("Select emotes from the browser.");
+            ImGui.Text(this.localization.Translate("config_hb_manual_pop"));
+            ImGui.TextDisabled(this.localization.Translate("config_hb_manual_desc"));
         }
 
         ImGui.Spacing();
@@ -292,24 +288,22 @@ public class HotbarConfigSubTab {
 
     private void DrawDeleteConfirmationModal() {
         if (this.isDeleteDialogOpen) {
-            ImGui.OpenPopup("Delete Hotbar Confirmation");
+            ImGui.OpenPopup(this.localization.Translate("config_hb_del_title"));
             this.isDeleteDialogOpen = false;
         }
 
-        if (ImGui.BeginPopupModal("Delete Hotbar Confirmation", ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoSavedSettings)) {
-            ImGui.Text($"Are you sure you want to delete the hotbar '{this.hotbarToDelete?.Name}'?");
-            ImGui.TextColored(new Vector4(0.8f, 0.2f, 0.2f, 1.0f), "This action cannot be undone.");
+        if (ImGui.BeginPopupModal(this.localization.Translate("config_hb_del_title"), ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoSavedSettings)) {
+            ImGui.Text(this.localization.Translate("config_hb_del_desc", this.hotbarToDelete?.Name ?? "Unknown"));
+            ImGui.TextColored(new Vector4(0.8f, 0.2f, 0.2f, 1.0f), this.localization.Translate("config_hb_del_warn"));
             ImGui.Spacing();
             ImGui.Separator();
             ImGui.Spacing();
 
-            if (ImGui.Button("Yes, Delete", new Vector2(120, 0))) {
+            if (ImGui.Button(this.localization.Translate("config_common_yes_delete"), new Vector2(120, 0))) {
                 if (this.hotbarToDelete != null) {
                     var context = this.contextService.GetCurrentContext();
                     context.Hotbars.Remove(this.hotbarToDelete);
-                    if (this.selectedHotbar == this.hotbarToDelete) {
-                        this.selectedHotbar = null;
-                    }
+                    if (this.selectedHotbar == this.hotbarToDelete) this.selectedHotbar = null;
 
                     this.configService.Save();
                     this.hotbarManager.RefreshWindows();
@@ -317,9 +311,7 @@ public class HotbarConfigSubTab {
                 ImGui.CloseCurrentPopup();
             }
             ImGui.SameLine();
-            if (ImGui.Button("Cancel", new Vector2(120, 0))) {
-                ImGui.CloseCurrentPopup();
-            }
+            if (ImGui.Button(this.localization.Translate("config_common_cancel"), new Vector2(120, 0))) ImGui.CloseCurrentPopup();
 
             ImGui.EndPopup();
         }
@@ -330,7 +322,7 @@ public class HotbarConfigSubTab {
 
         ImGui.Separator();
         ImGui.Spacing();
-        ImGui.TextColored(new Vector4(0.7f, 0.7f, 0.7f, 1.0f), $"Preview: {resolvedEmotes.Count} emotes");
+        ImGui.TextColored(new Vector4(0.7f, 0.7f, 0.7f, 1.0f), this.localization.Translate("config_hb_preview", resolvedEmotes.Count));
         ImGui.Spacing();
 
         int totalEmotes = resolvedEmotes.Count;
