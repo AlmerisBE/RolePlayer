@@ -88,11 +88,14 @@ public class HotbarWindow : Window {
 
             int maxColumns = this.GetColumnsForLayout(this.config.Layout);
 
-            // Calcul de la largeur réelle du bouton incluant l'espacement du rendu ImGui
-            float columnWidth = IconSize + (ImGui.GetStyle().FramePadding.X * 2f);
+            // La largeur de la colonne est maintenant exactement la taille de l'icône car le padding est supprimé
+            float columnWidth = IconSize;
+
+            // Suppression du padding interne et du fond gris pour obtenir un rendu "natif FFXIV"
+            ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, Vector2.Zero);
+            ImGui.PushStyleColor(ImGuiCol.Button, Vector4.Zero);
 
             if (ImGui.BeginTable($"HotbarGrid_{this.config.Id}", maxColumns, ImGuiTableFlags.SizingFixedFit)) {
-                // Application de la largeur calculée pour éviter toute coupure d'affichage
                 for (int col = 0; col < maxColumns; col++) {
                     ImGui.TableSetupColumn($"col_{col}", ImGuiTableColumnFlags.WidthFixed, columnWidth);
                 }
@@ -107,6 +110,10 @@ public class HotbarWindow : Window {
                 }
                 ImGui.EndTable();
             }
+
+            // Restauration des styles par défaut AVANT de dessiner la pagination
+            ImGui.PopStyleColor();
+            ImGui.PopStyleVar();
 
             if (totalPages > 1) {
                 this.DrawPagination(totalPages);
