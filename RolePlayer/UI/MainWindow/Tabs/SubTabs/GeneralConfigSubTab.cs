@@ -20,6 +20,19 @@ public class GeneralConfigSubTab {
         ImGui.Separator();
         ImGui.Spacing();
 
+        bool enableHotbars = config.EnableHotbars;
+        if (ImGui.Checkbox("Enable Hotbars (Master Switch)##enableHotbars", ref enableHotbars)) {
+            config.EnableHotbars = enableHotbars;
+            changed = true;
+        }
+        if (ImGui.IsItemHovered()) {
+            ImGui.SetTooltip("Toggle visibility for all RolePlayer hotbars globally.");
+        }
+
+        ImGui.Spacing();
+        ImGui.Separator();
+        ImGui.Spacing();
+
         ImGui.Text("Global Hotkey to Toggle Main Window");
         ImGui.Spacing();
 

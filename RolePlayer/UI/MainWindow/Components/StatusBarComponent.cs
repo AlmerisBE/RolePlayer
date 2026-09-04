@@ -46,9 +46,10 @@ public class StatusBarComponent : IDisposable {
     }
 
     public void Draw() {
-        var height = ImGui.GetFrameHeight() + (ImGui.GetStyle().WindowPadding.Y * 0.5f);
+        // Hauteur stricte calée sur la hauteur d'une frame ImGui standard
+        var height = ImGui.GetFrameHeight();
 
-        if (ImGui.BeginChild("StatusBar", new Vector2(0, height), false, ImGuiWindowFlags.NoScrollbar)) {
+        if (ImGui.BeginChild("StatusBar", new Vector2(0, height), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)) {
             ImGui.PushFont(UiBuilder.IconFont);
             if (ImGui.Button(FontAwesomeIcon.UserFriends.ToIconString())) {
                 this.executionService.OpenNativeEmoteWindow();
