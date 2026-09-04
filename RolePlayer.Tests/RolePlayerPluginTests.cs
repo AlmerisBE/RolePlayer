@@ -20,6 +20,7 @@ public class RolePlayerPluginTests {
         var mockTextureProvider = Substitute.For<ITextureProvider>();
         var mockFramework = Substitute.For<IFramework>();
         var mockCondition = Substitute.For<ICondition>();
+        var mockKeyState = Substitute.For<IKeyState>();
 
         var exception = Record.Exception(() => new RolePlayerPlugin(
             mockPluginInterface,
@@ -32,7 +33,8 @@ public class RolePlayerPluginTests {
             mockInteropProvider,
             mockTextureProvider,
             mockFramework,
-            mockCondition));
+            mockCondition,
+            mockKeyState));
 
         Assert.Null(exception);
     }
