@@ -26,7 +26,8 @@ public sealed class RolePlayerPlugin : IDalamudPlugin {
         IGameInteropProvider interopProvider,
         ITextureProvider textureProvider,
         IFramework framework,
-        ICondition condition) {
+        ICondition condition,
+        IKeyState keyState) {
 
         this.pluginInterface = pluginInterface;
         this.windowSystem = new WindowSystem("RolePlayer");
@@ -44,6 +45,7 @@ public sealed class RolePlayerPlugin : IDalamudPlugin {
         services.AddSingleton(textureProvider);
         services.AddSingleton(framework);
         services.AddSingleton(condition);
+        services.AddSingleton(keyState);
 
         services.AddPluginFeatures();
 
@@ -57,6 +59,10 @@ public sealed class RolePlayerPlugin : IDalamudPlugin {
 
         this.pluginInterface.UiBuilder.Draw += this.windowSystem.Draw;
         this.pluginInterface.UiBuilder.OpenConfigUi += this.OnOpenConfigUi;
+        this.pluginInterface.UiBuilder.OpenMainUi += this.OnOpenMainUi;
+
+        var hotkeyService = this.serviceProvider.GetRequiredService<RolePlayer.UI.Input.Contracts.IHotkeyService>();
+        hotkeyService.OnHotkeyPressed += this.OnOpenMainUi;
     }
 
     private void OnOpenConfigUi() {
@@ -66,9 +72,17 @@ public sealed class RolePlayerPlugin : IDalamudPlugin {
         }
     }
 
+    private void OnOpenMainUi() {
+        var mainWindow = this.serviceProvider.GetService<RolePlayer.UI.MainWindow.Windows.MainWindow>();
+        if (mainWindow != null) {
+            mainWindow.Toggle();
+        }
+    }
+
     public void Dispose() {
         this.pluginInterface.UiBuilder.Draw -= this.windowSystem.Draw;
         this.pluginInterface.UiBuilder.OpenConfigUi -= this.OnOpenConfigUi;
+        this.pluginInterface.UiBuilder.OpenMainUi -= this.OnOpenMainUi;
 
         this.windowSystem.RemoveAllWindows();
         this.serviceProvider.Dispose();

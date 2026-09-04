@@ -9,5 +9,11 @@
   "LoadRequiredState": 0,
   "LoadSync": false,
   "LoadPriority": 0,
-  "Punchline": "What about dynamic hotbars?"
+  "Punchline": "What about dynamic hotbars?",
+  "Tags": [
+    "emotes",
+    "roleplay",
+    "hotbars",
+    "ui"
+  ]
 }
