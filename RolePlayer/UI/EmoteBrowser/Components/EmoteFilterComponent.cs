@@ -40,17 +40,13 @@ public class EmoteFilterComponent {
         ImGui.PopFont();
 
         ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - filterIconWidth - ImGui.GetStyle().ItemSpacing.X);
-        if (ImGui.InputTextWithHint("##SearchEmotes", "Search by name or command...", ref this.SearchQuery, 128)) {
-            filtersChanged = true;
-        }
+        if (ImGui.InputTextWithHint("##SearchEmotes", "Search by name or command...", ref this.SearchQuery, 128)) filtersChanged = true;
 
         ImGui.SameLine();
 
         bool isFilterActive = context.ShowFilters;
 
-        if (isFilterActive) {
-            ImGui.PushStyleColor(ImGuiCol.Button, ImGui.GetStyle().Colors[(int)ImGuiCol.ButtonActive]);
-        }
+        if (isFilterActive) ImGui.PushStyleColor(ImGuiCol.Button, ImGui.GetStyle().Colors[(int)ImGuiCol.ButtonActive]);
 
         ImGui.PushFont(UiBuilder.IconFont);
         if (ImGui.Button(filterIconText)) {
@@ -59,23 +55,20 @@ public class EmoteFilterComponent {
         }
         ImGui.PopFont();
 
-        if (isFilterActive) {
-            ImGui.PopStyleColor();
-        }
+        if (isFilterActive) ImGui.PopStyleColor();
 
-        if (ImGui.IsItemHovered()) {
-            ImGui.SetTooltip("Toggle Advanced Filters");
-        }
+        if (ImGui.IsItemHovered()) ImGui.SetTooltip("Toggle Advanced Filters");
 
         if (context.ShowFilters) {
             ImGui.Spacing();
             ImGui.Separator();
             ImGui.Spacing();
 
+            // Line 1: Group By (Takes full remaining width)
             ImGui.AlignTextToFramePadding();
             ImGui.Text("Group By:");
             ImGui.SameLine();
-            ImGui.SetNextItemWidth(150f);
+            ImGui.SetNextItemWidth(-1f);
 
             string currentGroupLabel = context.CurrentGrouping switch {
                 GroupingMode.NativeCategory => "Native Category",
@@ -102,7 +95,7 @@ public class EmoteFilterComponent {
                 ImGui.EndCombo();
             }
 
-            ImGui.SameLine();
+            // Line 2: Modded Checkbox alongside Unlock Status
             bool showModded = context.ShowModdedOnly;
             if (ImGui.Checkbox("Show Modded Only", ref showModded)) {
                 context.ShowModdedOnly = showModded;
@@ -111,8 +104,12 @@ public class EmoteFilterComponent {
             }
 
             ImGui.SameLine();
-            ImGui.SetNextItemWidth(120f);
-            if (ImGui.BeginCombo("Unlock Status", context.UnlockFilter.ToString())) {
+            ImGui.AlignTextToFramePadding();
+            ImGui.Text("Unlock:");
+            ImGui.SameLine();
+            ImGui.SetNextItemWidth(-1f);
+
+            if (ImGui.BeginCombo("##UnlockStatus", context.UnlockFilter.ToString())) {
                 if (ImGui.Selectable("All", context.UnlockFilter == UnlockFilterMode.All)) {
                     context.UnlockFilter = UnlockFilterMode.All;
                     this.configurationService.Save();
@@ -133,24 +130,27 @@ public class EmoteFilterComponent {
 
             ImGui.Spacing();
 
-            if (ImGui.BeginTable("FiltersLayoutTable", 3)) {
+            // Line 3: Multi-select tables
+            if (ImGui.BeginTable("FiltersLayoutTable", 3, ImGuiTableFlags.SizingStretchProp)) {
                 ImGui.TableSetupColumn("Categories");
                 ImGui.TableSetupColumn("Groups");
                 ImGui.TableSetupColumn("Tags");
+                ImGui.TableHeadersRow();
+
                 ImGui.TableNextRow();
 
                 bool multiSelectChanged = false;
 
                 ImGui.TableNextColumn();
-                this.DrawMultiSelectCombo("Categories##Combo", availableCategories, context.SelectedCategories, ref multiSelectChanged);
+                this.DrawMultiSelectCombo("##CatCombo", availableCategories, context.SelectedCategories, ref multiSelectChanged);
 
                 ImGui.TableNextColumn();
                 var groups = this.groupManagementService.GetGroups().Select(g => g.Name).ToList();
-                this.DrawMultiSelectCombo("Groups##Combo", groups, context.SelectedGroups, ref multiSelectChanged);
+                this.DrawMultiSelectCombo("##GrpCombo", groups, context.SelectedGroups, ref multiSelectChanged);
 
                 ImGui.TableNextColumn();
                 var tags = this.tagManagementService.GetAvailableTags().ToList();
-                this.DrawMultiSelectCombo("Tags##Combo", tags, context.SelectedTags, ref multiSelectChanged);
+                this.DrawMultiSelectCombo("##TagCombo", tags, context.SelectedTags, ref multiSelectChanged);
 
                 if (multiSelectChanged) {
                     this.configurationService.Save();
@@ -168,11 +168,11 @@ public class EmoteFilterComponent {
         return filtersChanged;
     }
 
-    private void DrawMultiSelectCombo(string label, List<string> items, HashSet<string> selectedItems, ref bool changed) {
+    private void DrawMultiSelectCombo(string id, List<string> items, HashSet<string> selectedItems, ref bool changed) {
         var preview = selectedItems.Count == 0 ? "All" : $"{selectedItems.Count} selected";
         ImGui.SetNextItemWidth(-1f);
 
-        if (ImGui.BeginCombo(label, preview)) {
+        if (ImGui.BeginCombo(id, preview)) {
             bool allSelected = selectedItems.Count == 0;
             if (ImGui.Checkbox("All", ref allSelected)) {
                 selectedItems.Clear();
@@ -184,12 +184,8 @@ public class EmoteFilterComponent {
             foreach (var item in items) {
                 bool isSelected = selectedItems.Contains(item);
                 if (ImGui.Checkbox(item, ref isSelected)) {
-                    if (isSelected) {
-                        selectedItems.Add(item);
-                    }
-                    else {
-                        selectedItems.Remove(item);
-                    }
+                    if (isSelected) selectedItems.Add(item);
+                    else selectedItems.Remove(item);
 
                     changed = true;
                 }
@@ -214,41 +210,26 @@ public class EmoteFilterComponent {
         bool hasTagFilter = context.SelectedTags.Count > 0;
 
         foreach (var emote in emotesCache) {
-            if (context.ShowModdedOnly && !emote.IsModded) {
-                continue;
-            }
+            if (context.ShowModdedOnly && !emote.IsModded) continue;
 
-            if (context.UnlockFilter == UnlockFilterMode.Unlocked && !emote.IsUnlocked) {
-                continue;
-            }
-
-            if (context.UnlockFilter == UnlockFilterMode.Locked && emote.IsUnlocked) {
-                continue;
-            }
+            if (context.UnlockFilter == UnlockFilterMode.Unlocked && !emote.IsUnlocked) continue;
+            if (context.UnlockFilter == UnlockFilterMode.Locked && emote.IsUnlocked) continue;
 
             if (hasSearch) {
                 bool matchesName = emote.Name.ToLowerInvariant().Contains(query);
                 bool matchesCmd = emote.LocalizedCommand.ToLowerInvariant().Contains(query);
                 bool matchesEnCmd = !string.IsNullOrEmpty(emote.EnglishCommand) && emote.EnglishCommand.ToLowerInvariant().Contains(query);
-                if (!matchesName && !matchesCmd && !matchesEnCmd) {
-                    continue;
-                }
+                if (!matchesName && !matchesCmd && !matchesEnCmd) continue;
             }
 
-            if (hasCatFilter && !context.SelectedCategories.Contains(emote.Category)) {
-                continue;
-            }
+            if (hasCatFilter && !context.SelectedCategories.Contains(emote.Category)) continue;
 
             var customGroup = this.groupManagementService.GetGroupForEmote(emote.Id);
-            if (hasGroupFilter && (string.IsNullOrEmpty(customGroup) || !context.SelectedGroups.Contains(customGroup))) {
-                continue;
-            }
+            if (hasGroupFilter && (string.IsNullOrEmpty(customGroup) || !context.SelectedGroups.Contains(customGroup))) continue;
 
             if (hasTagFilter) {
                 var tags = this.tagManagementService.GetTagsForEmote(emote.Id);
-                if (!context.SelectedTags.Overlaps(tags)) {
-                    continue;
-                }
+                if (!context.SelectedTags.Overlaps(tags)) continue;
             }
 
             string groupKey = "All";
@@ -259,26 +240,18 @@ public class EmoteFilterComponent {
                 groupKey = string.IsNullOrEmpty(customGroup) ? "Ungrouped" : customGroup;
             }
 
-            if (!groupedEmotes.ContainsKey(groupKey)) {
-                groupedEmotes[groupKey] = new List<EmoteDisplayData>();
-            }
+            if (!groupedEmotes.ContainsKey(groupKey)) groupedEmotes[groupKey] = new List<EmoteDisplayData>();
 
             groupedEmotes[groupKey].Add(emote);
         }
 
-        if (this.sortColumn == -1) {
-            return groupedEmotes;
-        }
+        if (this.sortColumn == -1) return groupedEmotes;
 
         foreach (var key in groupedEmotes.Keys.ToList()) {
             var list = groupedEmotes[key];
 
-            if (this.sortColumn == 1) {
-                list = this.sortDescending ? list.OrderByDescending(e => e.Name).ToList() : list.OrderBy(e => e.Name).ToList();
-            }
-            else if (this.sortColumn == 2) {
-                list = this.sortDescending ? list.OrderByDescending(e => e.LocalizedCommand).ToList() : list.OrderBy(e => e.LocalizedCommand).ToList();
-            }
+            if (this.sortColumn == 1) list = this.sortDescending ? list.OrderByDescending(e => e.Name).ToList() : list.OrderBy(e => e.Name).ToList();
+            else if (this.sortColumn == 2) list = this.sortDescending ? list.OrderByDescending(e => e.LocalizedCommand).ToList() : list.OrderBy(e => e.LocalizedCommand).ToList();
 
             groupedEmotes[key] = list;
         }
