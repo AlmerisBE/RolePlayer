@@ -33,11 +33,15 @@ public class StatusBarComponent : IDisposable {
         this.clientState = clientState;
         this.contextService = contextService;
 
-        this.clientState.Login += this.OnLogin;
+        this.playerStateProvider.PlayerStateValid += this.CalculateEmoteStatsAsync;
         this.CalculateEmoteStatsAsync();
     }
 
     private void CalculateEmoteStatsAsync() {
+        if (!this.playerStateProvider.IsPlayerValid) {
+            return;
+        }
+
         Task.Run(() => {
             var emotes = this.emoteRepository.GetBaseEmotes().ToList();
             this.totalEmotesCount = emotes.Count;
@@ -46,7 +50,6 @@ public class StatusBarComponent : IDisposable {
     }
 
     public void Draw() {
-        // Hauteur stricte calée sur la hauteur d'une frame ImGui standard
         var height = ImGui.GetFrameHeight();
 
         if (ImGui.BeginChild("StatusBar", new Vector2(0, height), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)) {
@@ -88,7 +91,5 @@ public class StatusBarComponent : IDisposable {
         ImGui.EndChild();
     }
 
-    private void OnLogin() => this.CalculateEmoteStatsAsync();
-
-    public void Dispose() => this.clientState.Login -= this.OnLogin;
+    public void Dispose() => this.playerStateProvider.PlayerStateValid -= this.CalculateEmoteStatsAsync;
 }

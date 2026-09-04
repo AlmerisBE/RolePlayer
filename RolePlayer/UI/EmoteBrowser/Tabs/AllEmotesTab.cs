@@ -84,9 +84,11 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
         this.detailsPanel = detailsPanel;
 
         this.modStateProvider.ModStateChanged += this.OnModStateChanged;
+        this.playerStateProvider.PlayerStateValid += this.OnPlayerStateValid;
     }
 
     private void OnModStateChanged() => this.needsRefresh = true;
+    private void OnPlayerStateValid() => this.needsRefresh = true;
 
     public void Draw() {
         if (this.needsRefresh && !this.isRefreshing) {
@@ -164,7 +166,6 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
                                         var cursorPos = ImGui.GetCursorScreenPos();
                                         ImGui.Image(iconWrap.Handle, new Vector2(24, 24));
 
-                                        // Ajout de l'indicateur visuel pour les variations (/cpose)
                                         if (emote.HasVariations) {
                                             var drawList = ImGui.GetWindowDrawList();
                                             ImGui.PushFont(UiBuilder.IconFont);
@@ -320,6 +321,10 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
     }
 
     private void LoadEmotesAsync() {
+        if (!this.playerStateProvider.IsPlayerValid) {
+            return;
+        }
+
         this.isRefreshing = true;
         Task.Run(() => {
             try {
@@ -350,9 +355,10 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
         });
     }
 
-    public void DrawSidePanel() {
-        this.detailsPanel.Draw();
-    }
+    public void DrawSidePanel() => this.detailsPanel.Draw();
 
-    public void Dispose() => this.modStateProvider.ModStateChanged -= this.OnModStateChanged;
+    public void Dispose() {
+        this.modStateProvider.ModStateChanged -= this.OnModStateChanged;
+        this.playerStateProvider.PlayerStateValid -= this.OnPlayerStateValid;
+    }
 }
