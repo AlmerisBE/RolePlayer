@@ -46,7 +46,10 @@ public class EmoteFilterComponent {
 
         ImGui.SameLine();
 
-        if (context.ShowFilters) {
+        // Snapshot the visual state for the current frame to prevent ImGui push/pop mismatch
+        bool isFilterActive = context.ShowFilters;
+
+        if (isFilterActive) {
             ImGui.PushStyleColor(ImGuiCol.Button, ImGui.GetStyle().Colors[(int)ImGuiCol.ButtonActive]);
         }
 
@@ -57,7 +60,7 @@ public class EmoteFilterComponent {
         }
         ImGui.PopFont();
 
-        if (context.ShowFilters) {
+        if (isFilterActive) {
             ImGui.PopStyleColor();
         }
 
