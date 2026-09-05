@@ -3,6 +3,9 @@
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using NSubstitute;
+using RolePlayer.Core.Configuration.Models;
+using System;
+using System.IO;
 using Xunit;
 
 public class RolePlayerPluginTests {
@@ -21,6 +24,15 @@ public class RolePlayerPluginTests {
         var mockFramework = Substitute.For<IFramework>();
         var mockCondition = Substitute.For<ICondition>();
         var mockKeyState = Substitute.For<IKeyState>();
+
+        // 1. Simule le répertoire pour le ThemeManagementService
+        mockPluginInterface.ConfigDirectory.Returns(new DirectoryInfo(Path.GetTempPath()));
+
+        // 2. Simule la version du manifeste pour la MainWindow
+        mockPluginInterface.Manifest.AssemblyVersion.Returns(new Version("1.0.0.0"));
+
+        // 3. Simule la configuration de base pour le ConfigurationService
+        mockPluginInterface.GetPluginConfig().Returns(new PluginConfiguration());
 
         var exception = Record.Exception(() => new RolePlayerPlugin(
             mockPluginInterface,
