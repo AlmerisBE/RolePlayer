@@ -87,8 +87,15 @@ public class HotbarConfigSubTab {
                 bool isSelected = this.selectedHotbar?.Id == hotbar.Id;
 
                 ImGui.TableNextColumn();
-                ImGui.AlignTextToFramePadding();
-                if (ImGui.Selectable($"{hotbar.Name}##sel_{hotbar.Id}", isSelected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowItemOverlap, new Vector2(0, 24f))) this.selectedHotbar = isSelected ? null : hotbar;
+                // We use SelectableTextAlign to vertically center the text, overriding the need for AlignTextToFramePadding
+                ImGui.PushStyleVar(ImGuiStyleVar.SelectableTextAlign, new Vector2(0.0f, 0.5f));
+
+                // Calculate exact inner height to prevent vertical stretching while filling the entire 28f row bounds
+                float selectableHeight = 28f - (ImGui.GetStyle().CellPadding.Y * 2);
+
+                if (ImGui.Selectable($"{hotbar.Name}##sel_{hotbar.Id}", isSelected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowItemOverlap, new Vector2(0, selectableHeight))) this.selectedHotbar = isSelected ? null : hotbar;
+
+                ImGui.PopStyleVar();
 
                 ImGui.TableNextColumn();
                 ImGui.AlignTextToFramePadding();
