@@ -52,7 +52,6 @@
   "config_hb_del_desc": "Leiste '{0}' wirklich löschen?",
   "config_hb_del_warn": "Dies kann nicht rückgängig gemacht werden.",
   "config_hb_scale": "Skalierung",
-  "config_hb_always_on_top": "Immer im Vordergrund",
   "config_ctx_create": "Neuen Kontext",
   "config_ctx_name_hint": "Kontextname",
   "config_ctx_clone_none": "Klonen von (Keine)",

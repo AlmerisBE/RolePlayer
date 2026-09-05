@@ -22,7 +22,6 @@ public class HotbarConfig {
     public bool PositionInitialized { get; set; } = false;
 
     public float Scale { get; set; } = 1.0f;
-    public bool AlwaysOnTop { get; set; } = false;
 
     public List<uint> ManualEmoteIds { get; set; } = new();
 

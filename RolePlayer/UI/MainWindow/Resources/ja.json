@@ -52,7 +52,6 @@
   "config_hb_del_desc": "'{0}' を削除しますか？",
   "config_hb_del_warn": "この操作は元に戻せません。",
   "config_hb_scale": "スケール",
-  "config_hb_always_on_top": "常に最前面に表示",
   "config_ctx_create": "新規作成",
   "config_ctx_name_hint": "コンテキスト名",
   "config_ctx_clone_none": "クローン元 (なし)",

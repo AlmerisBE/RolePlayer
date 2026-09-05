@@ -250,12 +250,6 @@ public class HotbarConfigSubTab {
             configChanged = true;
         }
 
-        bool alwaysOnTop = this.selectedHotbar.AlwaysOnTop;
-        if (ImGui.Checkbox(this.localization.Translate("config_hb_always_on_top"), ref alwaysOnTop)) {
-            this.selectedHotbar.AlwaysOnTop = alwaysOnTop;
-            configChanged = true;
-        }
-
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();

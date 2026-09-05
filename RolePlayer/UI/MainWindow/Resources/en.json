@@ -52,7 +52,6 @@
   "config_hb_del_desc": "Are you sure you want to delete the hotbar '{0}'?",
   "config_hb_del_warn": "This action cannot be undone.",
   "config_hb_scale": "Scale",
-  "config_hb_always_on_top": "Always on Top",
   "config_ctx_create": "Create New Context",
   "config_ctx_name_hint": "Context Name",
   "config_ctx_clone_none": "Clone from (None)",
