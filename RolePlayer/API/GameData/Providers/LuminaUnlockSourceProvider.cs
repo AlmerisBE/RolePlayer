@@ -36,11 +36,14 @@ public class LuminaUnlockSourceProvider : IUnlockSourceProvider {
 
         var itemToEmote = new Dictionary<uint, uint>();
 
-        // Phase 1: Items & Mog Station Fallback
         foreach (var item in itemSheet) {
             if (!item.ItemAction.IsValid) continue;
 
-            if (this.GetActionType(item.ItemAction.Value) != 2633) continue;
+            var actionType = this.GetActionType(item.ItemAction.Value);
+
+            // 814 is the standard historical ItemAction Type for Emote Manuals.
+            // 2633 is kept as a fallback for potential newer Dawntrail structures.
+            if (actionType != 814 && actionType != 2633) continue;
 
             var unlockId = item.ItemAction.Value.Data[0];
             if (unlockId != 0 && unlockLinkToEmote.TryGetValue(unlockId, out var emoteId)) {
@@ -52,13 +55,11 @@ public class LuminaUnlockSourceProvider : IUnlockSourceProvider {
                 bool isUntradable = this.GetBoolProperty(item, "IsUntradable");
                 uint price = this.GetUIntProperty(item, "PriceMid");
 
-                // If an item is untradable and costs 0 Gil, it's highly likely from Mog Station or Seasonal Events
                 if (isUntradable && price == 0) this.unlockCache[emoteId] = this.localization.Translate("src_mogstation", itemName);
                 else this.unlockCache[emoteId] = this.localization.Translate("src_item", itemName);
             }
         }
 
-        // Phase 2: Quests Cross-referencing
         if (questSheet != null) {
             var emoteRewardProp = typeof(Quest).GetProperty("EmoteReward") ?? typeof(Quest).GetProperty("ActionReward");
             var itemRewardProp = typeof(Quest).GetProperty("ItemReward");
@@ -77,7 +78,6 @@ public class LuminaUnlockSourceProvider : IUnlockSourceProvider {
                     if (itemRewards != null) {
                         foreach (var reward in itemRewards) {
                             var itemId = this.ExtractId(reward);
-                            // Override Item definition with the specific Quest definition
                             if (itemId != 0 && itemToEmote.TryGetValue(itemId, out var emoteId)) this.unlockCache[emoteId] = this.localization.Translate("src_quest", questName);
                         }
                     }
@@ -85,13 +85,11 @@ public class LuminaUnlockSourceProvider : IUnlockSourceProvider {
             }
         }
 
-        // Phase 3: Achievements Cross-referencing
         if (achievementSheet != null) {
             var itemProp = typeof(Achievement).GetProperty("Item");
             if (itemProp != null) {
                 foreach (var achievement in achievementSheet) {
                     var itemId = this.ExtractId(itemProp.GetValue(achievement));
-                    // Override Item definition with the specific Achievement definition
                     if (itemId != 0 && itemToEmote.TryGetValue(itemId, out var emoteId)) {
                         var achName = achievement.Name.ToString();
                         if (!string.IsNullOrEmpty(achName)) this.unlockCache[emoteId] = this.localization.Translate("src_achievement", achName);
