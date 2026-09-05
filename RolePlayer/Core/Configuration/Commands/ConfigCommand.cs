@@ -1,19 +1,19 @@
-﻿using RolePlayer.Core.Configuration.UI;
-using RolePlayer.UI.Command.Contracts;
+﻿namespace RolePlayer.Core.Configuration.Commands;
 
-namespace RolePlayer.Core.Configuration.Commands;
+using RolePlayer.UI.Command.Contracts;
+using RolePlayer.UI.MainWindow.Windows;
 
 public class ConfigCommand : ICommand {
-    private ConfigWindow configWindow;
+    private MainWindow mainWindow;
 
     public string CommandTrigger => "config";
-    public string Description => "Ouvre ou ferme la fenêtre de configuration.";
+    public string Description => "Ouvre la fenêtre principale sur l'onglet de configuration.";
 
-    public ConfigCommand(ConfigWindow configWindow) {
-        this.configWindow = configWindow;
+    public ConfigCommand(MainWindow mainWindow) {
+        this.mainWindow = mainWindow;
     }
 
     public void Execute(string arguments) {
-        this.configWindow.Toggle(); // Provided by Dalamud's Window base class
+        this.mainWindow.OpenConfig();
     }
 }

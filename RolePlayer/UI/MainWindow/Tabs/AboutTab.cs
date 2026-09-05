@@ -30,10 +30,12 @@ public class AboutTab : IEmoteBrowserTab, IDisposable {
         ImGui.TextDisabled(this.localization.Translate("about_features_title"));
         ImGui.Spacing();
 
+        ImGui.PushTextWrapPos();
         ImGui.BulletText(this.localization.Translate("about_feature_1"));
         ImGui.BulletText(this.localization.Translate("about_feature_2"));
         ImGui.BulletText(this.localization.Translate("about_feature_3"));
         ImGui.BulletText(this.localization.Translate("about_feature_4"));
+        ImGui.PopTextWrapPos();
 
         ImGui.Spacing();
         ImGui.Separator();

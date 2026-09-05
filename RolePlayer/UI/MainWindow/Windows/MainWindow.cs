@@ -5,6 +5,7 @@ using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using RolePlayer.UI.MainWindow.Components;
+using RolePlayer.UI.MainWindow.Tabs;
 using System;
 using System.Numerics;
 
@@ -31,6 +32,11 @@ public class MainWindow : Window, IDisposable {
             MinimumSize = new Vector2(400f, 400f),
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
         };
+    }
+
+    public void OpenConfig() {
+        this.IsOpen = true;
+        this.tabManager.RequestTab<ConfigurationTab>();
     }
 
     public override void Draw() {

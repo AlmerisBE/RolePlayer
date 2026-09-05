@@ -4,7 +4,6 @@ using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using Microsoft.Extensions.DependencyInjection;
-using RolePlayer.Core.Configuration.UI;
 using RolePlayer.Core.Framework;
 using RolePlayer.UI.Command.Services;
 using RolePlayer.UI.Themes.Contracts;
@@ -79,8 +78,8 @@ public sealed class RolePlayerPlugin : IDalamudPlugin {
     }
 
     private void OnOpenConfigUi() {
-        var configWindow = this.serviceProvider.GetService<ConfigWindow>();
-        if (configWindow != null) configWindow.IsOpen = true;
+        var mainWindow = this.serviceProvider.GetService<RolePlayer.UI.MainWindow.Windows.MainWindow>();
+        if (mainWindow != null) mainWindow.OpenConfig();
     }
 
     private void OnOpenMainUi() {
