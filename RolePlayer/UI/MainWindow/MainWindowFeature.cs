@@ -29,7 +29,11 @@ public class MainWindowFeature : IFeatureModule {
 
         services.AddSingleton<Window>(provider => provider.GetRequiredService<MainWindow>());
         services.AddSingleton<ICommand, OpenMainWindowCommand>();
+
+        // Tab registrations
         services.AddSingleton<IEmoteBrowserTab, ConfigurationTab>();
+        services.AddSingleton<IEmoteBrowserTab, AboutTab>();
+
         services.AddSingleton<ILocalizationProvider, MainWindowLocalizationProvider>();
     }
 }

@@ -78,5 +78,15 @@
   "config_themes_title": "テーマ管理",
   "config_themes_description": "テーマディレクトリにJSONファイルを配置して、プラグインの色をカスタマイズします。16進数の値は標準のImGuiCol要素を置き換えます。",
   "config_themes_open_folder": "テーマディレクトリを開く",
-  "config_themes_select": "アクティブなテーマ:"
+  "config_themes_select": "アクティブなテーマ:",
+  "about_tab_name": "情報",
+  "about_version": "バージョン: {0}",
+  "about_description": "RolePlayerは、包括的なエモート管理システムを提供し、ソーシャル体験を豊かにします。",
+  "about_features_title": "主な機能：",
+  "about_feature_1": "取得済みエモートの整理とフィルタリング。",
+  "about_feature_2": "未取得エモートの入手方法の確認（オンラインストア、クエストなど）。",
+  "about_feature_3": "迅速にアクセスするための動的および手動ホットバーの作成。",
+  "about_feature_4": "変更されたエモートを識別するためのシームレスなPenumbra統合。",
+  "about_discord": "Discordサーバー",
+  "about_github": "GitHubリポジトリ"
 }

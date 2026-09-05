@@ -78,5 +78,15 @@
   "config_themes_title": "Theme Management",
   "config_themes_description": "Drop JSON files in the themes directory to customize the plugin's colors. The hex values will replace standard ImGuiCol elements.",
   "config_themes_open_folder": "Open Themes Directory",
-  "config_themes_select": "Active Theme:"
+  "config_themes_select": "Active Theme:",
+  "about_tab_name": "About",
+  "about_version": "Version: {0}",
+  "about_description": "RolePlayer enriches your social experience by providing a comprehensive emote management system.",
+  "about_features_title": "Main features:",
+  "about_feature_1": "Organize and filter your unlocked emotes.",
+  "about_feature_2": "Discover how to obtain locked emotes (Mog Station, Quests, etc.).",
+  "about_feature_3": "Create dynamic and manual hotbars for quick access.",
+  "about_feature_4": "Seamless Penumbra integration to identify modified emotes.",
+  "about_discord": "Discord Server",
+  "about_github": "GitHub Repository"
 }

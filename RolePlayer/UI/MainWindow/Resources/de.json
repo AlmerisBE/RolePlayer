@@ -78,5 +78,15 @@
   "config_themes_title": "Themenverwaltung",
   "config_themes_description": "Lege JSON-Dateien im Themenverzeichnis ab, um die Farben des Plugins anzupassen. Die Hex-Werte ersetzen die Standard-ImGuiCol-Elemente.",
   "config_themes_open_folder": "Themenverzeichnis öffnen",
-  "config_themes_select": "Aktives Thema:"
+  "config_themes_select": "Aktives Thema:",
+  "about_tab_name": "Über",
+  "about_version": "Version: {0}",
+  "about_description": "RolePlayer bereichert dein soziales Erlebnis durch ein umfassendes Emote-Verwaltungssystem.",
+  "about_features_title": "Hauptfunktionen:",
+  "about_feature_1": "Freigeschaltete Emotes organisieren und filtern.",
+  "about_feature_2": "Entdecken, wie man gesperrte Emotes erhält (Mogry-Station, Aufträge usw.).",
+  "about_feature_3": "Dynamische und manuelle Aktionsleisten für schnellen Zugriff erstellen.",
+  "about_feature_4": "Nahtlose Penumbra-Integration zur Identifizierung modifizierter Emotes.",
+  "about_discord": "Discord-Server",
+  "about_github": "GitHub-Repository"
 }

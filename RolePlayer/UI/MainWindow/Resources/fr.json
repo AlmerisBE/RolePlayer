@@ -78,5 +78,15 @@
   "config_themes_title": "Gestion des Thèmes",
   "config_themes_description": "Déposez des fichiers JSON dans le répertoire des thèmes pour personnaliser les couleurs du plugin. Les valeurs hexadécimales remplaceront les éléments ImGuiCol standards.",
   "config_themes_open_folder": "Ouvrir le dossier des thèmes",
-  "config_themes_select": "Thème Actif :"
+  "config_themes_select": "Thème Actif :",
+  "about_tab_name": "À propos",
+  "about_version": "Version: {0}",
+  "about_description": "RolePlayer enrichit votre expérience sociale en vous offrant un système complet de gestion d'emotes.",
+  "about_features_title": "Fonctionnalités principales :",
+  "about_feature_1": "Organisation et filtrage de vos emotes débloquées.",
+  "about_feature_2": "Découverte des méthodes d'obtention des emotes verrouillées.",
+  "about_feature_3": "Création de barres de raccourcis dynamiques et manuelles.",
+  "about_feature_4": "Intégration parfaite avec Penumbra pour identifier les emotes modifiées.",
+  "about_discord": "Serveur Discord",
+  "about_github": "Dépôt GitHub"
 }
