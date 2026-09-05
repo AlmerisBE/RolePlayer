@@ -63,7 +63,8 @@ public class GroupsConfigSubTab {
         if (groups.Count == 0) return;
 
         if (ImGui.BeginTable("GroupsTable", 4, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit)) {
-            ImGui.TableSetupColumn(this.localization.Translate("config_common_name"), ImGuiTableColumnFlags.WidthFixed, 150f);
+            // Réduction de la largeur de la colonne Nom de 150f à 100f
+            ImGui.TableSetupColumn(this.localization.Translate("config_common_name"), ImGuiTableColumnFlags.WidthFixed, 100f);
             ImGui.TableSetupColumn(this.localization.Translate("config_grp_col_desc"), ImGuiTableColumnFlags.WidthStretch);
             ImGui.TableSetupColumn(this.localization.Translate("config_hb_table_emotes"), ImGuiTableColumnFlags.WidthFixed, 50f);
             ImGui.TableSetupColumn(this.localization.Translate("config_common_actions"), ImGuiTableColumnFlags.WidthFixed, 75f);
@@ -103,7 +104,15 @@ public class GroupsConfigSubTab {
 
                     ImGui.TableNextColumn();
                     ImGui.AlignTextToFramePadding();
-                    ImGui.Text(group.Description);
+
+                    // Vérification de la largeur disponible vs la taille du texte
+                    float availableCellWidth = ImGui.GetContentRegionAvail().X;
+                    Vector2 textSize = ImGui.CalcTextSize(group.Description);
+
+                    ImGui.TextUnformatted(group.Description);
+
+                    // Affiche le tooltip uniquement si le texte est coupé par la taille de la cellule
+                    if (textSize.X > availableCellWidth && ImGui.IsItemHovered()) ImGui.SetTooltip(group.Description);
 
                     ImGui.TableNextColumn();
                     ImGui.AlignTextToFramePadding();
