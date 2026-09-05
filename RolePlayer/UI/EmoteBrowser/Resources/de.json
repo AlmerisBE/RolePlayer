@@ -46,5 +46,6 @@
   "browser_col_action": "Aktion",
   "browser_col_tag": "Tag",
   "browser_uncategorized": "Nicht kategorisiert",
-  "browser_ungrouped": "Ohne Gruppe"
+  "browser_ungrouped": "Ohne Gruppe",
+  "browser_details_unlock_source": "Quelle: {0}"
 }

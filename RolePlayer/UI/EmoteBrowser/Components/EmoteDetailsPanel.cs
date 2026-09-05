@@ -11,7 +11,6 @@ using System.Linq;
 using System.Numerics;
 
 public class EmoteDetailsPanel {
-    private IUnlockSourceProvider unlockSourceProvider;
     private IModStateProvider modStateProvider;
     private IEmoteSelectionState selectionState;
     private IEmoteDebugService debugService;
@@ -24,7 +23,6 @@ public class EmoteDetailsPanel {
     private ILocalizationService localization;
 
     public EmoteDetailsPanel(
-        IUnlockSourceProvider unlockSourceProvider,
         IModStateProvider modStateProvider,
         IEmoteSelectionState selectionState,
         IEmoteDebugService debugService,
@@ -36,7 +34,6 @@ public class EmoteDetailsPanel {
         HotbarManagerComponent hotbarManager,
         ILocalizationService localization) {
 
-        this.unlockSourceProvider = unlockSourceProvider;
         this.modStateProvider = modStateProvider;
         this.selectionState = selectionState;
         this.debugService = debugService;
@@ -88,6 +85,11 @@ public class EmoteDetailsPanel {
 
         string isUnlockedStr = emote.IsUnlocked ? this.localization.Translate("browser_details_yes") : this.localization.Translate("browser_details_no");
         ImGui.Text(this.localization.Translate("browser_details_unlocked", isUnlockedStr));
+
+        // Affichage de la méthode d'obtention si l'emote n'est pas native (Unlockable)
+        if (emote.IsUnlockable && !string.IsNullOrEmpty(emote.UnlockRequirement)) {
+            ImGui.TextColored(new Vector4(0.7f, 0.7f, 0.7f, 1.0f), this.localization.Translate("browser_details_unlock_source", emote.UnlockRequirement));
+        }
 
         var modName = this.modStateProvider.GetModNameModifyingEmote(emote.Id);
         if (!string.IsNullOrEmpty(modName)) ImGui.TextColored(new Vector4(0.2f, 0.8f, 0.2f, 1.0f), this.localization.Translate("browser_details_modified_by", modName));
