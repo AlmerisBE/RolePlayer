@@ -2,11 +2,12 @@
 
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
+using Dalamud.Interface.Components;
 using Dalamud.Plugin;
-using Dalamud.Utility;
 using RolePlayer.UI.EmoteBrowser.Contracts;
 using RolePlayer.UI.Localization.Contracts;
 using System;
+using System.Diagnostics;
 
 public class AboutTab : IEmoteBrowserTab, IDisposable {
     private ILocalizationService localization;
@@ -30,12 +31,14 @@ public class AboutTab : IEmoteBrowserTab, IDisposable {
         ImGui.TextDisabled(this.localization.Translate("about_features_title"));
         ImGui.Spacing();
 
-        ImGui.PushTextWrapPos();
-        ImGui.BulletText(this.localization.Translate("about_feature_1"));
-        ImGui.BulletText(this.localization.Translate("about_feature_2"));
-        ImGui.BulletText(this.localization.Translate("about_feature_3"));
-        ImGui.BulletText(this.localization.Translate("about_feature_4"));
-        ImGui.PopTextWrapPos();
+        ImGui.Bullet();
+        ImGui.TextWrapped(this.localization.Translate("about_feature_1"));
+        ImGui.Bullet();
+        ImGui.TextWrapped(this.localization.Translate("about_feature_2"));
+        ImGui.Bullet();
+        ImGui.TextWrapped(this.localization.Translate("about_feature_3"));
+        ImGui.Bullet();
+        ImGui.TextWrapped(this.localization.Translate("about_feature_4"));
 
         ImGui.Spacing();
         ImGui.Separator();
@@ -46,16 +49,27 @@ public class AboutTab : IEmoteBrowserTab, IDisposable {
 
         ImGui.Spacing();
 
-        ImGui.PushFont(UiBuilder.IconFont);
-        var githubIcon = FontAwesomeIcon.CodeBranch.ToIconString();
-        var discordIcon = FontAwesomeIcon.Comments.ToIconString();
-        ImGui.PopFont();
-
-        if (ImGui.Button($"{githubIcon} {this.localization.Translate("about_github")}")) Util.OpenLink("https://github.com/AlmerisBE/RolePlayer");
+        if (ImGuiComponents.IconButtonWithText(FontAwesomeIcon.CodeBranch, this.localization.Translate("about_github"))) {
+            try {
+                Process.Start(new ProcessStartInfo {
+                    FileName = "https://github.com/AlmerisBE/RolePlayer",
+                    UseShellExecute = true
+                });
+            }
+            catch { } // Silently ignore if the OS fails to open the browser
+        }
 
         ImGui.SameLine();
 
-        if (ImGui.Button($"{discordIcon} {this.localization.Translate("about_discord")}")) Util.OpenLink("https://discord.gg/2GdUQdC3h9");
+        if (ImGuiComponents.IconButtonWithText(FontAwesomeIcon.Comments, this.localization.Translate("about_discord"))) {
+            try {
+                Process.Start(new ProcessStartInfo {
+                    FileName = "https://discord.gg/2GdUQdC3h9",
+                    UseShellExecute = true
+                });
+            }
+            catch { } // Silently ignore if the OS fails to open the browser
+        }
     }
 
     public void DrawSidePanel() { }
