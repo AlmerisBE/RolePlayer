@@ -41,23 +41,30 @@ public class ThemeManagementService : IThemeManagementService {
 
         var defaultTheme = new RolePlayerTheme {
             Name = "Dark",
-            Colors = new Dictionary<string, string> {
-                { "WindowBg", "#111111FF" },
-                { "TitleBg", "#1A1A1AFF" },
-                { "TitleBgActive", "#2B2B2BFF" },
-                { "Button", "#333333FF" },
-                { "ButtonHovered", "#444444FF" },
-                { "ButtonActive", "#555555FF" },
-                { "FrameBg", "#222222FF" },
-                { "FrameBgHovered", "#333333FF" },
-                { "FrameBgActive", "#444444FF" },
-                { "Text", "#EEEEEEFF" },
-                { "Header", "#333333FF" },
-                { "HeaderHovered", "#444444FF" },
-                { "HeaderActive", "#555555FF" },
-                { "Tab", "#222222FF" },
-                { "TabHovered", "#444444FF" },
-                { "TabActive", "#333333FF" }
+            Author = "Almeris",
+            Palette = new Dictionary<string, string> {
+                { "WindowBg", "#262323F2" },
+                { "Text", "#E5E5E5FF" },
+                { "ChildBg", "#1E1C1C7F" },
+                { "PopupBg", "#262323F2" },
+                { "FrameBg", "#333333FF" },
+                { "FrameBgHovered", "#3F3F3FFF" },
+                { "FrameBgActive", "#4C4C4CFF" },
+                { "TitleBg", "#1E1C1CFF" },
+                { "TitleBgActive", "#332626FF" },
+                { "TitleBgCollapsed", "#191919FF" },
+                { "TableHeaderBg", "#2D2B2BFF" },
+                { "TableRowBg", "#262323FF" },
+                { "TableRowBgAlt", "#2D2B2BFF" },
+                { "Border", "#4C3F3FFF" },
+                { "Tab", "#262323FF" },
+                { "TabHovered", "#3F3333FF" },
+                { "TabActive", "#4C3F3FFF" },
+                { "TabUnfocused", "#1E1C1CFF" },
+                { "TabUnfocusedActive", "#2D2B2BFF" },
+                { "Button", "#3F3333FF" },
+                { "ButtonHovered", "#593F3FFF" },
+                { "ButtonActive", "#664C4CFF" }
             }
         };
 
@@ -87,9 +94,9 @@ public class ThemeManagementService : IThemeManagementService {
             var json = File.ReadAllText(path);
             var theme = JsonSerializer.Deserialize<RolePlayerTheme>(json);
 
-            if (theme == null || theme.Colors == null) return;
+            if (theme == null || theme.Palette == null) return;
 
-            foreach (var kvp in theme.Colors) {
+            foreach (var kvp in theme.Palette) {
                 if (Enum.TryParse<ImGuiCol>(kvp.Key, true, out var colEnum)) {
                     this.currentThemeColors[colEnum] = this.ParseHexColor(kvp.Value);
                 }
