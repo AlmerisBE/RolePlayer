@@ -33,12 +33,13 @@ public class ThemeManagementService : IThemeManagementService {
     }
 
     private void EnsureDirectoryAndDefaultTheme() {
-        if (Directory.Exists(this.ThemeDirectory)) return;
+        if (!Directory.Exists(this.ThemeDirectory)) Directory.CreateDirectory(this.ThemeDirectory);
 
-        Directory.CreateDirectory(this.ThemeDirectory);
+        var path = Path.Combine(this.ThemeDirectory, "FFXIV_Dark.json");
+        if (File.Exists(path)) return;
 
         var defaultTheme = new RolePlayerTheme {
-            Name = "FFXIV Classic Dark",
+            Name = "FFXIV Dark",
             Colors = new Dictionary<string, string> {
                 { "WindowBg", "#261C14F2" },
                 { "TitleBg", "#3A2A20FF" },
@@ -53,8 +54,12 @@ public class ThemeManagementService : IThemeManagementService {
             }
         };
 
-        var path = Path.Combine(this.ThemeDirectory, "FFXIV_Classic_Dark.json");
-        File.WriteAllText(path, JsonSerializer.Serialize(defaultTheme, new JsonSerializerOptions { WriteIndented = true }));
+        try {
+            File.WriteAllText(path, JsonSerializer.Serialize(defaultTheme, new JsonSerializerOptions { WriteIndented = true }));
+        }
+        catch (Exception ex) {
+            this.logger.Error(ex, "Failed to write the default FFXIV Dark theme file.");
+        }
     }
 
     public IEnumerable<string> GetAvailableThemes() {
@@ -74,7 +79,8 @@ public class ThemeManagementService : IThemeManagementService {
         try {
             var json = File.ReadAllText(path);
             var theme = JsonSerializer.Deserialize<RolePlayerTheme>(json);
-            if (theme == null) return;
+
+            if (theme == null || theme.Colors == null) return;
 
             foreach (var kvp in theme.Colors) {
                 if (Enum.TryParse<ImGuiCol>(kvp.Key, true, out var colEnum)) {
@@ -83,7 +89,7 @@ public class ThemeManagementService : IThemeManagementService {
             }
         }
         catch (Exception ex) {
-            this.logger.Error(ex, $"Failed to load theme file: {themeName}");
+            this.logger.Error(ex, $"Failed to load or parse theme file: {themeName}");
         }
     }
 
