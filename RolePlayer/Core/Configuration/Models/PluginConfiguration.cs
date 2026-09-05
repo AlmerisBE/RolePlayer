@@ -14,6 +14,7 @@ public class PluginConfiguration : IPluginConfiguration {
     public bool HotkeyCtrl { get; set; } = true;
     public bool HotkeyShift { get; set; } = false;
     public bool HotkeyAlt { get; set; } = false;
+    public string SelectedTheme { get; set; } = "Default";
 
     public bool EnableHotbars { get; set; } = true;
 }

@@ -74,5 +74,9 @@
   "config_tag_tooltip_add": "Tag hinzufügen",
   "config_tag_del_title": "Tag löschen",
   "config_tag_del_desc": "Tag '{0}' wirklich löschen?",
-  "config_tag_del_warn": "Entfernt den Tag von allen Emotes."
+  "config_tag_del_warn": "Entfernt den Tag von allen Emotes.",
+  "config_themes_title": "Themenverwaltung",
+  "config_themes_description": "Lege JSON-Dateien im Themenverzeichnis ab, um die Farben des Plugins anzupassen. Die Hex-Werte ersetzen die Standard-ImGuiCol-Elemente.",
+  "config_themes_open_folder": "Themenverzeichnis öffnen",
+  "config_themes_select": "Aktives Thema:"
 }

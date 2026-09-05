@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using RolePlayer.Core.Configuration.UI;
 using RolePlayer.Core.Framework;
 using RolePlayer.UI.Command.Services;
+using RolePlayer.UI.Themes.Contracts;
 
 public sealed class RolePlayerPlugin : IDalamudPlugin {
     public string Name => "RolePlayer";
@@ -14,6 +15,7 @@ public sealed class RolePlayerPlugin : IDalamudPlugin {
     private ServiceProvider serviceProvider;
     private IDalamudPluginInterface pluginInterface;
     private WindowSystem windowSystem;
+    private IThemeManagementService themeService;
 
     public RolePlayerPlugin(
         IDalamudPluginInterface pluginInterface,
@@ -51,13 +53,15 @@ public sealed class RolePlayerPlugin : IDalamudPlugin {
 
         this.serviceProvider = services.BuildServiceProvider();
         this.serviceProvider.GetRequiredService<CommandDispatcher>();
+        this.themeService = this.serviceProvider.GetRequiredService<IThemeManagementService>();
 
         var windows = this.serviceProvider.GetServices<Window>();
         foreach (var window in windows) {
             this.windowSystem.AddWindow(window);
         }
 
-        this.pluginInterface.UiBuilder.Draw += this.windowSystem.Draw;
+        // On remplace le handler direct par notre méthode OnDraw pour encadrer le rendu avec le thème
+        this.pluginInterface.UiBuilder.Draw += this.OnDraw;
         this.pluginInterface.UiBuilder.OpenConfigUi += this.OnOpenConfigUi;
         this.pluginInterface.UiBuilder.OpenMainUi += this.OnOpenMainUi;
 
@@ -65,22 +69,24 @@ public sealed class RolePlayerPlugin : IDalamudPlugin {
         hotkeyService.OnHotkeyPressed += this.OnOpenMainUi;
     }
 
+    private void OnDraw() {
+        this.themeService.PushTheme();
+        this.windowSystem.Draw();
+        this.themeService.PopTheme();
+    }
+
     private void OnOpenConfigUi() {
         var configWindow = this.serviceProvider.GetService<ConfigWindow>();
-        if (configWindow != null) {
-            configWindow.IsOpen = true;
-        }
+        if (configWindow != null) configWindow.IsOpen = true;
     }
 
     private void OnOpenMainUi() {
         var mainWindow = this.serviceProvider.GetService<RolePlayer.UI.MainWindow.Windows.MainWindow>();
-        if (mainWindow != null) {
-            mainWindow.Toggle();
-        }
+        if (mainWindow != null) mainWindow.Toggle();
     }
 
     public void Dispose() {
-        this.pluginInterface.UiBuilder.Draw -= this.windowSystem.Draw;
+        this.pluginInterface.UiBuilder.Draw -= this.OnDraw;
         this.pluginInterface.UiBuilder.OpenConfigUi -= this.OnOpenConfigUi;
         this.pluginInterface.UiBuilder.OpenMainUi -= this.OnOpenMainUi;
 

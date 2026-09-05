@@ -2,17 +2,22 @@
 
 using Dalamud.Bindings.ImGui;
 using Dalamud.Game.ClientState.Keys;
+using Dalamud.Interface;
 using RolePlayer.Core.Configuration.Contracts;
 using RolePlayer.UI.Localization.Contracts;
+using RolePlayer.UI.Themes.Contracts;
 using System;
+using System.Linq;
 
 public class GeneralConfigSubTab {
     private IConfigurationService configService;
     private ILocalizationService localization;
+    private IThemeManagementService themeService;
 
-    public GeneralConfigSubTab(IConfigurationService configService, ILocalizationService localization) {
+    public GeneralConfigSubTab(IConfigurationService configService, ILocalizationService localization, IThemeManagementService themeService) {
         this.configService = configService;
         this.localization = localization;
+        this.themeService = themeService;
     }
 
     public void Draw() {
@@ -64,6 +69,46 @@ public class GeneralConfigSubTab {
                 if (ImGui.Selectable(key.ToString(), config.Hotkey == key)) {
                     config.Hotkey = key;
                     changed = true;
+                }
+            }
+            ImGui.EndCombo();
+        }
+
+        ImGui.Spacing();
+        ImGui.Separator();
+        ImGui.Spacing();
+
+        ImGui.Text(this.localization.Translate("config_themes_title"));
+        ImGui.Separator();
+        ImGui.Spacing();
+
+        ImGui.TextWrapped(this.localization.Translate("config_themes_description"));
+        ImGui.Spacing();
+
+        ImGui.PushFont(UiBuilder.IconFont);
+        if (ImGui.Button(FontAwesomeIcon.FolderOpen.ToIconString())) this.themeService.OpenThemeDirectory();
+        ImGui.PopFont();
+
+        ImGui.SameLine();
+        ImGui.Text(this.localization.Translate("config_themes_open_folder"));
+
+        ImGui.TextDisabled(this.themeService.ThemeDirectory);
+
+        ImGui.Spacing();
+        ImGui.Spacing();
+
+        var availableThemes = this.themeService.GetAvailableThemes().ToList();
+        availableThemes.Insert(0, "Default");
+
+        ImGui.Text(this.localization.Translate("config_themes_select"));
+        ImGui.SetNextItemWidth(250f);
+
+        if (ImGui.BeginCombo("##ThemeSelect", config.SelectedTheme)) {
+            foreach (var theme in availableThemes) {
+                if (ImGui.Selectable(theme, config.SelectedTheme == theme)) {
+                    config.SelectedTheme = theme;
+                    changed = true;
+                    this.themeService.LoadTheme(theme);
                 }
             }
             ImGui.EndCombo();
