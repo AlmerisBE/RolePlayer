@@ -29,50 +29,89 @@ public class ThemeManagementService : IThemeManagementService {
         this.configurationService = configurationService;
         this.logger = logger;
 
-        this.EnsureDirectoryAndDefaultTheme();
+        this.EnsureDirectoryAndDefaultThemes();
         this.LoadTheme(this.configurationService.GetConfig().SelectedTheme);
     }
 
-    private void EnsureDirectoryAndDefaultTheme() {
+    private void EnsureDirectoryAndDefaultThemes() {
         if (!Directory.Exists(this.ThemeDirectory)) Directory.CreateDirectory(this.ThemeDirectory);
 
-        var path = Path.Combine(this.ThemeDirectory, "Dark.json");
-        if (File.Exists(path)) return;
+        var darkPath = Path.Combine(this.ThemeDirectory, "Dark.json");
+        if (!File.Exists(darkPath)) {
+            var darkTheme = new RolePlayerTheme {
+                Name = "Dark",
+                Author = "Almeris",
+                Palette = new Dictionary<string, string> {
+                    { "WindowBg", "#262323F2" },
+                    { "Text", "#E5E5E5FF" },
+                    { "ChildBg", "#1E1C1C7F" },
+                    { "PopupBg", "#262323F2" },
+                    { "FrameBg", "#333333FF" },
+                    { "FrameBgHovered", "#3F3F3FFF" },
+                    { "FrameBgActive", "#4C4C4CFF" },
+                    { "TitleBg", "#1E1C1CFF" },
+                    { "TitleBgActive", "#332626FF" },
+                    { "TitleBgCollapsed", "#191919FF" },
+                    { "TableHeaderBg", "#2D2B2BFF" },
+                    { "TableRowBg", "#262323FF" },
+                    { "TableRowBgAlt", "#2D2B2BFF" },
+                    { "Border", "#4C3F3FFF" },
+                    { "Tab", "#262323FF" },
+                    { "TabHovered", "#3F3333FF" },
+                    { "TabActive", "#4C3F3FFF" },
+                    { "TabUnfocused", "#1E1C1CFF" },
+                    { "TabUnfocusedActive", "#2D2B2BFF" },
+                    { "Button", "#3F3333FF" },
+                    { "ButtonHovered", "#593F3FFF" },
+                    { "ButtonActive", "#664C4CFF" }
+                }
+            };
 
-        var defaultTheme = new RolePlayerTheme {
-            Name = "Dark",
-            Author = "Almeris",
-            Palette = new Dictionary<string, string> {
-                { "WindowBg", "#262323F2" },
-                { "Text", "#E5E5E5FF" },
-                { "ChildBg", "#1E1C1C7F" },
-                { "PopupBg", "#262323F2" },
-                { "FrameBg", "#333333FF" },
-                { "FrameBgHovered", "#3F3F3FFF" },
-                { "FrameBgActive", "#4C4C4CFF" },
-                { "TitleBg", "#1E1C1CFF" },
-                { "TitleBgActive", "#332626FF" },
-                { "TitleBgCollapsed", "#191919FF" },
-                { "TableHeaderBg", "#2D2B2BFF" },
-                { "TableRowBg", "#262323FF" },
-                { "TableRowBgAlt", "#2D2B2BFF" },
-                { "Border", "#4C3F3FFF" },
-                { "Tab", "#262323FF" },
-                { "TabHovered", "#3F3333FF" },
-                { "TabActive", "#4C3F3FFF" },
-                { "TabUnfocused", "#1E1C1CFF" },
-                { "TabUnfocusedActive", "#2D2B2BFF" },
-                { "Button", "#3F3333FF" },
-                { "ButtonHovered", "#593F3FFF" },
-                { "ButtonActive", "#664C4CFF" }
+            try {
+                File.WriteAllText(darkPath, JsonSerializer.Serialize(darkTheme, new JsonSerializerOptions { WriteIndented = true }));
             }
-        };
-
-        try {
-            File.WriteAllText(path, JsonSerializer.Serialize(defaultTheme, new JsonSerializerOptions { WriteIndented = true }));
+            catch (Exception ex) {
+                this.logger.Error(ex, "Failed to write the default Dark theme file.");
+            }
         }
-        catch (Exception ex) {
-            this.logger.Error(ex, "Failed to write the default Dark theme file.");
+
+        var lightPath = Path.Combine(this.ThemeDirectory, "Light.json");
+        if (!File.Exists(lightPath)) {
+            var lightTheme = new RolePlayerTheme {
+                Name = "Light",
+                Author = "Almeris",
+                Palette = new Dictionary<string, string> {
+                    { "WindowBg", "#E8DBC4F9" },
+                    { "Text", "#261C11FF" },
+                    { "ChildBg", "#E0D1BA7F" },
+                    { "PopupBg", "#E8DBC4F9" },
+                    { "FrameBg", "#D8C6A5FF" },
+                    { "FrameBgHovered", "#E5D1B2FF" },
+                    { "FrameBgActive", "#CCB799FF" },
+                    { "TitleBg", "#D8C6A5FF" },
+                    { "TitleBgActive", "#E5D1B2FF" },
+                    { "TitleBgCollapsed", "#CCB299FF" },
+                    { "TableHeaderBg", "#D1BA99FF" },
+                    { "TableRowBg", "#E8DBC4FF" },
+                    { "TableRowBgAlt", "#D8C9AFFF" },
+                    { "Border", "#AA8966FF" },
+                    { "Tab", "#D8C6A5FF" },
+                    { "TabHovered", "#E5D1B2FF" },
+                    { "TabActive", "#F2E5CCFF" },
+                    { "TabUnfocused", "#CCB799FF" },
+                    { "TabUnfocusedActive", "#D8C6A5FF" },
+                    { "Button", "#D8C6A5FF" },
+                    { "ButtonHovered", "#E5D1B2FF" },
+                    { "ButtonActive", "#CCB799FF" }
+                }
+            };
+
+            try {
+                File.WriteAllText(lightPath, JsonSerializer.Serialize(lightTheme, new JsonSerializerOptions { WriteIndented = true }));
+            }
+            catch (Exception ex) {
+                this.logger.Error(ex, "Failed to write the default Light theme file.");
+            }
         }
     }
 
