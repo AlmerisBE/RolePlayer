@@ -86,9 +86,10 @@ public class EmoteDetailsPanel {
         string isUnlockedStr = emote.IsUnlocked ? this.localization.Translate("browser_details_yes") : this.localization.Translate("browser_details_no");
         ImGui.Text(this.localization.Translate("browser_details_unlocked", isUnlockedStr));
 
-        // Affichage de la méthode d'obtention si l'emote n'est pas native (Unlockable)
         if (emote.IsUnlockable && !string.IsNullOrEmpty(emote.UnlockRequirement)) {
-            ImGui.TextColored(new Vector4(0.7f, 0.7f, 0.7f, 1.0f), this.localization.Translate("browser_details_unlock_source", emote.UnlockRequirement));
+            ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.7f, 0.7f, 0.7f, 1.0f));
+            ImGui.TextWrapped(this.localization.Translate("browser_details_unlock_source", emote.UnlockRequirement));
+            ImGui.PopStyleColor();
         }
 
         var modName = this.modStateProvider.GetModNameModifyingEmote(emote.Id);

@@ -1,5 +1,6 @@
 ﻿namespace RolePlayer.Tests.API.FFXIVCollect.Providers;
 
+using Dalamud.Game;
 using Dalamud.Plugin.Services;
 using NSubstitute;
 using RolePlayer.API.FFXIVCollect.Providers;
@@ -14,15 +15,15 @@ public class FFXIVCollectUnlockSourceProviderTests {
     public void GetUnlockSource_WhenExternalCacheIsEmpty_FallsBackToLuminaProvider() {
         var mockDataManager = Substitute.For<IDataManager>();
         var mockLocalization = Substitute.For<ILocalizationService>();
+        var mockClientState = Substitute.For<IClientState>();
         var mockLogger = Substitute.For<ILoggerService>();
 
         mockLocalization.Translate(Arg.Any<string>()).Returns("Fallback Value");
+        mockClientState.ClientLanguage.Returns(ClientLanguage.French);
 
         var fallbackProvider = new LuminaUnlockSourceProvider(mockDataManager, mockLocalization);
-        using var provider = new FFXIVCollectUnlockSourceProvider(fallbackProvider, mockLogger);
+        using var provider = new FFXIVCollectUnlockSourceProvider(fallbackProvider, mockClientState, mockLogger);
 
-        // L'appel a lieu immédiatement, avant que le call HTTP asynchrone ne se termine, 
-        // déclenchant le comportement de fallback.
         var result = provider.GetUnlockSource(9999);
 
         Assert.Equal("Fallback Value", result);
