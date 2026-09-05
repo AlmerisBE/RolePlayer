@@ -2,7 +2,7 @@
   "Author": "Almeris",
   "Name": "RolePlayer",
   "InternalName": "RolePlayer",
-  "AssemblyVersion": "0.1.0.0",
+  "AssemblyVersion": "1.0.0.0",
   "Description": "Managing your emotes and RP hotbars",
   "ApplicableVersion": "any",
   "DalamudApiLevel": 15,
