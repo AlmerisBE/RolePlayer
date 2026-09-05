@@ -47,5 +47,11 @@
   "browser_col_tag": "Tag",
   "browser_uncategorized": "Non catégorisé",
   "browser_ungrouped": "Sans groupe",
-  "browser_details_unlock_source": "Obtention : {0}"
+  "browser_details_unlock_source": "Obtention : {0}",
+  "src_quest": "Quête : {0}",
+  "src_achievement": "Haut fait : {0}",
+  "src_mogstation": "Objet : {0} (Kiosque Mog / Événement)",
+  "src_item": "Objet : {0}",
+  "src_default": "Emote de base",
+  "src_unknown": "Source inconnue"
 }

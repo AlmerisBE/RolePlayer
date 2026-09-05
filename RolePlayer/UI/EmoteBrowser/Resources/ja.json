@@ -47,5 +47,11 @@
   "browser_col_tag": "タグ",
   "browser_uncategorized": "未分類",
   "browser_ungrouped": "グループなし",
-  "browser_details_unlock_source": "入手方法: {0}"
+  "browser_details_unlock_source": "入手方法: {0}",
+  "src_quest": "クエスト: {0}",
+  "src_achievement": "アチーブメント: {0}",
+  "src_mogstation": "アイテム: {0} (オンラインストア / イベント)",
+  "src_item": "アイテム: {0}",
+  "src_default": "初期エモート",
+  "src_unknown": "取得元不明"
 }

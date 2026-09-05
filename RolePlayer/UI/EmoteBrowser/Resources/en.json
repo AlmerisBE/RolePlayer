@@ -47,5 +47,11 @@
   "browser_col_tag": "Tag",
   "browser_uncategorized": "Uncategorized",
   "browser_ungrouped": "Ungrouped",
-  "browser_details_unlock_source": "Source: {0}"
+  "browser_details_unlock_source": "Source: {0}",
+  "src_quest": "Quest: {0}",
+  "src_achievement": "Achievement: {0}",
+  "src_mogstation": "Item: {0} (Mog Station / Event)",
+  "src_item": "Item: {0}",
+  "src_default": "Default Emote",
+  "src_unknown": "Unknown Source"
 }

@@ -47,5 +47,11 @@
   "browser_col_tag": "Tag",
   "browser_uncategorized": "Nicht kategorisiert",
   "browser_ungrouped": "Ohne Gruppe",
-  "browser_details_unlock_source": "Quelle: {0}"
+  "browser_details_unlock_source": "Quelle: {0}",
+  "src_quest": "Auftrag: {0}",
+  "src_achievement": "Errungenschaft: {0}",
+  "src_mogstation": "Gegenstand: {0} (Mogry-Station / Ereignis)",
+  "src_item": "Gegenstand: {0}",
+  "src_default": "Standard-Emote",
+  "src_unknown": "Unbekannte Quelle"
 }
