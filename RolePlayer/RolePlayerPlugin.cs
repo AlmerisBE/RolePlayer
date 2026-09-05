@@ -60,7 +60,6 @@ public sealed class RolePlayerPlugin : IDalamudPlugin {
             this.windowSystem.AddWindow(window);
         }
 
-        // On remplace le handler direct par notre méthode OnDraw pour encadrer le rendu avec le thème
         this.pluginInterface.UiBuilder.Draw += this.OnDraw;
         this.pluginInterface.UiBuilder.OpenConfigUi += this.OnOpenConfigUi;
         this.pluginInterface.UiBuilder.OpenMainUi += this.OnOpenMainUi;

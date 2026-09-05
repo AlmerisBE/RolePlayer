@@ -35,22 +35,28 @@ public class ThemeManagementService : IThemeManagementService {
     private void EnsureDirectoryAndDefaultTheme() {
         if (!Directory.Exists(this.ThemeDirectory)) Directory.CreateDirectory(this.ThemeDirectory);
 
-        var path = Path.Combine(this.ThemeDirectory, "FFXIV_Dark.json");
+        var path = Path.Combine(this.ThemeDirectory, "Dark.json");
         if (File.Exists(path)) return;
 
         var defaultTheme = new RolePlayerTheme {
-            Name = "FFXIV Dark",
+            Name = "Dark",
             Colors = new Dictionary<string, string> {
-                { "WindowBg", "#261C14F2" },
-                { "TitleBg", "#3A2A20FF" },
-                { "TitleBgActive", "#5A4232FF" },
-                { "Button", "#503D2EFF" },
-                { "ButtonHovered", "#6D5541FF" },
-                { "ButtonActive", "#8A6D55FF" },
-                { "FrameBg", "#1E1510FF" },
-                { "FrameBgHovered", "#2D2018FF" },
-                { "FrameBgActive", "#402E24FF" },
-                { "Text", "#D4C7B8FF" }
+                { "WindowBg", "#111111FF" },
+                { "TitleBg", "#1A1A1AFF" },
+                { "TitleBgActive", "#2B2B2BFF" },
+                { "Button", "#333333FF" },
+                { "ButtonHovered", "#444444FF" },
+                { "ButtonActive", "#555555FF" },
+                { "FrameBg", "#222222FF" },
+                { "FrameBgHovered", "#333333FF" },
+                { "FrameBgActive", "#444444FF" },
+                { "Text", "#EEEEEEFF" },
+                { "Header", "#333333FF" },
+                { "HeaderHovered", "#444444FF" },
+                { "HeaderActive", "#555555FF" },
+                { "Tab", "#222222FF" },
+                { "TabHovered", "#444444FF" },
+                { "TabActive", "#333333FF" }
             }
         };
 
@@ -58,7 +64,7 @@ public class ThemeManagementService : IThemeManagementService {
             File.WriteAllText(path, JsonSerializer.Serialize(defaultTheme, new JsonSerializerOptions { WriteIndented = true }));
         }
         catch (Exception ex) {
-            this.logger.Error(ex, "Failed to write the default FFXIV Dark theme file.");
+            this.logger.Error(ex, "Failed to write the default Dark theme file.");
         }
     }
 

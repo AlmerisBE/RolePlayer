@@ -92,7 +92,9 @@ public class GeneralConfigSubTab {
         ImGui.SameLine();
         ImGui.Text(this.localization.Translate("config_themes_open_folder"));
 
-        ImGui.TextDisabled(this.themeService.ThemeDirectory);
+        string themePath = this.themeService.ThemeDirectory;
+        ImGui.SetNextItemWidth(-1f);
+        ImGui.InputText("##ThemeDirectoryPath", ref themePath, 512, ImGuiInputTextFlags.ReadOnly);
 
         ImGui.Spacing();
         ImGui.Spacing();
