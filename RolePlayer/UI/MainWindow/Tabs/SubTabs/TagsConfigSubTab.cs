@@ -57,7 +57,7 @@ public class TagsConfigSubTab {
             ImGui.TableHeadersRow();
 
             foreach (var tag in tags) {
-                ImGui.TableNextRow();
+                ImGui.TableNextRow(ImGuiTableRowFlags.None, 28f);
 
                 if (this.editingTag == tag) {
                     ImGui.TableNextColumn();

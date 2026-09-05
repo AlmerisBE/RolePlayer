@@ -82,18 +82,21 @@ public class HotbarConfigSubTab {
             ImGui.TableHeadersRow();
 
             foreach (var hotbar in context.Hotbars) {
-                ImGui.TableNextRow();
+                ImGui.TableNextRow(ImGuiTableRowFlags.None, 28f);
 
                 bool isSelected = this.selectedHotbar?.Id == hotbar.Id;
 
                 ImGui.TableNextColumn();
-                if (ImGui.Selectable($"{hotbar.Name}##sel_{hotbar.Id}", isSelected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowItemOverlap)) this.selectedHotbar = hotbar;
+                ImGui.AlignTextToFramePadding();
+                if (ImGui.Selectable($"{hotbar.Name}##sel_{hotbar.Id}", isSelected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowItemOverlap, new Vector2(0, 24f))) this.selectedHotbar = hotbar;
 
                 ImGui.TableNextColumn();
+                ImGui.AlignTextToFramePadding();
                 string popModeStr = hotbar.PopulationMode == HotbarPopulationMode.Manual ? this.localization.Translate("config_hb_pop_manual") : this.localization.Translate("config_hb_pop_dynamic");
                 ImGui.Text(popModeStr);
 
                 ImGui.TableNextColumn();
+                ImGui.AlignTextToFramePadding();
                 int count = this.hotbarResolver.ResolveEmotesForHotbar(hotbar, this.hotbarManager.GetEmoteCache()).Count;
                 ImGui.Text(count.ToString());
             }

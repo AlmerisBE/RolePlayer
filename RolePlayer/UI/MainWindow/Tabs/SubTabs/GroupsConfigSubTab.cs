@@ -70,7 +70,7 @@ public class GroupsConfigSubTab {
             ImGui.TableHeadersRow();
 
             foreach (var group in groups) {
-                ImGui.TableNextRow();
+                ImGui.TableNextRow(ImGuiTableRowFlags.None, 28f);
 
                 if (this.editingGroup == group.Name) {
                     ImGui.TableNextColumn();

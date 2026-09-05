@@ -71,9 +71,10 @@ public class ContextsConfigSubTab {
             ImGui.TableHeadersRow();
 
             foreach (var ctx in contexts) {
-                ImGui.TableNextRow();
+                ImGui.TableNextRow(ImGuiTableRowFlags.None, 28f);
 
                 ImGui.TableNextColumn();
+                ImGui.AlignTextToFramePadding();
                 if (ImGui.RadioButton($"##SelCtx_{ctx.Id}", currentId == ctx.Id)) this.contextService.SwitchContext(ctx.Id);
 
                 if (this.editingContext == ctx.Id.ToString()) {
