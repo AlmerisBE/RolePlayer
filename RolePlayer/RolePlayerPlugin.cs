@@ -70,8 +70,12 @@ public sealed class RolePlayerPlugin : IDalamudPlugin {
 
     private void OnDraw() {
         this.themeService.PushTheme();
-        this.windowSystem.Draw();
-        this.themeService.PopTheme();
+        try {
+            this.windowSystem.Draw();
+        }
+        finally {
+            this.themeService.PopTheme();
+        }
     }
 
     private void OnOpenConfigUi() {

@@ -20,6 +20,7 @@ public class ThemeManagementService : IThemeManagementService {
     private ILoggerService logger;
 
     private Dictionary<ImGuiCol, Vector4> currentThemeColors = new();
+    private int pushedColorsCount = 0;
 
     public string ThemeDirectory => Path.Combine(this.pluginInterface.ConfigDirectory.FullName, "Themes");
 
@@ -100,11 +101,15 @@ public class ThemeManagementService : IThemeManagementService {
     }
 
     public void PushTheme() {
+        this.pushedColorsCount = this.currentThemeColors.Count;
         foreach (var kvp in this.currentThemeColors) ImGui.PushStyleColor(kvp.Key, kvp.Value);
     }
 
     public void PopTheme() {
-        if (this.currentThemeColors.Count > 0) ImGui.PopStyleColor(this.currentThemeColors.Count);
+        if (this.pushedColorsCount > 0) {
+            ImGui.PopStyleColor(this.pushedColorsCount);
+            this.pushedColorsCount = 0;
+        }
     }
 
     public void OpenThemeDirectory() {
