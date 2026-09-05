@@ -12,6 +12,7 @@ public class MainLayoutComponent {
 
     public void Draw(Action drawMainContent, Action drawSidePanel, bool isPanelOpen) {
         var panelTotalWidth = SidePanelWidth + ImGui.GetStyle().ItemSpacing.X;
+        bool skipSidePanelRender = false;
 
         if (this.isFirstFrame) {
             var initialSize = ImGui.GetWindowSize();
@@ -25,16 +26,16 @@ public class MainLayoutComponent {
         else if (isPanelOpen != this.lastPanelState) {
             var currentSize = ImGui.GetWindowSize();
             var targetWidth = isPanelOpen ? currentSize.X + panelTotalWidth : currentSize.X - panelTotalWidth;
-            if (targetWidth < BaseWidth) {
-                targetWidth = BaseWidth;
-            }
+
+            if (targetWidth < BaseWidth) targetWidth = BaseWidth;
 
             ImGui.SetWindowSize(new Vector2(targetWidth, currentSize.Y));
             this.lastPanelState = isPanelOpen;
+
+            if (isPanelOpen) skipSidePanelRender = true;
         }
 
-        var contentWidth = isPanelOpen ? -panelTotalWidth : 0;
-
+        var contentWidth = (isPanelOpen && !skipSidePanelRender) ? -panelTotalWidth : 0;
         var footerHeight = ImGui.GetFrameHeight() + ImGui.GetStyle().ItemSpacing.Y;
 
         if (ImGui.BeginChild("MainContent", new Vector2(contentWidth, -footerHeight), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)) {
@@ -43,7 +44,7 @@ public class MainLayoutComponent {
 
         ImGui.EndChild();
 
-        if (isPanelOpen) {
+        if (isPanelOpen && !skipSidePanelRender) {
             ImGui.SameLine();
             if (ImGui.BeginChild("SidePanel", new Vector2(SidePanelWidth, -footerHeight), true)) {
                 drawSidePanel();
