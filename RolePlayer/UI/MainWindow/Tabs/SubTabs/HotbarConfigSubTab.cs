@@ -88,7 +88,7 @@ public class HotbarConfigSubTab {
 
                 ImGui.TableNextColumn();
                 ImGui.AlignTextToFramePadding();
-                if (ImGui.Selectable($"{hotbar.Name}##sel_{hotbar.Id}", isSelected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowItemOverlap, new Vector2(0, 24f))) this.selectedHotbar = hotbar;
+                if (ImGui.Selectable($"{hotbar.Name}##sel_{hotbar.Id}", isSelected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowItemOverlap, new Vector2(0, 24f))) this.selectedHotbar = isSelected ? null : hotbar;
 
                 ImGui.TableNextColumn();
                 ImGui.AlignTextToFramePadding();
