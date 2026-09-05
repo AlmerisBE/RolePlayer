@@ -12,12 +12,14 @@ public class GameDataFeature : IFeatureModule {
     public void RegisterServices(IServiceCollection services) {
         services.AddSingleton<IEmoteRepository, LuminaEmoteProvider>();
         services.AddSingleton<IPlayerStateProvider, PlayerStateProvider>();
-        services.AddSingleton<IUnlockSourceProvider, LuminaUnlockSourceProvider>();
+
+        // Enregistrement en tant que classe concrète (Fallback)
+        services.AddSingleton<LuminaUnlockSourceProvider>();
+
         services.AddSingleton<IEmotePathProvider, LuminaEmotePathProvider>();
         services.AddSingleton<IEmoteDebugService, LuminaEmoteDebugService>();
         services.AddSingleton<IEmoteExecutionService, EmoteExecutionProvider>();
 
-        // Registering the debug command
         services.AddSingleton<ICommand, DumpCommand>();
     }
 }
