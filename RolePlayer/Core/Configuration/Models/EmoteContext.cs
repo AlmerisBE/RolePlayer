@@ -13,7 +13,9 @@ public class EmoteContext {
 
     public List<EmoteGroup> EmoteGroups { get; set; } = new();
     public Dictionary<uint, HashSet<string>> EmoteTags { get; set; } = new();
+    public Dictionary<Guid, HashSet<string>> MacroTags { get; set; } = new();
     public Dictionary<uint, string> EmoteToGroupMap { get; set; } = new();
+    public Dictionary<Guid, string> MacroToGroupMap { get; set; } = new();
     public HashSet<string> AvailableTags { get; set; } = new();
 
     public bool ShowFilters { get; set; } = false;

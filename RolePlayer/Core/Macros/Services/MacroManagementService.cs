@@ -15,7 +15,6 @@ public class MacroManagementService : IMacroManagementService {
     }
 
     public IEnumerable<RoleplayMacro> GetMacros() {
-        // En assumant que les macros soient stockées au niveau du profil personnage
         return this.configService.GetCurrentProfile().Macros;
     }
 

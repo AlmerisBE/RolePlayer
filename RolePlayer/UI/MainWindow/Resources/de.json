@@ -109,5 +109,8 @@
   "main_tab_macros": "Makros",
   "config_macro_autotranslate_title": "Auto-Übersetzungswörterbuch",
   "config_macro_autotranslate_hint": "Nach einem Begriff suchen (min 2 Zech)...",
-  "config_macro_autotranslate_desc": "Verwende dieses Wörterbuch, um automatisch übersetzte Begriffe in dein Makro einzufügen. Diese werden bei der Ausführung konvertiert."
+  "config_macro_autotranslate_desc": "Verwende dieses Wörterbuch, um automatisch übersetzte Begriffe in dein Makro einzufügen. Diese werden bei der Ausführung konvertiert.",
+  "config_macro_search_hint": "Suche nach Name oder Tags...",
+  "config_macro_group": "Gruppe",
+  "config_macro_tags": "Tags"
 }

@@ -17,15 +17,17 @@ public class ContextManagementService : IContextManagementService {
     }
 
     public EmoteContext GetCurrentContext() {
+        var config = this.configService.GetConfig();
         var profile = this.configService.GetCurrentProfile();
-        if (profile.Contexts.TryGetValue(profile.ActiveContextId, out var context)) {
+
+        if (config.Contexts.TryGetValue(profile.ActiveContextId, out var context)) {
             return context;
         }
 
-        var defaultContext = profile.Contexts.Values.FirstOrDefault();
+        var defaultContext = config.Contexts.Values.FirstOrDefault();
         if (defaultContext == null) {
             defaultContext = new EmoteContext();
-            profile.Contexts.Add(defaultContext.Id, defaultContext);
+            config.Contexts.Add(defaultContext.Id, defaultContext);
         }
 
         profile.ActiveContextId = defaultContext.Id;
@@ -34,25 +36,21 @@ public class ContextManagementService : IContextManagementService {
     }
 
     public IEnumerable<EmoteContext> GetAllContexts() {
-        return this.configService.GetCurrentProfile().Contexts.Values.OrderBy(c => c.Name);
+        return this.configService.GetConfig().Contexts.Values.OrderBy(c => c.Name);
     }
 
     public void CreateContext(string name, Guid? cloneFromId) {
-        if (string.IsNullOrWhiteSpace(name)) {
-            return;
-        }
+        if (string.IsNullOrWhiteSpace(name)) return;
 
-        var profile = this.configService.GetCurrentProfile();
+        var config = this.configService.GetConfig();
         EmoteContext newContext;
 
-        if (cloneFromId.HasValue && profile.Contexts.TryGetValue(cloneFromId.Value, out var sourceContext)) {
-            // Clonage profond via sérialisation JSON pour éviter les références partagées
+        if (cloneFromId.HasValue && config.Contexts.TryGetValue(cloneFromId.Value, out var sourceContext)) {
             var serialized = JsonConvert.SerializeObject(sourceContext);
             newContext = JsonConvert.DeserializeObject<EmoteContext>(serialized) ?? new EmoteContext();
-            newContext.Id = Guid.NewGuid(); // Génération d'un nouvel ID unique
+            newContext.Id = Guid.NewGuid();
             newContext.Name = name.Trim();
 
-            // Renouvellement des IDs des hotbars clonées pour éviter les conflits de rendu ImGui
             foreach (var hotbar in newContext.Hotbars) {
                 hotbar.Id = Guid.NewGuid();
             }
@@ -61,15 +59,15 @@ public class ContextManagementService : IContextManagementService {
             newContext = new EmoteContext { Name = name.Trim() };
         }
 
-        profile.Contexts.Add(newContext.Id, newContext);
+        config.Contexts.Add(newContext.Id, newContext);
         this.configService.Save();
     }
 
     public void SwitchContext(Guid contextId) {
+        var config = this.configService.GetConfig();
         var profile = this.configService.GetCurrentProfile();
-        if (!profile.Contexts.ContainsKey(contextId) || profile.ActiveContextId == contextId) {
-            return;
-        }
+
+        if (!config.Contexts.ContainsKey(contextId) || profile.ActiveContextId == contextId) return;
 
         profile.ActiveContextId = contextId;
         this.configService.Save();
@@ -78,33 +76,29 @@ public class ContextManagementService : IContextManagementService {
 
     public void SwitchContextByName(string name) {
         var context = this.GetAllContexts().FirstOrDefault(c => c.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
-        if (context != null) {
-            this.SwitchContext(context.Id);
-        }
+        if (context != null) this.SwitchContext(context.Id);
     }
 
     public void RenameContext(Guid contextId, string newName) {
-        if (string.IsNullOrWhiteSpace(newName)) {
-            return;
-        }
+        if (string.IsNullOrWhiteSpace(newName)) return;
 
-        var profile = this.configService.GetCurrentProfile();
-        if (profile.Contexts.TryGetValue(contextId, out var context)) {
+        var config = this.configService.GetConfig();
+        if (config.Contexts.TryGetValue(contextId, out var context)) {
             context.Name = newName.Trim();
             this.configService.Save();
         }
     }
 
     public void DeleteContext(Guid contextId) {
+        var config = this.configService.GetConfig();
         var profile = this.configService.GetCurrentProfile();
-        if (profile.Contexts.Count <= 1 || !profile.Contexts.ContainsKey(contextId)) {
-            return;
-        }
 
-        profile.Contexts.Remove(contextId);
+        if (config.Contexts.Count <= 1 || !config.Contexts.ContainsKey(contextId)) return;
+
+        config.Contexts.Remove(contextId);
 
         if (profile.ActiveContextId == contextId) {
-            profile.ActiveContextId = profile.Contexts.Keys.First();
+            profile.ActiveContextId = config.Contexts.Keys.First();
             this.ContextChanged?.Invoke();
         }
 

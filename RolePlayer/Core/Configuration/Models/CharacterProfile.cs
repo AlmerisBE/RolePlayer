@@ -4,9 +4,9 @@ using RolePlayer.Core.Macros.Models;
 using System;
 using System.Collections.Generic;
 
-[Serializable]
 public class CharacterProfile {
-    public Dictionary<Guid, EmoteContext> Contexts { get; set; } = new();
-    public Guid ActiveContextId { get; set; }
+    public ulong CharacterId { get; set; }
+    public string CharacterName { get; set; } = string.Empty;
+    public Guid ActiveContextId { get; set; } = Guid.Empty;
     public List<RoleplayMacro> Macros { get; set; } = new();
 }
