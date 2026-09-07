@@ -29,7 +29,7 @@ public class MacrosTab : IEmoteBrowserTab, IDisposable {
     private bool isDeleteDialogOpen = false;
 
     public string TabName => this.localization.Translate("main_tab_macros");
-    public int SortOrder => 20; // Se place après la liste des emotes (généralement 10) et avant la configuration (99)
+    public int SortOrder => 20;
     public bool IsSidePanelOpen => this.selectedMacro != null;
 
     public MacrosTab(
@@ -97,7 +97,13 @@ public class MacrosTab : IEmoteBrowserTab, IDisposable {
                 ImGui.PopStyleVar();
 
                 ImGui.TableNextColumn();
-                this.DrawIconPreview(macro.IconId, 24f);
+
+                // Centrage vertical de l'icône dans la ligne
+                float iconSize = 24f;
+                float iconOffsetY = (rowHeight - iconSize) / 2f;
+                if (iconOffsetY > 0) ImGui.SetCursorPosY(ImGui.GetCursorPosY() + iconOffsetY);
+
+                this.DrawIconPreview(macro.IconId, iconSize);
 
                 ImGui.TableNextColumn();
 

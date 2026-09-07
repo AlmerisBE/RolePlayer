@@ -26,7 +26,6 @@ public class HotbarWindow : Window {
     private ILocalizationService localization;
     private int currentPage = 0;
     private const int MaxItemsPerPage = 16;
-
     private const float IconSize = 41f;
 
     public HotbarWindow(
@@ -47,13 +46,27 @@ public class HotbarWindow : Window {
         this.shouldHideHotbars = shouldHideHotbars;
         this.localization = localization;
 
+        // Force une contrainte de taille pour interdire l'effondrement à 0x0 pixels
+        this.SizeConstraints = new WindowSizeConstraints {
+            MinimumSize = new Vector2(IconSize + 6f, IconSize + 6f),
+            MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
+        };
+
         this.SizeCondition = ImGuiCond.Always;
         this.BgAlpha = 0.7f;
+
+        // Initialisation explicite primordiale pour éviter l'exclusion d'Update() par le WindowSystem
+        this.IsOpen = config.IsVisible;
     }
 
     public override void Update() {
-        // En mettant à jour IsOpen ici, Dalamud évitera d'appeler ImGui.Begin() si la fenêtre doit être cachée, supprimant ainsi l'artefact visuel.
-        this.IsOpen = this.config.IsVisible && !this.shouldHideHotbars();
+        try {
+            bool hide = this.shouldHideHotbars != null && this.shouldHideHotbars();
+            this.IsOpen = this.config.IsVisible && !hide;
+        }
+        catch {
+            this.IsOpen = this.config.IsVisible;
+        }
     }
 
     public override void PreDraw() {
@@ -103,6 +116,10 @@ public class HotbarWindow : Window {
             ImGui.PopStyleVar();
 
             if (totalPages > 1) this.DrawPagination(totalPages);
+        }
+        else if (!this.config.IsLocked) {
+            ImGui.Dummy(new Vector2(IconSize, IconSize));
+            if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_common_empty"));
         }
 
         if (!this.config.IsLocked || !this.config.PositionInitialized) {
@@ -181,8 +198,14 @@ public class HotbarWindow : Window {
 
                 ImGui.PopID();
             }
+            else {
+                // Zone de substitution pendant le chargement asynchrone pour éviter l'effondrement
+                ImGui.Dummy(new Vector2(IconSize, IconSize));
+            }
         }
-        catch (IconNotFoundException) { }
+        catch (IconNotFoundException) {
+            ImGui.Dummy(new Vector2(IconSize, IconSize));
+        }
     }
 
     private void DrawPagination(int totalPages) {
