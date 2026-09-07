@@ -1,4 +1,7 @@
 {
   "hotbar_tooltip_mod": "Mod:",
-  "hotbar_tooltip_variation": "(Erneut klicken, um die Pose zu ändern)"
+  "hotbar_tooltip_variation": "(Erneut klicken, um die Pose zu ändern)",
+  "config_hb_target_emotes": "Emotes",
+  "config_hb_target_macros": "Makros",
+  "config_hb_target_mixed": "Gemischt"
 }

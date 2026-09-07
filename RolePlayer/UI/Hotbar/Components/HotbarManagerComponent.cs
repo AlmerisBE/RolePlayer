@@ -21,6 +21,7 @@ public class HotbarManagerComponent : IDisposable {
     private IContextManagementService contextService;
     private IHotbarResolverService resolverService;
     private IEmoteExecutionService executionService;
+    private IMacroExecutionService macroExecutionService;
     private ITextureProvider textureProvider;
     private IEmoteRepository emoteRepository;
     private IPlayerStateProvider playerStateProvider;
@@ -39,6 +40,7 @@ public class HotbarManagerComponent : IDisposable {
         IContextManagementService contextService,
         IHotbarResolverService resolverService,
         IEmoteExecutionService executionService,
+        IMacroExecutionService macroExecutionService,
         ITextureProvider textureProvider,
         IEmoteRepository emoteRepository,
         IPlayerStateProvider playerStateProvider,
@@ -52,6 +54,7 @@ public class HotbarManagerComponent : IDisposable {
         this.contextService = contextService;
         this.resolverService = resolverService;
         this.executionService = executionService;
+        this.macroExecutionService = macroExecutionService;
         this.textureProvider = textureProvider;
         this.emoteRepository = emoteRepository;
         this.playerStateProvider = playerStateProvider;
@@ -132,6 +135,7 @@ public class HotbarManagerComponent : IDisposable {
                 hotbarConfig,
                 this.resolverService,
                 this.executionService,
+                this.macroExecutionService,
                 this.textureProvider,
                 () => this.sharedCache,
                 () => this.EvaluateHotbarVisibility(hotbarConfig),

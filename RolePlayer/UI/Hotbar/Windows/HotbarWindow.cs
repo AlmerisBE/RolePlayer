@@ -19,7 +19,8 @@ using System.Numerics;
 public class HotbarWindow : Window {
     private HotbarConfig config;
     private IHotbarResolverService resolverService;
-    private IEmoteExecutionService executionService;
+    private IEmoteExecutionService emoteExecutionService;
+    private IMacroExecutionService macroExecutionService;
     private ITextureProvider textureProvider;
     private Func<IEnumerable<EmoteDisplayData>> emoteCacheProvider;
     private Func<bool> shouldHideHotbars;
@@ -31,7 +32,8 @@ public class HotbarWindow : Window {
     public HotbarWindow(
         HotbarConfig config,
         IHotbarResolverService resolverService,
-        IEmoteExecutionService executionService,
+        IEmoteExecutionService emoteExecutionService,
+        IMacroExecutionService macroExecutionService,
         ITextureProvider textureProvider,
         Func<IEnumerable<EmoteDisplayData>> emoteCacheProvider,
         Func<bool> shouldHideHotbars,
@@ -40,13 +42,13 @@ public class HotbarWindow : Window {
 
         this.config = config;
         this.resolverService = resolverService;
-        this.executionService = executionService;
+        this.emoteExecutionService = emoteExecutionService;
+        this.macroExecutionService = macroExecutionService;
         this.textureProvider = textureProvider;
         this.emoteCacheProvider = emoteCacheProvider;
         this.shouldHideHotbars = shouldHideHotbars;
         this.localization = localization;
 
-        // Force une contrainte de taille pour interdire l'effondrement à 0x0 pixels
         this.SizeConstraints = new WindowSizeConstraints {
             MinimumSize = new Vector2(IconSize + 6f, IconSize + 6f),
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
@@ -54,8 +56,6 @@ public class HotbarWindow : Window {
 
         this.SizeCondition = ImGuiCond.Always;
         this.BgAlpha = 0.7f;
-
-        // Initialisation explicite primordiale pour éviter l'exclusion d'Update() par le WindowSystem
         this.IsOpen = config.IsVisible;
     }
 
@@ -84,17 +84,17 @@ public class HotbarWindow : Window {
 
     public override void Draw() {
         var allEmotes = this.emoteCacheProvider();
-        var resolvedEmotes = this.resolverService.ResolveEmotesForHotbar(this.config, allEmotes);
+        var resolvedItems = this.resolverService.ResolveItemsForHotbar(this.config, allEmotes);
 
-        if (resolvedEmotes.Count > 0) {
-            int totalPages = (int)Math.Ceiling(resolvedEmotes.Count / (double)MaxItemsPerPage);
+        if (resolvedItems.Count > 0) {
+            int totalPages = (int)Math.Ceiling(resolvedItems.Count / (double)MaxItemsPerPage);
             if (this.currentPage >= totalPages && totalPages > 0) this.currentPage = totalPages - 1;
             if (totalPages == 0) this.currentPage = 0;
 
-            var displayedEmotes = resolvedEmotes.Skip(this.currentPage * MaxItemsPerPage).Take(MaxItemsPerPage).ToList();
+            var displayedItems = resolvedItems.Skip(this.currentPage * MaxItemsPerPage).Take(MaxItemsPerPage).ToList();
 
             int maxColumns = this.GetColumnsForLayout(this.config.Layout);
-            int actualColumns = Math.Max(1, Math.Min(maxColumns, displayedEmotes.Count));
+            int actualColumns = Math.Max(1, Math.Min(maxColumns, displayedItems.Count));
             float columnWidth = IconSize;
 
             ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, Vector2.Zero);
@@ -103,11 +103,11 @@ public class HotbarWindow : Window {
             if (ImGui.BeginTable($"HotbarGrid_{this.config.Id}", actualColumns, ImGuiTableFlags.SizingFixedFit)) {
                 for (int col = 0; col < actualColumns; col++) ImGui.TableSetupColumn($"col_{col}", ImGuiTableColumnFlags.WidthFixed, columnWidth);
 
-                for (int i = 0; i < displayedEmotes.Count; i++) {
+                for (int i = 0; i < displayedItems.Count; i++) {
                     if (i % actualColumns == 0) ImGui.TableNextRow();
 
                     ImGui.TableNextColumn();
-                    this.DrawEmoteIcon(displayedEmotes[i]);
+                    this.DrawHotbarItemIcon(displayedItems[i]);
                 }
                 ImGui.EndTable();
             }
@@ -165,18 +165,21 @@ public class HotbarWindow : Window {
         };
     }
 
-    private void DrawEmoteIcon(EmoteDisplayData emote) {
+    private void DrawHotbarItemIcon(ResolvedHotbarItem item) {
         try {
-            var lookup = new GameIconLookup { IconId = emote.IconId, HiRes = false };
+            var lookup = new GameIconLookup { IconId = item.IconId, HiRes = false };
             var iconWrap = this.textureProvider.GetFromGameIcon(lookup).GetWrapOrDefault();
 
             if (iconWrap != null) {
-                ImGui.PushID($"emote_{emote.Id}");
+                ImGui.PushID($"item_{(item.EmoteId.HasValue ? item.EmoteId.ToString() : item.MacroId.ToString())}");
                 var cursorPos = ImGui.GetCursorScreenPos();
 
-                if (ImGui.ImageButton(iconWrap.Handle, new Vector2(IconSize, IconSize))) this.executionService.ExecuteEmote(emote.Id);
+                if (ImGui.ImageButton(iconWrap.Handle, new Vector2(IconSize, IconSize))) {
+                    if (item.EmoteId.HasValue) this.emoteExecutionService.ExecuteEmote(item.EmoteId.Value);
+                    else if (item.MacroId.HasValue && item.MacroReference != null) this.macroExecutionService.Execute(item.MacroReference);
+                }
 
-                if (emote.HasVariations) {
+                if (item.HasVariations) {
                     var drawList = ImGui.GetWindowDrawList();
                     ImGui.PushFont(UiBuilder.IconFont);
                     var indicatorText = FontAwesomeIcon.Sync.ToIconString();
@@ -190,8 +193,8 @@ public class HotbarWindow : Window {
                 }
 
                 if (ImGui.IsItemHovered()) {
-                    string tooltipText = emote.IsModded ? $"★ {emote.Name}\n{this.localization.Translate("hotbar_tooltip_mod")} {emote.ModName}\n{emote.LocalizedCommand}" : $"{emote.Name}\n{emote.LocalizedCommand}";
-                    if (emote.HasVariations) tooltipText += $"\n{this.localization.Translate("hotbar_tooltip_variation")}";
+                    string tooltipText = item.IsModded ? $"★ {item.Name}\n{this.localization.Translate("hotbar_tooltip_mod")} {item.ModName}\n{item.CommandText}" : $"{item.Name}\n{item.CommandText}";
+                    if (item.HasVariations) tooltipText += $"\n{this.localization.Translate("hotbar_tooltip_variation")}";
 
                     ImGui.SetTooltip(tooltipText);
                 }
@@ -199,7 +202,6 @@ public class HotbarWindow : Window {
                 ImGui.PopID();
             }
             else {
-                // Zone de substitution pendant le chargement asynchrone pour éviter l'effondrement
                 ImGui.Dummy(new Vector2(IconSize, IconSize));
             }
         }

@@ -1,521 +1,58 @@
 ﻿namespace RolePlayer.UI.MainWindow.Tabs;
 
-using Dalamud.Bindings.ImGui;
-using Dalamud.Interface;
-using Dalamud.Interface.Textures;
-using Dalamud.Interface.Textures.Internal;
-using Dalamud.Plugin.Services;
-using RolePlayer.Core.Macros.Models;
 using RolePlayer.UI.EmoteBrowser.Contracts;
-using RolePlayer.UI.Hotbar.Components;
-using RolePlayer.UI.Hotbar.Contracts;
 using RolePlayer.UI.Localization.Contracts;
+using RolePlayer.UI.MainWindow.Components.Macros;
 using RolePlayer.UI.MainWindow.Contracts;
-using RolePlayer.UI.MainWindow.Models;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
 
 public class MacrosTab : IEmoteBrowserTab, IDisposable {
-    private IMacroManagementService macroService;
-    private IMacroExecutionService macroExecutionService;
     private ILocalizationService localization;
-    private ITextureProvider textureProvider;
-    private HotbarManagerComponent hotbarManager;
-    private IAutoTranslateService autoTranslateService;
-    private IGroupManagementService groupService;
-    private ITagManagementService tagService;
+    private IMacroSelectionState selectionState;
 
-    private string newMacroName = string.Empty;
-    private string macroSearchQuery = string.Empty;
-
-    private RoleplayMacro? selectedMacro;
-    private Guid macroToDelete = Guid.Empty;
-    private bool isDeleteDialogOpen = false;
-
-    private string autoTranslateSearch = string.Empty;
-    private List<AutoTranslateResult> autoTranslateResults = new();
+    private MacroCreationComponent creationComponent;
+    private MacroSearchComponent searchComponent;
+    private MacroListComponent listComponent;
+    private MacroEditorPanelComponent editorPanelComponent;
 
     public string TabName => this.localization.Translate("main_tab_macros");
     public int SortOrder => 20;
-    public bool IsSidePanelOpen => this.selectedMacro != null;
+    public bool IsSidePanelOpen => this.selectionState.SelectedMacro != null;
 
     public MacrosTab(
-        IMacroManagementService macroService,
-        IMacroExecutionService macroExecutionService,
         ILocalizationService localization,
-        ITextureProvider textureProvider,
-        HotbarManagerComponent hotbarManager,
-        IAutoTranslateService autoTranslateService,
-        IGroupManagementService groupService,
-        ITagManagementService tagService) {
+        IMacroSelectionState selectionState,
+        MacroCreationComponent creationComponent,
+        MacroSearchComponent searchComponent,
+        MacroListComponent listComponent,
+        MacroEditorPanelComponent editorPanelComponent) {
 
-        this.macroService = macroService;
-        this.macroExecutionService = macroExecutionService;
         this.localization = localization;
-        this.textureProvider = textureProvider;
-        this.hotbarManager = hotbarManager;
-        this.autoTranslateService = autoTranslateService;
-        this.groupService = groupService;
-        this.tagService = tagService;
+        this.selectionState = selectionState;
+        this.creationComponent = creationComponent;
+        this.searchComponent = searchComponent;
+        this.listComponent = listComponent;
+        this.editorPanelComponent = editorPanelComponent;
     }
 
     public void Draw() {
-        ImGui.Text(this.localization.Translate("config_macro_create"));
+        this.creationComponent.Draw();
 
-        float availableWidth = ImGui.GetContentRegionAvail().X;
-        float buttonWidth = 32f;
-        float spacing = ImGui.GetStyle().ItemSpacing.X;
+        Dalamud.Bindings.ImGui.ImGui.Spacing();
+        Dalamud.Bindings.ImGui.ImGui.Separator();
+        Dalamud.Bindings.ImGui.ImGui.Spacing();
 
-        ImGui.SetNextItemWidth(availableWidth - buttonWidth - spacing);
-        ImGui.InputTextWithHint("##NewMacroName", this.localization.Translate("config_macro_name_hint"), ref this.newMacroName, 64);
-        ImGui.SameLine();
+        this.searchComponent.Draw();
 
-        ImGui.PushFont(UiBuilder.IconFont);
-        if (ImGui.Button($"{FontAwesomeIcon.Plus.ToIconString()}##AddMacro", new Vector2(buttonWidth, 0)) && !string.IsNullOrWhiteSpace(this.newMacroName)) {
-            var newMacro = new RoleplayMacro {
-                Name = this.newMacroName.Trim(),
-                IconId = 66001
-            };
-            this.macroService.CreateMacro(newMacro);
-            this.selectedMacro = newMacro;
-            this.newMacroName = string.Empty;
-        }
-        ImGui.PopFont();
+        Dalamud.Bindings.ImGui.ImGui.Spacing();
+        Dalamud.Bindings.ImGui.ImGui.Separator();
+        Dalamud.Bindings.ImGui.ImGui.Spacing();
 
-        ImGui.Spacing();
-        ImGui.Separator();
-        ImGui.Spacing();
-
-        ImGui.SetNextItemWidth(-1f);
-        ImGui.InputTextWithHint("##MacroSearch", this.localization.Translate("config_macro_search_hint"), ref this.macroSearchQuery, 128);
-
-        ImGui.Spacing();
-        ImGui.Separator();
-        ImGui.Spacing();
-
-        var macros = this.macroService.GetMacros().ToList();
-        if (macros.Count == 0) return;
-
-        var query = this.macroSearchQuery.Trim().ToLowerInvariant();
-        var filteredMacros = macros.Where(m => {
-            var tags = this.tagService.GetTagsForMacro(m.Id);
-            return string.IsNullOrEmpty(query) ||
-                   m.Name.ToLowerInvariant().Contains(query) ||
-                   tags.Any(t => t.ToLowerInvariant().Contains(query));
-        }).ToList();
-
-        var groupedMacros = filteredMacros
-            .GroupBy(m => {
-                var group = this.groupService.GetGroupForMacro(m.Id);
-                return string.IsNullOrEmpty(group) ? this.localization.Translate("browser_ungrouped") : group;
-            })
-            .OrderBy(g => g.Key);
-
-        foreach (var group in groupedMacros) {
-            if (ImGui.CollapsingHeader($"{group.Key} ({group.Count()})###MacroGroup_{group.Key}", ImGuiTreeNodeFlags.DefaultOpen)) {
-                if (ImGui.BeginTable($"MacrosTable_{group.Key}", 3, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit)) {
-                    ImGui.TableSetupColumn(this.localization.Translate("config_macro_col_icon"), ImGuiTableColumnFlags.WidthFixed, 40f);
-                    ImGui.TableSetupColumn(this.localization.Translate("config_common_name"), ImGuiTableColumnFlags.WidthStretch);
-                    ImGui.TableSetupColumn(this.localization.Translate("config_common_actions"), ImGuiTableColumnFlags.WidthFixed, 68f);
-
-                    ImGui.TableHeadersRow();
-
-                    foreach (var macro in group) {
-                        float rowHeight = 32f;
-                        ImGui.TableNextRow(ImGuiTableRowFlags.None, rowHeight);
-
-                        bool isSelected = this.selectedMacro?.Id == macro.Id;
-
-                        ImGui.TableNextColumn();
-                        float iconSize = 24f;
-                        float startY = ImGui.GetCursorPosY() - ImGui.GetStyle().CellPadding.Y;
-                        ImGui.SetCursorPosY(startY + (rowHeight - iconSize) / 2f);
-                        this.DrawIconPreview(macro.IconId, iconSize);
-
-                        ImGui.TableNextColumn();
-                        ImGui.PushStyleVar(ImGuiStyleVar.SelectableTextAlign, new Vector2(0.0f, 0.5f));
-                        float selectableHeight = rowHeight - (ImGui.GetStyle().CellPadding.Y * 2);
-
-                        if (ImGui.Selectable($"{macro.Name}##sel_{macro.Id}", isSelected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowItemOverlap, new Vector2(0, selectableHeight))) {
-                            this.selectedMacro = isSelected ? null : macro;
-                            this.autoTranslateSearch = string.Empty;
-                            this.autoTranslateResults.Clear();
-                        }
-                        ImGui.PopStyleVar();
-
-                        ImGui.TableNextColumn();
-                        float buttonHeight = ImGui.GetFrameHeight();
-                        startY = ImGui.GetCursorPosY() - ImGui.GetStyle().CellPadding.Y;
-                        ImGui.SetCursorPosY(startY + (rowHeight - buttonHeight) / 2f);
-
-                        ImGui.PushFont(UiBuilder.IconFont);
-
-                        ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.2f, 0.6f, 0.2f, 1.0f));
-                        if (ImGui.Button($"{FontAwesomeIcon.Play.ToIconString()}##Play_{macro.Id}")) this.macroExecutionService.Execute(macro);
-                        ImGui.PopStyleColor();
-
-                        if (ImGui.IsItemHovered()) {
-                            ImGui.PopFont();
-                            ImGui.SetTooltip(this.localization.Translate("config_macro_execute"));
-                            ImGui.PushFont(UiBuilder.IconFont);
-                        }
-
-                        ImGui.SameLine();
-
-                        ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
-                        if (ImGui.Button($"{FontAwesomeIcon.Trash.ToIconString()}##Del_{macro.Id}")) {
-                            this.macroToDelete = macro.Id;
-                            this.isDeleteDialogOpen = true;
-                        }
-                        ImGui.PopStyleColor();
-                        ImGui.PopFont();
-                    }
-                    ImGui.EndTable();
-                }
-            }
-        }
-
-        this.DrawDeleteConfirmationModal();
+        this.listComponent.Draw();
     }
 
     public void DrawSidePanel() {
-        if (this.selectedMacro == null) return;
-
-        bool changed = false;
-
-        string playIcon = FontAwesomeIcon.Play.ToIconString();
-        string closeIcon = FontAwesomeIcon.Times.ToIconString();
-
-        ImGui.PushFont(UiBuilder.IconFont);
-        var playBtnWidth = ImGui.CalcTextSize(playIcon).X + ImGui.GetStyle().FramePadding.X * 2;
-        var closeBtnWidth = ImGui.CalcTextSize(closeIcon).X + ImGui.GetStyle().FramePadding.X * 2;
-        ImGui.PopFont();
-
-        if (ImGui.BeginTable("MacroSettingsHeaderTable", 3)) {
-            ImGui.TableSetupColumn("Title", ImGuiTableColumnFlags.WidthStretch);
-            ImGui.TableSetupColumn("PlayBtn", ImGuiTableColumnFlags.WidthFixed, playBtnWidth);
-            ImGui.TableSetupColumn("CloseBtn", ImGuiTableColumnFlags.WidthFixed, closeBtnWidth);
-
-            ImGui.TableNextRow();
-            ImGui.TableNextColumn();
-            ImGui.AlignTextToFramePadding();
-            ImGui.SetWindowFontScale(1.3f);
-
-            string title = string.IsNullOrWhiteSpace(this.selectedMacro.Name) ? this.localization.Translate("config_macro_settings") : this.selectedMacro.Name;
-            ImGui.TextUnformatted(title);
-            ImGui.SetWindowFontScale(1.0f);
-
-            ImGui.TableNextColumn();
-            ImGui.PushFont(UiBuilder.IconFont);
-            ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.2f, 0.6f, 0.2f, 1.0f));
-            if (ImGui.Button($"{playIcon}##PlayMacroDetails")) this.macroExecutionService.Execute(this.selectedMacro);
-            ImGui.PopStyleColor();
-            ImGui.PopFont();
-
-            if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_macro_execute"));
-
-            ImGui.TableNextColumn();
-            ImGui.PushFont(UiBuilder.IconFont);
-            if (ImGui.Button($"{closeIcon}##CloseMacroDetails")) {
-                this.selectedMacro = null;
-                ImGui.PopFont();
-                ImGui.EndTable();
-                return;
-            }
-            ImGui.PopFont();
-
-            ImGui.EndTable();
-        }
-
-        ImGui.Separator();
-        ImGui.Spacing();
-
-        float totalHeight = ImGui.GetTextLineHeight() + ImGui.GetStyle().ItemSpacing.Y + ImGui.GetFrameHeight();
-        float btnSizeXY = totalHeight;
-        float imgSize = btnSizeXY - (ImGui.GetStyle().FramePadding.Y * 2);
-        float inputWidth = ImGui.GetContentRegionAvail().X - btnSizeXY - ImGui.GetStyle().ItemSpacing.X;
-
-        ImGui.BeginGroup();
-        ImGui.TextDisabled(this.localization.Translate("config_common_name"));
-
-        string name = this.selectedMacro.Name;
-        ImGui.SetNextItemWidth(inputWidth);
-        if (ImGui.InputText("##MacroNameEdit", ref name, 64)) {
-            this.selectedMacro.Name = name;
-            changed = true;
-        }
-        ImGui.EndGroup();
-
-        ImGui.SameLine();
-
-        bool openIconPicker = false;
-        ImGui.PushID("IconSelectButton");
-        try {
-            var lookup = new GameIconLookup { IconId = this.selectedMacro.IconId, HiRes = false };
-            var iconWrap = this.textureProvider.GetFromGameIcon(lookup).GetWrapOrDefault();
-
-            if (iconWrap != null && ImGui.ImageButton(iconWrap.Handle, new Vector2(imgSize, imgSize))) openIconPicker = true;
-            if (iconWrap == null && ImGui.Button("?", new Vector2(btnSizeXY, btnSizeXY))) openIconPicker = true;
-        }
-        catch (IconNotFoundException) {
-            if (ImGui.Button("?", new Vector2(btnSizeXY, btnSizeXY))) openIconPicker = true;
-        }
-        ImGui.PopID();
-
-        if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_macro_icon_select"));
-
-        if (openIconPicker) ImGui.OpenPopup("IconPickerPopup");
-
-        this.DrawIconPickerPopup(ref changed);
-
-        ImGui.Spacing();
-        ImGui.Separator();
-        ImGui.Spacing();
-
-        ImGui.TextDisabled(this.localization.Translate("config_macro_group"));
-        ImGui.SetNextItemWidth(-1f);
-        var groups = this.groupService.GetGroups().Select(g => g.Name).ToList();
-        var currentGroup = this.groupService.GetGroupForMacro(this.selectedMacro.Id);
-
-        if (ImGui.BeginCombo("##MacroGroupCombo", string.IsNullOrEmpty(currentGroup) ? this.localization.Translate("browser_none") : currentGroup)) {
-            if (ImGui.Selectable(this.localization.Translate("browser_none"), string.IsNullOrEmpty(currentGroup))) {
-                this.groupService.RemoveMacroFromGroup(this.selectedMacro.Id);
-            }
-            foreach (var g in groups) {
-                if (ImGui.Selectable(g, currentGroup == g)) {
-                    this.groupService.AssignMacroToGroup(this.selectedMacro.Id, g);
-                }
-            }
-            ImGui.EndCombo();
-        }
-
-        ImGui.Spacing();
-        ImGui.Separator();
-        ImGui.Spacing();
-
-        ImGui.TextDisabled(this.localization.Translate("config_macro_tags"));
-
-        var macroTags = this.tagService.GetTagsForMacro(this.selectedMacro.Id).ToList();
-
-        if (ImGui.BeginTable("MacroTagsTable", 2, ImGuiTableFlags.BordersInnerH | ImGuiTableFlags.RowBg)) {
-            ImGui.TableSetupColumn(this.localization.Translate("config_common_tags"), ImGuiTableColumnFlags.WidthStretch);
-            ImGui.TableSetupColumn(this.localization.Translate("config_common_actions"), ImGuiTableColumnFlags.WidthFixed, 60f);
-
-            if (macroTags.Count == 0) {
-                ImGui.TableNextRow();
-                ImGui.TableNextColumn();
-                ImGui.TextDisabled(this.localization.Translate("browser_details_no_assigned_tags"));
-                ImGui.TableNextColumn();
-            }
-
-            string? tagToRemove = null;
-            foreach (var tag in macroTags) {
-                ImGui.TableNextRow();
-                ImGui.TableNextColumn();
-                ImGui.AlignTextToFramePadding();
-                ImGui.TextUnformatted(tag);
-
-                ImGui.TableNextColumn();
-                if (ImGui.Button($"{this.localization.Translate("browser_details_remove")}##{tag}", new Vector2(-1f, 0))) tagToRemove = tag;
-            }
-            ImGui.EndTable();
-
-            if (tagToRemove != null) {
-                this.tagService.RemoveTagFromMacro(this.selectedMacro.Id, tagToRemove);
-            }
-        }
-
-        ImGui.Spacing();
-
-        var availableTags = this.tagService.GetAvailableTags().Except(macroTags).ToList();
-
-        if (ImGui.BeginTable("AddMacroTagTable", 1, ImGuiTableFlags.None)) {
-            ImGui.TableSetupColumn("Combo", ImGuiTableColumnFlags.WidthStretch);
-            ImGui.TableNextRow();
-            ImGui.TableNextColumn();
-
-            ImGui.SetNextItemWidth(-1f);
-            if (availableTags.Count > 0) {
-                if (ImGui.BeginCombo("##addTagMacroCombo", this.localization.Translate("browser_details_select_tag"))) {
-                    foreach (var tag in availableTags) {
-                        if (ImGui.Selectable(tag)) {
-                            this.tagService.AddTagToMacro(this.selectedMacro.Id, tag);
-                        }
-                    }
-                    ImGui.EndCombo();
-                }
-            }
-            else {
-                ImGui.BeginDisabled();
-                if (ImGui.BeginCombo("##addTagMacroCombo", this.localization.Translate("browser_details_no_available_tags"))) ImGui.EndCombo();
-                ImGui.EndDisabled();
-            }
-            ImGui.EndTable();
-        }
-
-        ImGui.Spacing();
-        ImGui.Separator();
-        ImGui.Spacing();
-
-        ImGui.TextDisabled(this.localization.Translate("config_macro_col_content"));
-        ImGui.Spacing();
-
-        string content = this.selectedMacro.Content;
-        float inputHeight = ImGui.GetTextLineHeight() * 10f;
-
-        if (ImGui.InputTextMultiline("##MacroContent", ref content, 8192, new Vector2(-1, inputHeight))) {
-            this.selectedMacro.Content = content;
-            changed = true;
-        }
-
-        if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_macro_lines_hint"));
-
-        ImGui.Spacing();
-        ImGui.Separator();
-        ImGui.Spacing();
-
-        ImGui.TextDisabled(this.localization.Translate("config_macro_autotranslate_title"));
-        ImGui.Spacing();
-
-        ImGui.TextWrapped(this.localization.Translate("config_macro_autotranslate_desc"));
-        ImGui.Spacing();
-
-        ImGui.SetNextItemWidth(-1f);
-
-        if (ImGui.InputTextWithHint("##AutoTranslateSearch", this.localization.Translate("config_macro_autotranslate_hint"), ref this.autoTranslateSearch, 64)) {
-            if (this.autoTranslateSearch.Length >= 2) this.autoTranslateResults = this.autoTranslateService.Search(this.autoTranslateSearch).ToList();
-            else this.autoTranslateResults.Clear();
-        }
-
-        if (this.autoTranslateResults.Count > 0) {
-            if (ImGui.BeginChild("AutoTranslateResultsList", new Vector2(0, 150), true)) {
-                foreach (var result in this.autoTranslateResults) {
-                    if (ImGui.Selectable($"{result.DisplayText}##{result.Payload}")) {
-                        this.selectedMacro.Content += result.Payload;
-                        changed = true;
-                        this.autoTranslateSearch = string.Empty;
-                        this.autoTranslateResults.Clear();
-                        break;
-                    }
-                }
-                ImGui.EndChild();
-            }
-        }
-
-        if (changed) {
-            this.macroService.UpdateMacro(this.selectedMacro.Id, this.selectedMacro.Name, this.selectedMacro.Content, this.selectedMacro.IconId);
-        }
-    }
-
-    private void DrawIconPreview(uint iconId, float size) {
-        try {
-            var lookup = new GameIconLookup { IconId = iconId, HiRes = false };
-            var iconWrap = this.textureProvider.GetFromGameIcon(lookup).GetWrapOrDefault();
-
-            if (iconWrap != null) ImGui.Image(iconWrap.Handle, new Vector2(size, size));
-            else ImGui.Dummy(new Vector2(size, size));
-        }
-        catch (IconNotFoundException) {
-            ImGui.Dummy(new Vector2(size, size));
-        }
-    }
-
-    private void DrawIconPickerPopup(ref bool changed) {
-        ImGui.SetNextWindowSize(new Vector2(340, 400), ImGuiCond.Appearing);
-
-        if (ImGui.BeginPopup("IconPickerPopup")) {
-            ImGui.TextDisabled(this.localization.Translate("config_macro_icon_picker"));
-            ImGui.Separator();
-
-            if (ImGui.BeginTabBar("IconPickerTabs")) {
-                if (ImGui.BeginTabItem(this.localization.Translate("config_macro_icon_tab_macros"))) {
-                    this.DrawIconGrid("MacroIconsGrid", 66001, 66344, null, ref changed);
-                    ImGui.EndTabItem();
-                }
-
-                if (ImGui.BeginTabItem(this.localization.Translate("config_macro_icon_tab_emotes"))) {
-                    var emoteIcons = this.hotbarManager.GetEmoteCache().Select(e => e.IconId).Distinct().ToList();
-                    this.DrawIconGrid("EmoteIconsGrid", 0, 0, emoteIcons, ref changed);
-                    ImGui.EndTabItem();
-                }
-
-                ImGui.EndTabBar();
-            }
-            ImGui.EndPopup();
-        }
-    }
-
-    private void DrawIconGrid(string id, uint startId, uint endId, List<uint>? specificIcons, ref bool changed) {
-        if (ImGui.BeginChild(id, new Vector2(0, 300), false, ImGuiWindowFlags.AlwaysVerticalScrollbar)) {
-            int columns = Math.Max(1, (int)(ImGui.GetContentRegionAvail().X / 48f));
-
-            if (ImGui.BeginTable($"{id}Table", columns, ImGuiTableFlags.SizingFixedFit)) {
-                var iconsToRender = specificIcons ?? Enumerable.Range((int)startId, (int)(endId - startId + 1)).Select(i => (uint)i).ToList();
-                int drawnIconsCount = 0;
-
-                foreach (uint iconId in iconsToRender) {
-                    try {
-                        var lookup = new GameIconLookup { IconId = iconId, HiRes = false };
-                        var iconWrap = this.textureProvider.GetFromGameIcon(lookup).GetWrapOrDefault();
-
-                        if (iconWrap != null) {
-                            if (drawnIconsCount % columns == 0) ImGui.TableNextRow();
-
-                            ImGui.TableNextColumn();
-
-                            ImGui.PushID($"icon_{iconId}");
-                            if (ImGui.ImageButton(iconWrap.Handle, new Vector2(38, 38))) {
-                                this.selectedMacro!.IconId = iconId;
-                                changed = true;
-                                ImGui.CloseCurrentPopup();
-                            }
-                            ImGui.PopID();
-
-                            drawnIconsCount++;
-                        }
-                    }
-                    catch (IconNotFoundException) { }
-                }
-                ImGui.EndTable();
-            }
-            ImGui.EndChild();
-        }
-    }
-
-    private void DrawDeleteConfirmationModal() {
-        if (this.isDeleteDialogOpen) {
-            ImGui.OpenPopup(this.localization.Translate("config_macro_del_title"));
-            this.isDeleteDialogOpen = false;
-        }
-
-        if (ImGui.BeginPopupModal(this.localization.Translate("config_macro_del_title"), ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoSavedSettings)) {
-            var macroName = this.macroService.GetMacros().FirstOrDefault(m => m.Id == this.macroToDelete)?.Name ?? "Unknown";
-            ImGui.Text(this.localization.Translate("config_macro_del_desc", macroName));
-            ImGui.TextColored(new Vector4(0.8f, 0.2f, 0.2f, 1.0f), this.localization.Translate("config_macro_del_warn"));
-
-            ImGui.Spacing();
-            ImGui.Separator();
-            ImGui.Spacing();
-
-            if (ImGui.Button(this.localization.Translate("config_common_yes_delete"), new Vector2(120, 0))) {
-                this.groupService.RemoveMacroFromGroup(this.macroToDelete);
-
-                var macroTags = this.tagService.GetTagsForMacro(this.macroToDelete).ToList();
-                foreach (var tag in macroTags) {
-                    this.tagService.RemoveTagFromMacro(this.macroToDelete, tag);
-                }
-
-                this.macroService.DeleteMacro(this.macroToDelete);
-                if (this.selectedMacro?.Id == this.macroToDelete) this.selectedMacro = null;
-                ImGui.CloseCurrentPopup();
-            }
-            ImGui.SameLine();
-            if (ImGui.Button(this.localization.Translate("config_common_cancel"), new Vector2(120, 0))) ImGui.CloseCurrentPopup();
-
-            ImGui.EndPopup();
-        }
+        this.editorPanelComponent.Draw();
     }
 
     public void Dispose() { }

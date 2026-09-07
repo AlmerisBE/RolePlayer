@@ -5,5 +5,5 @@ using RolePlayer.UI.Hotbar.Models;
 using System.Collections.Generic;
 
 public interface IHotbarResolverService {
-    List<EmoteDisplayData> ResolveEmotesForHotbar(HotbarConfig config, IEnumerable<EmoteDisplayData> allCachedEmotes);
+    List<ResolvedHotbarItem> ResolveItemsForHotbar(HotbarConfig config, IEnumerable<EmoteDisplayData> allCachedEmotes);
 }

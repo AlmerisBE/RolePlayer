@@ -87,10 +87,8 @@ public class HotbarConfigSubTab {
                 bool isSelected = this.selectedHotbar?.Id == hotbar.Id;
 
                 ImGui.TableNextColumn();
-                // We use SelectableTextAlign to vertically center the text, overriding the need for AlignTextToFramePadding
                 ImGui.PushStyleVar(ImGuiStyleVar.SelectableTextAlign, new Vector2(0.0f, 0.5f));
 
-                // Calculate exact inner height to prevent vertical stretching while filling the entire 28f row bounds
                 float selectableHeight = 28f - (ImGui.GetStyle().CellPadding.Y * 2);
 
                 if (ImGui.Selectable($"{hotbar.Name}##sel_{hotbar.Id}", isSelected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowItemOverlap, new Vector2(0, selectableHeight))) this.selectedHotbar = isSelected ? null : hotbar;
@@ -104,7 +102,7 @@ public class HotbarConfigSubTab {
 
                 ImGui.TableNextColumn();
                 ImGui.AlignTextToFramePadding();
-                int count = this.hotbarResolver.ResolveEmotesForHotbar(hotbar, this.hotbarManager.GetEmoteCache()).Count;
+                int count = this.hotbarResolver.ResolveItemsForHotbar(hotbar, this.hotbarManager.GetEmoteCache()).Count;
                 ImGui.Text(count.ToString());
             }
             ImGui.EndTable();
@@ -266,7 +264,21 @@ public class HotbarConfigSubTab {
 
         if (this.selectedHotbar.PopulationMode == HotbarPopulationMode.Dynamic) {
             ImGui.Text(this.localization.Translate("config_hb_dyn_filters"));
+
+            ImGui.SetNextItemWidth(120f);
+            if (ImGui.BeginCombo("##TargetTypeCombo", this.localization.Translate($"config_hb_target_{this.selectedHotbar.TargetType.ToString().ToLowerInvariant()}"))) {
+                foreach (HotbarTargetType type in Enum.GetValues(typeof(HotbarTargetType))) {
+                    if (ImGui.Selectable(this.localization.Translate($"config_hb_target_{type.ToString().ToLowerInvariant()}"), this.selectedHotbar.TargetType == type)) {
+                        this.selectedHotbar.TargetType = type;
+                        configChanged = true;
+                    }
+                }
+                ImGui.EndCombo();
+            }
+            ImGui.SameLine();
+
             string searchQuery = this.selectedHotbar.SearchQuery;
+            ImGui.SetNextItemWidth(-1f);
             if (ImGui.InputTextWithHint("##HotbarSearch", this.localization.Translate("config_hb_search"), ref searchQuery, 128)) {
                 this.selectedHotbar.SearchQuery = searchQuery;
                 configChanged = true;
@@ -296,7 +308,7 @@ public class HotbarConfigSubTab {
 
         ImGui.Spacing();
 
-        this.DrawEmotePreview();
+        this.DrawPreview();
 
         if (configChanged) {
             this.configService.Save();
@@ -337,36 +349,36 @@ public class HotbarConfigSubTab {
         }
     }
 
-    private void DrawEmotePreview() {
-        var resolvedEmotes = this.hotbarResolver.ResolveEmotesForHotbar(this.selectedHotbar!, this.hotbarManager.GetEmoteCache());
+    private void DrawPreview() {
+        var resolvedItems = this.hotbarResolver.ResolveItemsForHotbar(this.selectedHotbar!, this.hotbarManager.GetEmoteCache());
 
         ImGui.Separator();
         ImGui.Spacing();
-        ImGui.TextColored(new Vector4(0.7f, 0.7f, 0.7f, 1.0f), this.localization.Translate("config_hb_preview", resolvedEmotes.Count));
+        ImGui.TextColored(new Vector4(0.7f, 0.7f, 0.7f, 1.0f), this.localization.Translate("config_hb_preview", resolvedItems.Count));
         ImGui.Spacing();
 
-        int totalEmotes = resolvedEmotes.Count;
-        if (totalEmotes == 0) return;
+        int totalItems = resolvedItems.Count;
+        if (totalItems == 0) return;
 
         float availWidth = ImGui.GetContentRegionAvail().X;
         int cols = (int)(availWidth / 36f);
         if (cols < 1) cols = 1;
 
         if (ImGui.BeginTable("PreviewGrid", cols, ImGuiTableFlags.SizingFixedFit)) {
-            for (int i = 0; i < totalEmotes; i++) {
+            for (int i = 0; i < totalItems; i++) {
                 if (i % cols == 0) ImGui.TableNextRow();
 
                 ImGui.TableNextColumn();
 
-                var emote = resolvedEmotes[i];
-                if (emote.IconId > 0) {
+                var item = resolvedItems[i];
+                if (item.IconId > 0) {
                     try {
-                        var lookup = new GameIconLookup { IconId = emote.IconId, HiRes = false };
+                        var lookup = new GameIconLookup { IconId = item.IconId, HiRes = false };
                         var iconWrap = this.textureProvider.GetFromGameIcon(lookup).GetWrapOrDefault();
 
                         if (iconWrap != null) {
                             ImGui.Image(iconWrap.Handle, new Vector2(32, 32));
-                            if (ImGui.IsItemHovered()) ImGui.SetTooltip(emote.Name);
+                            if (ImGui.IsItemHovered()) ImGui.SetTooltip(item.Name);
                         }
                     }
                     catch (IconNotFoundException) { }
