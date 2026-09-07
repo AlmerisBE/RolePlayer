@@ -98,5 +98,9 @@
   "config_macro_col_content": "Contenu",
   "config_macro_del_title": "Supprimer la Macro",
   "config_macro_del_desc": "Voulez-vous vraiment supprimer la macro '{0}' ?",
-  "config_macro_del_warn": "Cette macro sera retirée de toutes les barres."
+  "config_macro_del_warn": "Cette macro sera retirée de toutes les barres.",
+  "config_macro_settings": "Paramètres de la Macro",
+  "config_macro_icon_select": "Sélectionner l'icône",
+  "config_macro_lines_hint": "Saisissez jusqu'à 15 lignes de commandes...",
+  "config_macro_icon_picker": "Sélecteur d'icônes"
 }

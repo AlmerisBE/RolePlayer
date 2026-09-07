@@ -98,5 +98,9 @@
   "config_macro_col_content": "Content",
   "config_macro_del_title": "Delete Macro",
   "config_macro_del_desc": "Are you sure you want to delete the macro '{0}'?",
-  "config_macro_del_warn": "This macro will be removed from all hotbars."
+  "config_macro_del_warn": "This macro will be removed from all hotbars.",
+  "config_macro_settings": "Macro Settings",
+  "config_macro_icon_select": "Select Icon",
+  "config_macro_lines_hint": "Enter up to 15 lines of macro commands...",
+  "config_macro_icon_picker": "Icon Picker"
 }

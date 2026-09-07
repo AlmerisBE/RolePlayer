@@ -12,7 +12,8 @@ public class ConfigurationTab : IEmoteBrowserTab, IDisposable {
     public string TabName => this.localization.Translate("config_tab_config");
     public int SortOrder => 99;
 
-    public bool IsSidePanelOpen => this.isHotbarTabActive && this.hotbarConfigSubTab.IsSidePanelOpen;
+    public bool IsSidePanelOpen => (this.isHotbarTabActive && this.hotbarConfigSubTab.IsSidePanelOpen) ||
+                                   (this.isMacrosTabActive && this.macrosConfigSubTab.IsSidePanelOpen);
 
     private GeneralConfigSubTab generalConfigSubTab;
     private HotbarConfigSubTab hotbarConfigSubTab;
@@ -22,6 +23,7 @@ public class ConfigurationTab : IEmoteBrowserTab, IDisposable {
     private MacrosConfigSubTab macrosConfigSubTab;
 
     private bool isHotbarTabActive = true;
+    private bool isMacrosTabActive = false;
 
     public ConfigurationTab(
         GeneralConfigSubTab generalConfigSubTab,
@@ -41,40 +43,47 @@ public class ConfigurationTab : IEmoteBrowserTab, IDisposable {
         this.localization = localization;
     }
 
+    private void ResetTabStates() {
+        this.isHotbarTabActive = false;
+        this.isMacrosTabActive = false;
+    }
+
     public void Draw() {
         if (ImGui.BeginTabBar("ConfigurationTabBar")) {
             if (ImGui.BeginTabItem(this.localization.Translate("config_tab_general"))) {
-                this.isHotbarTabActive = false;
+                this.ResetTabStates();
                 this.generalConfigSubTab.Draw();
                 ImGui.EndTabItem();
             }
 
             if (ImGui.BeginTabItem(this.localization.Translate("config_tab_contexts"))) {
-                this.isHotbarTabActive = false;
+                this.ResetTabStates();
                 this.contextsConfigSubTab.Draw();
                 ImGui.EndTabItem();
             }
 
             if (ImGui.BeginTabItem(this.localization.Translate("config_tab_hotbars"))) {
+                this.ResetTabStates();
                 this.isHotbarTabActive = true;
                 this.hotbarConfigSubTab.Draw();
                 ImGui.EndTabItem();
             }
 
             if (ImGui.BeginTabItem(this.localization.Translate("config_tab_macros"))) {
-                this.isHotbarTabActive = false;
+                this.ResetTabStates();
+                this.isMacrosTabActive = true;
                 this.macrosConfigSubTab.Draw();
                 ImGui.EndTabItem();
             }
 
             if (ImGui.BeginTabItem(this.localization.Translate("config_tab_groups"))) {
-                this.isHotbarTabActive = false;
+                this.ResetTabStates();
                 this.groupsConfigSubTab.Draw();
                 ImGui.EndTabItem();
             }
 
             if (ImGui.BeginTabItem(this.localization.Translate("config_tab_tags"))) {
-                this.isHotbarTabActive = false;
+                this.ResetTabStates();
                 this.tagsConfigSubTab.Draw();
                 ImGui.EndTabItem();
             }
@@ -85,6 +94,7 @@ public class ConfigurationTab : IEmoteBrowserTab, IDisposable {
 
     public void DrawSidePanel() {
         if (this.isHotbarTabActive) this.hotbarConfigSubTab.DrawSidePanel();
+        if (this.isMacrosTabActive) this.macrosConfigSubTab.DrawSidePanel();
     }
 
     public void Dispose() { }

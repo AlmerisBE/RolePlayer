@@ -98,5 +98,9 @@
   "config_macro_col_content": "内容",
   "config_macro_del_title": "マクロを削除",
   "config_macro_del_desc": "本当にマクロ '{0}' を削除しますか？",
-  "config_macro_del_warn": "このマクロはすべてのホットバーから削除されます。"
+  "config_macro_del_warn": "このマクロはすべてのホットバーから削除されます。",
+  "config_macro_settings": "マクロ設定",
+  "config_macro_icon_select": "アイコンを選択",
+  "config_macro_lines_hint": "最大15行のマクロコマンドを入力...",
+  "config_macro_icon_picker": "アイコン選択"
 }
