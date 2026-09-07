@@ -13,6 +13,7 @@ using RolePlayer.UI.EmoteBrowser.Components;
 using RolePlayer.UI.EmoteBrowser.Contracts;
 using RolePlayer.UI.EmoteBrowser.Models;
 using RolePlayer.UI.Hotbar.Components;
+using RolePlayer.UI.Hotbar.Contracts;
 using RolePlayer.UI.Hotbar.Models;
 using RolePlayer.UI.Localization.Contracts;
 using System;
@@ -38,6 +39,7 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
     private EmoteFilterComponent filterComponent;
     private EmoteDetailsPanel detailsPanel;
     private ILocalizationService localization;
+    private IMacroManagementService macroService;
 
     private List<EmoteDisplayData> emotesCache = new();
     private List<string> availableCategories = new();
@@ -67,7 +69,8 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
         HotbarManagerComponent hotbarManager,
         EmoteFilterComponent filterComponent,
         EmoteDetailsPanel detailsPanel,
-        ILocalizationService localization) {
+        ILocalizationService localization,
+        IMacroManagementService macroService) {
 
         this.emoteRepository = emoteRepository;
         this.playerStateProvider = playerStateProvider;
@@ -85,6 +88,7 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
         this.filterComponent = filterComponent;
         this.detailsPanel = detailsPanel;
         this.localization = localization;
+        this.macroService = macroService;
 
         this.modStateProvider.ModStateChanged += this.OnModStateChanged;
         this.playerStateProvider.PlayerStateValid += this.OnPlayerStateValid;
@@ -216,6 +220,25 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
             if (ImGui.MenuItem(this.localization.Translate("browser_ctx_copy"))) ImGui.SetClipboardText(emote.LocalizedCommand);
 
             if (ImGui.MenuItem(this.localization.Translate("browser_ctx_execute"), "", false, emote.IsUnlocked)) this.executionService.ExecuteEmote(emote.Id);
+
+            ImGui.Separator();
+
+            if (ImGui.BeginMenu(this.localization.Translate("browser_ctx_append_macro"))) {
+                var unlockedMacros = this.macroService.GetMacros().Where(m => !m.IsLocked).ToList();
+                if (!unlockedMacros.Any()) {
+                    ImGui.MenuItem(this.localization.Translate("browser_ctx_no_unlocked_macros"), "", false, false);
+                }
+                else {
+                    foreach (var m in unlockedMacros) {
+                        if (ImGui.MenuItem(m.Name)) {
+                            string prefix = string.IsNullOrEmpty(m.Content) ? string.Empty : "\r\n";
+                            m.Content += $"{prefix}{emote.LocalizedCommand}";
+                            this.macroService.UpdateMacro(m.Id, m.Name, m.Content, m.IconId, m.IsLocked);
+                        }
+                    }
+                }
+                ImGui.EndMenu();
+            }
 
             ImGui.Separator();
 

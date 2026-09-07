@@ -7,4 +7,5 @@ public class RoleplayMacro {
     public string Name { get; set; } = "New Macro";
     public string Content { get; set; } = string.Empty;
     public uint IconId { get; set; }
+    public bool IsLocked { get; set; } = false;
 }

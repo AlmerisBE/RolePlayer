@@ -113,5 +113,8 @@
   "config_macro_search_hint": "Suche nach Name oder Tags...",
   "config_macro_group": "Gruppe",
   "config_macro_tags": "Tags",
-  "config_macro_copy": "Makroinhalt kopieren"
+  "config_macro_copy": "Makroinhalt kopieren",
+  "config_macro_toggle_lock": "Makrosperre umschalten",
+  "browser_ctx_append_macro": "Zum Makro hinzufügen...",
+  "browser_ctx_no_unlocked_macros": "Keine entsperrten Makros verfügbar"
 }

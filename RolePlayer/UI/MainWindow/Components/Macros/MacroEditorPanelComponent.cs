@@ -68,18 +68,21 @@ public class MacroEditorPanelComponent {
         bool changed = false;
 
         string copyIcon = FontAwesomeIcon.Copy.ToIconString();
+        string lockIcon = macro.IsLocked ? FontAwesomeIcon.Lock.ToIconString() : FontAwesomeIcon.Unlock.ToIconString();
         string playIcon = FontAwesomeIcon.Play.ToIconString();
         string closeIcon = FontAwesomeIcon.Times.ToIconString();
 
         ImGui.PushFont(UiBuilder.IconFont);
         var copyBtnWidth = ImGui.CalcTextSize(copyIcon).X + ImGui.GetStyle().FramePadding.X * 2;
+        var lockBtnWidth = ImGui.CalcTextSize(lockIcon).X + ImGui.GetStyle().FramePadding.X * 2;
         var playBtnWidth = ImGui.CalcTextSize(playIcon).X + ImGui.GetStyle().FramePadding.X * 2;
         var closeBtnWidth = ImGui.CalcTextSize(closeIcon).X + ImGui.GetStyle().FramePadding.X * 2;
         ImGui.PopFont();
 
-        if (ImGui.BeginTable("MacroSettingsHeaderTable", 4)) {
+        if (ImGui.BeginTable("MacroSettingsHeaderTable", 5)) {
             ImGui.TableSetupColumn("Title", ImGuiTableColumnFlags.WidthStretch);
             ImGui.TableSetupColumn("CopyBtn", ImGuiTableColumnFlags.WidthFixed, copyBtnWidth);
+            ImGui.TableSetupColumn("LockBtn", ImGuiTableColumnFlags.WidthFixed, lockBtnWidth);
             ImGui.TableSetupColumn("PlayBtn", ImGuiTableColumnFlags.WidthFixed, playBtnWidth);
             ImGui.TableSetupColumn("CloseBtn", ImGuiTableColumnFlags.WidthFixed, closeBtnWidth);
 
@@ -96,8 +99,23 @@ public class MacroEditorPanelComponent {
             ImGui.PushFont(UiBuilder.IconFont);
             if (ImGui.Button($"{copyIcon}##CopyMacroDetails")) ImGui.SetClipboardText(macro.Content);
             ImGui.PopFont();
-
             if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_macro_copy"));
+
+            ImGui.TableNextColumn();
+            ImGui.PushFont(UiBuilder.IconFont);
+
+            // Fix: Store the state before the button is drawn to avoid ImGui stack leaks
+            bool wasLocked = macro.IsLocked;
+            if (wasLocked) ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
+
+            if (ImGui.Button($"{lockIcon}##LockMacroDetails")) {
+                macro.IsLocked = !macro.IsLocked;
+                changed = true;
+            }
+
+            if (wasLocked) ImGui.PopStyleColor();
+            ImGui.PopFont();
+            if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_macro_toggle_lock"));
 
             ImGui.TableNextColumn();
             ImGui.PushFont(UiBuilder.IconFont);
@@ -105,7 +123,6 @@ public class MacroEditorPanelComponent {
             if (ImGui.Button($"{playIcon}##PlayMacroDetails")) this.macroExecutionService.Execute(macro);
             ImGui.PopStyleColor();
             ImGui.PopFont();
-
             if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_macro_execute"));
 
             ImGui.TableNextColumn();
@@ -128,6 +145,8 @@ public class MacroEditorPanelComponent {
         float btnSizeXY = totalHeight;
         float imgSize = btnSizeXY - (ImGui.GetStyle().FramePadding.Y * 2);
         float inputWidth = ImGui.GetContentRegionAvail().X - btnSizeXY - ImGui.GetStyle().ItemSpacing.X;
+
+        ImGui.BeginDisabled(macro.IsLocked);
 
         ImGui.BeginGroup();
         ImGui.TextDisabled(this.localization.Translate("config_common_name"));
@@ -161,6 +180,8 @@ public class MacroEditorPanelComponent {
         if (openIconPicker) ImGui.OpenPopup("IconPickerPopup");
 
         this.DrawIconPickerPopup(macro, ref changed);
+
+        ImGui.EndDisabled();
 
         ImGui.Spacing();
         ImGui.Separator();
@@ -257,6 +278,8 @@ public class MacroEditorPanelComponent {
         ImGui.Separator();
         ImGui.Spacing();
 
+        ImGui.BeginDisabled(macro.IsLocked);
+
         ImGui.TextDisabled(this.localization.Translate("config_macro_col_content"));
         ImGui.Spacing();
 
@@ -302,8 +325,10 @@ public class MacroEditorPanelComponent {
             }
         }
 
+        ImGui.EndDisabled();
+
         if (changed) {
-            this.macroService.UpdateMacro(macro.Id, macro.Name, macro.Content, macro.IconId);
+            this.macroService.UpdateMacro(macro.Id, macro.Name, macro.Content, macro.IconId, macro.IsLocked);
         }
     }
 

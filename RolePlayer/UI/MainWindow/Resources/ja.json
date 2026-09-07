@@ -113,5 +113,8 @@
   "config_macro_search_hint": "名前またはタグで検索...",
   "config_macro_group": "グループ",
   "config_macro_tags": "タグ",
-  "config_macro_copy": "マクロの内容をコピー"
+  "config_macro_copy": "マクロの内容をコピー",
+  "config_macro_toggle_lock": "マクロのロックを切り替える",
+  "browser_ctx_append_macro": "マクロに追加...",
+  "browser_ctx_no_unlocked_macros": "利用可能なマクロがありません"
 }

@@ -5,6 +5,7 @@ using Dalamud.Interface;
 using RolePlayer.Core.Configuration.Contracts;
 using RolePlayer.UI.EmoteBrowser.Contracts;
 using RolePlayer.UI.Hotbar.Components;
+using RolePlayer.UI.Hotbar.Contracts;
 using RolePlayer.UI.Hotbar.Models;
 using RolePlayer.UI.Localization.Contracts;
 using System.Linq;
@@ -21,6 +22,7 @@ public class EmoteDetailsPanel {
     private IContextManagementService contextService;
     private HotbarManagerComponent hotbarManager;
     private ILocalizationService localization;
+    private IMacroManagementService macroService;
 
     public EmoteDetailsPanel(
         IModStateProvider modStateProvider,
@@ -32,7 +34,8 @@ public class EmoteDetailsPanel {
         IConfigurationService configurationService,
         IContextManagementService contextService,
         HotbarManagerComponent hotbarManager,
-        ILocalizationService localization) {
+        ILocalizationService localization,
+        IMacroManagementService macroService) {
 
         this.modStateProvider = modStateProvider;
         this.selectionState = selectionState;
@@ -44,6 +47,7 @@ public class EmoteDetailsPanel {
         this.contextService = contextService;
         this.hotbarManager = hotbarManager;
         this.localization = localization;
+        this.macroService = macroService;
     }
 
     public void Draw() {
@@ -119,6 +123,26 @@ public class EmoteDetailsPanel {
 
         if (emote.IsUnlocked) {
             if (ImGui.Button(this.localization.Translate("browser_details_execute"), new Vector2(-1, 30))) this.executionService.ExecuteEmote(emote.Id);
+
+            ImGui.Spacing();
+
+            ImGui.SetNextItemWidth(-1f);
+            if (ImGui.BeginCombo("##AppendToMacroCombo", this.localization.Translate("browser_ctx_append_macro"))) {
+                var unlockedMacros = this.macroService.GetMacros().Where(m => !m.IsLocked).ToList();
+                if (!unlockedMacros.Any()) {
+                    ImGui.Selectable(this.localization.Translate("browser_ctx_no_unlocked_macros"), false, ImGuiSelectableFlags.Disabled);
+                }
+                else {
+                    foreach (var m in unlockedMacros) {
+                        if (ImGui.Selectable(m.Name)) {
+                            string prefix = string.IsNullOrEmpty(m.Content) ? string.Empty : "\r\n";
+                            m.Content += $"{prefix}{emote.LocalizedCommand}";
+                            this.macroService.UpdateMacro(m.Id, m.Name, m.Content, m.IconId, m.IsLocked);
+                        }
+                    }
+                }
+                ImGui.EndCombo();
+            }
         }
         else {
             ImGui.TextDisabled(this.localization.Translate("browser_details_not_unlocked"));

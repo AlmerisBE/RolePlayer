@@ -25,20 +25,19 @@ public class MacroManagementService : IMacroManagementService {
         this.configService.Save();
     }
 
-    public void UpdateMacro(Guid id, string name, string content, uint iconId) {
+    public void UpdateMacro(Guid id, string name, string content, uint iconId, bool isLocked) {
         var macro = this.configService.GetCurrentProfile().Macros.FirstOrDefault(m => m.Id == id);
         if (macro == null) return;
 
         macro.Name = name;
         macro.Content = content;
         macro.IconId = iconId;
+        macro.IsLocked = isLocked;
         this.configService.Save();
     }
 
     public void DeleteMacro(Guid id) {
         var profile = this.configService.GetCurrentProfile();
-        var removed = profile.Macros.RemoveAll(m => m.Id == id);
-
-        if (removed > 0) this.configService.Save();
+        if (profile.Macros.RemoveAll(m => m.Id == id) > 0) this.configService.Save();
     }
 }

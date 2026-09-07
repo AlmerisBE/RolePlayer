@@ -113,5 +113,8 @@
   "config_macro_search_hint": "Search by name or tags...",
   "config_macro_group": "Group",
   "config_macro_tags": "Tags",
-  "config_macro_copy": "Copy Macro Content"
+  "config_macro_copy": "Copy Macro Content",
+  "config_macro_toggle_lock": "Toggle Macro Lock",
+  "browser_ctx_append_macro": "Append to Macro...",
+  "browser_ctx_no_unlocked_macros": "No unlocked macros available"
 }
