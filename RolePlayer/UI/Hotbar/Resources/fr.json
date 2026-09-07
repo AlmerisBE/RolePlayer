@@ -1,4 +1,8 @@
 {
   "hotbar_tooltip_mod": "Mod :",
-  "hotbar_tooltip_variation": "(Cliquez à nouveau pour changer de pose)"
+  "hotbar_tooltip_variation": "(Cliquez à nouveau pour changer de pose)",
+  "config_hb_target_emotes": "Emotes",
+  "config_hb_target_macros": "Macros",
+  "config_hb_target_mixed": "Mixte",
+  "config_common_empty": "Vide"
 }

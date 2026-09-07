@@ -19,20 +19,21 @@ using System.Numerics;
 public class HotbarWindow : Window {
     private HotbarConfig config;
     private IHotbarResolverService resolverService;
-    private IEmoteExecutionService executionService;
+    private IEmoteExecutionService emoteExecutionService;
+    private IMacroExecutionService macroExecutionService;
     private ITextureProvider textureProvider;
     private Func<IEnumerable<EmoteDisplayData>> emoteCacheProvider;
     private Func<bool> shouldHideHotbars;
     private ILocalizationService localization;
     private int currentPage = 0;
     private const int MaxItemsPerPage = 16;
-
     private const float IconSize = 41f;
 
     public HotbarWindow(
         HotbarConfig config,
         IHotbarResolverService resolverService,
-        IEmoteExecutionService executionService,
+        IEmoteExecutionService emoteExecutionService,
+        IMacroExecutionService macroExecutionService,
         ITextureProvider textureProvider,
         Func<IEnumerable<EmoteDisplayData>> emoteCacheProvider,
         Func<bool> shouldHideHotbars,
@@ -41,15 +42,31 @@ public class HotbarWindow : Window {
 
         this.config = config;
         this.resolverService = resolverService;
-        this.executionService = executionService;
+        this.emoteExecutionService = emoteExecutionService;
+        this.macroExecutionService = macroExecutionService;
         this.textureProvider = textureProvider;
         this.emoteCacheProvider = emoteCacheProvider;
         this.shouldHideHotbars = shouldHideHotbars;
         this.localization = localization;
 
+        this.SizeConstraints = new WindowSizeConstraints {
+            MinimumSize = new Vector2(IconSize + 4f, IconSize + 4f),
+            MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
+        };
+
         this.SizeCondition = ImGuiCond.Always;
         this.BgAlpha = 0.7f;
-        this.IsOpen = true;
+        this.IsOpen = config.IsVisible;
+    }
+
+    public override void Update() {
+        try {
+            bool hide = this.shouldHideHotbars != null && this.shouldHideHotbars();
+            this.IsOpen = this.config.IsVisible && !hide;
+        }
+        catch {
+            this.IsOpen = this.config.IsVisible;
+        }
     }
 
     public override void PreDraw() {
@@ -61,49 +78,53 @@ public class HotbarWindow : Window {
             this.Flags &= ~ImGuiWindowFlags.NoMove;
         }
 
-        ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(3f, 3f));
-        ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(4f, 4f));
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(2f, 2f));
+        ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(2f, 2f));
     }
 
     public override void Draw() {
-        if (!this.config.IsVisible) return;
-        if (this.shouldHideHotbars()) return;
-
         var allEmotes = this.emoteCacheProvider();
-        var resolvedEmotes = this.resolverService.ResolveEmotesForHotbar(this.config, allEmotes);
+        var resolvedItems = this.resolverService.ResolveItemsForHotbar(this.config, allEmotes);
 
-        if (resolvedEmotes.Count > 0) {
-            int totalPages = (int)Math.Ceiling(resolvedEmotes.Count / (double)MaxItemsPerPage);
+        if (resolvedItems.Count > 0) {
+            int totalPages = (int)Math.Ceiling(resolvedItems.Count / (double)MaxItemsPerPage);
             if (this.currentPage >= totalPages && totalPages > 0) this.currentPage = totalPages - 1;
             if (totalPages == 0) this.currentPage = 0;
 
-            var displayedEmotes = resolvedEmotes.Skip(this.currentPage * MaxItemsPerPage).Take(MaxItemsPerPage).ToList();
+            var displayedItems = resolvedItems.Skip(this.currentPage * MaxItemsPerPage).Take(MaxItemsPerPage).ToList();
 
             int maxColumns = this.GetColumnsForLayout(this.config.Layout);
-
-            // Plafonnement du nombre de colonnes au nombre réel d'emotes affichées
-            int actualColumns = Math.Max(1, Math.Min(maxColumns, displayedEmotes.Count));
+            int actualColumns = Math.Max(1, Math.Min(maxColumns, displayedItems.Count));
             float columnWidth = IconSize;
 
             ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, Vector2.Zero);
+            // On ajuste le padding de cellule à 2 pixels pour correspondre à l'interface native
+            ImGui.PushStyleVar(ImGuiStyleVar.CellPadding, new Vector2(2f, 2f));
             ImGui.PushStyleColor(ImGuiCol.Button, Vector4.Zero);
 
             if (ImGui.BeginTable($"HotbarGrid_{this.config.Id}", actualColumns, ImGuiTableFlags.SizingFixedFit)) {
                 for (int col = 0; col < actualColumns; col++) ImGui.TableSetupColumn($"col_{col}", ImGuiTableColumnFlags.WidthFixed, columnWidth);
 
-                for (int i = 0; i < displayedEmotes.Count; i++) {
+                for (int i = 0; i < displayedItems.Count; i++) {
                     if (i % actualColumns == 0) ImGui.TableNextRow();
 
                     ImGui.TableNextColumn();
-                    this.DrawEmoteIcon(displayedEmotes[i]);
+                    this.DrawHotbarItemIcon(displayedItems[i]);
                 }
                 ImGui.EndTable();
             }
 
             ImGui.PopStyleColor();
-            ImGui.PopStyleVar();
+            ImGui.PopStyleVar(2);
 
-            if (totalPages > 1) this.DrawPagination(totalPages);
+            if (totalPages > 1) {
+                ImGui.Spacing();
+                this.DrawPagination(totalPages);
+            }
+        }
+        else if (!this.config.IsLocked) {
+            ImGui.Dummy(new Vector2(IconSize, IconSize));
+            if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_common_empty"));
         }
 
         if (!this.config.IsLocked || !this.config.PositionInitialized) {
@@ -149,18 +170,21 @@ public class HotbarWindow : Window {
         };
     }
 
-    private void DrawEmoteIcon(EmoteDisplayData emote) {
+    private void DrawHotbarItemIcon(ResolvedHotbarItem item) {
         try {
-            var lookup = new GameIconLookup { IconId = emote.IconId, HiRes = false };
+            var lookup = new GameIconLookup { IconId = item.IconId, HiRes = false };
             var iconWrap = this.textureProvider.GetFromGameIcon(lookup).GetWrapOrDefault();
 
             if (iconWrap != null) {
-                ImGui.PushID($"emote_{emote.Id}");
+                ImGui.PushID($"item_{(item.EmoteId.HasValue ? item.EmoteId.ToString() : item.MacroId.ToString())}");
                 var cursorPos = ImGui.GetCursorScreenPos();
 
-                if (ImGui.ImageButton(iconWrap.Handle, new Vector2(IconSize, IconSize))) this.executionService.ExecuteEmote(emote.Id);
+                if (ImGui.ImageButton(iconWrap.Handle, new Vector2(IconSize, IconSize))) {
+                    if (item.EmoteId.HasValue) this.emoteExecutionService.ExecuteEmote(item.EmoteId.Value);
+                    else if (item.MacroId.HasValue && item.MacroReference != null) this.macroExecutionService.Execute(item.MacroReference);
+                }
 
-                if (emote.HasVariations) {
+                if (item.HasVariations) {
                     var drawList = ImGui.GetWindowDrawList();
                     ImGui.PushFont(UiBuilder.IconFont);
                     var indicatorText = FontAwesomeIcon.Sync.ToIconString();
@@ -174,16 +198,21 @@ public class HotbarWindow : Window {
                 }
 
                 if (ImGui.IsItemHovered()) {
-                    string tooltipText = emote.IsModded ? $"★ {emote.Name}\n{this.localization.Translate("hotbar_tooltip_mod")} {emote.ModName}\n{emote.LocalizedCommand}" : $"{emote.Name}\n{emote.LocalizedCommand}";
-                    if (emote.HasVariations) tooltipText += $"\n{this.localization.Translate("hotbar_tooltip_variation")}";
+                    string tooltipText = item.IsModded ? $"★ {item.Name}\n{this.localization.Translate("hotbar_tooltip_mod")} {item.ModName}\n{item.CommandText}" : $"{item.Name}\n{item.CommandText}";
+                    if (item.HasVariations) tooltipText += $"\n{this.localization.Translate("hotbar_tooltip_variation")}";
 
                     ImGui.SetTooltip(tooltipText);
                 }
 
                 ImGui.PopID();
             }
+            else {
+                ImGui.Dummy(new Vector2(IconSize, IconSize));
+            }
         }
-        catch (IconNotFoundException) { }
+        catch (IconNotFoundException) {
+            ImGui.Dummy(new Vector2(IconSize, IconSize));
+        }
     }
 
     private void DrawPagination(int totalPages) {

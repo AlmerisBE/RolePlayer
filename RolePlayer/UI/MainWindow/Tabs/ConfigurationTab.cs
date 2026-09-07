@@ -38,34 +38,39 @@ public class ConfigurationTab : IEmoteBrowserTab, IDisposable {
         this.localization = localization;
     }
 
+    private void ResetTabStates() {
+        this.isHotbarTabActive = false;
+    }
+
     public void Draw() {
         if (ImGui.BeginTabBar("ConfigurationTabBar")) {
             if (ImGui.BeginTabItem(this.localization.Translate("config_tab_general"))) {
-                this.isHotbarTabActive = false;
+                this.ResetTabStates();
                 this.generalConfigSubTab.Draw();
                 ImGui.EndTabItem();
             }
 
             if (ImGui.BeginTabItem(this.localization.Translate("config_tab_contexts"))) {
-                this.isHotbarTabActive = false;
+                this.ResetTabStates();
                 this.contextsConfigSubTab.Draw();
                 ImGui.EndTabItem();
             }
 
             if (ImGui.BeginTabItem(this.localization.Translate("config_tab_hotbars"))) {
+                this.ResetTabStates();
                 this.isHotbarTabActive = true;
                 this.hotbarConfigSubTab.Draw();
                 ImGui.EndTabItem();
             }
 
             if (ImGui.BeginTabItem(this.localization.Translate("config_tab_groups"))) {
-                this.isHotbarTabActive = false;
+                this.ResetTabStates();
                 this.groupsConfigSubTab.Draw();
                 ImGui.EndTabItem();
             }
 
             if (ImGui.BeginTabItem(this.localization.Translate("config_tab_tags"))) {
-                this.isHotbarTabActive = false;
+                this.ResetTabStates();
                 this.tagsConfigSubTab.Draw();
                 ImGui.EndTabItem();
             }

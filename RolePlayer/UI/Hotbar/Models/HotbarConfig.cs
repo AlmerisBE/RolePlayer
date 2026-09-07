@@ -16,6 +16,7 @@ public class HotbarConfig {
 
     public HotbarLayout Layout { get; set; } = HotbarLayout.Grid16x1;
     public HotbarPopulationMode PopulationMode { get; set; } = HotbarPopulationMode.Manual;
+    public HotbarTargetType TargetType { get; set; } = HotbarTargetType.Emotes;
 
     public HotbarAnchor Anchor { get; set; } = HotbarAnchor.TopLeft;
     public Vector2 AnchorPosition { get; set; } = Vector2.Zero;
@@ -24,6 +25,7 @@ public class HotbarConfig {
     public float Scale { get; set; } = 1.0f;
 
     public List<uint> ManualEmoteIds { get; set; } = new();
+    public List<Guid> ManualMacroIds { get; set; } = new();
 
     public string SearchQuery { get; set; } = string.Empty;
     public HashSet<string> SelectedCategories { get; set; } = new();

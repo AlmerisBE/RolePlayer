@@ -6,6 +6,7 @@ using Dalamud.Plugin.Services;
 using Microsoft.Extensions.DependencyInjection;
 using RolePlayer.Core.Framework;
 using RolePlayer.UI.Command.Services;
+using RolePlayer.UI.Hotbar.Components;
 using RolePlayer.UI.Themes.Contracts;
 
 public sealed class RolePlayerPlugin : IDalamudPlugin {
@@ -51,7 +52,11 @@ public sealed class RolePlayerPlugin : IDalamudPlugin {
         services.AddPluginFeatures();
 
         this.serviceProvider = services.BuildServiceProvider();
+
+        // Explicit initialization of background services
         this.serviceProvider.GetRequiredService<CommandDispatcher>();
+        this.serviceProvider.GetRequiredService<HotbarManagerComponent>();
+
         this.themeService = this.serviceProvider.GetRequiredService<IThemeManagementService>();
 
         var windows = this.serviceProvider.GetServices<Window>();

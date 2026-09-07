@@ -21,34 +21,26 @@ public class TagManagementService : ITagManagementService {
     }
 
     public void CreateGlobalTag(string tag) {
-        if (string.IsNullOrWhiteSpace(tag)) {
-            return;
-        }
+        if (string.IsNullOrWhiteSpace(tag)) return;
 
         var context = this.contextService.GetCurrentContext();
-        if (context.AvailableTags.Add(tag.Trim())) {
-            this.configurationService.Save();
-        }
+        if (context.AvailableTags.Add(tag.Trim())) this.configurationService.Save();
     }
 
     public void RenameGlobalTag(string oldTag, string newTag) {
-        if (string.IsNullOrWhiteSpace(newTag) || oldTag.Equals(newTag, StringComparison.OrdinalIgnoreCase)) {
-            return;
-        }
+        if (string.IsNullOrWhiteSpace(newTag) || oldTag.Equals(newTag, StringComparison.OrdinalIgnoreCase)) return;
 
         var context = this.contextService.GetCurrentContext();
-        if (context.AvailableTags.Contains(newTag)) {
-            return;
-        }
+        if (context.AvailableTags.Contains(newTag)) return;
 
-        if (context.AvailableTags.Remove(oldTag)) {
-            context.AvailableTags.Add(newTag.Trim());
-        }
+        if (context.AvailableTags.Remove(oldTag)) context.AvailableTags.Add(newTag.Trim());
 
         foreach (var kvp in context.EmoteTags) {
-            if (kvp.Value.Remove(oldTag)) {
-                kvp.Value.Add(newTag.Trim());
-            }
+            if (kvp.Value.Remove(oldTag)) kvp.Value.Add(newTag.Trim());
+        }
+
+        foreach (var kvp in context.MacroTags) {
+            if (kvp.Value.Remove(oldTag)) kvp.Value.Add(newTag.Trim());
         }
 
         this.configurationService.Save();
@@ -59,45 +51,54 @@ public class TagManagementService : ITagManagementService {
         bool changed = context.AvailableTags.Remove(tag);
 
         foreach (var kvp in context.EmoteTags) {
-            if (kvp.Value.Remove(tag)) {
-                changed = true;
-            }
+            if (kvp.Value.Remove(tag)) changed = true;
         }
 
-        if (changed) {
-            this.configurationService.Save();
+        foreach (var kvp in context.MacroTags) {
+            if (kvp.Value.Remove(tag)) changed = true;
         }
+
+        if (changed) this.configurationService.Save();
     }
 
     public IEnumerable<string> GetTagsForEmote(uint emoteId) {
         var context = this.contextService.GetCurrentContext();
-        if (context.EmoteTags.TryGetValue(emoteId, out var tags)) {
-            return tags;
-        }
-
+        if (context.EmoteTags.TryGetValue(emoteId, out var tags)) return tags;
         return Enumerable.Empty<string>();
     }
 
     public void AddTagToEmote(uint emoteId, string tag) {
-        if (string.IsNullOrWhiteSpace(tag)) {
-            return;
-        }
+        if (string.IsNullOrWhiteSpace(tag)) return;
 
         var context = this.contextService.GetCurrentContext();
-        if (!context.EmoteTags.ContainsKey(emoteId)) {
-            context.EmoteTags[emoteId] = new HashSet<string>();
-        }
+        if (!context.EmoteTags.ContainsKey(emoteId)) context.EmoteTags[emoteId] = new HashSet<string>();
 
-        if (context.EmoteTags[emoteId].Add(tag)) {
-            this.configurationService.Save();
-        }
+        if (context.EmoteTags[emoteId].Add(tag)) this.configurationService.Save();
     }
 
     public void RemoveTagFromEmote(uint emoteId, string tag) {
         var context = this.contextService.GetCurrentContext();
-        if (context.EmoteTags.TryGetValue(emoteId, out var tags) && tags.Remove(tag)) {
-            this.configurationService.Save();
-        }
+        if (context.EmoteTags.TryGetValue(emoteId, out var tags) && tags.Remove(tag)) this.configurationService.Save();
+    }
+
+    public IEnumerable<string> GetTagsForMacro(Guid macroId) {
+        var context = this.contextService.GetCurrentContext();
+        if (context.MacroTags.TryGetValue(macroId, out var tags)) return tags;
+        return Enumerable.Empty<string>();
+    }
+
+    public void AddTagToMacro(Guid macroId, string tag) {
+        if (string.IsNullOrWhiteSpace(tag)) return;
+
+        var context = this.contextService.GetCurrentContext();
+        if (!context.MacroTags.ContainsKey(macroId)) context.MacroTags[macroId] = new HashSet<string>();
+
+        if (context.MacroTags[macroId].Add(tag)) this.configurationService.Save();
+    }
+
+    public void RemoveTagFromMacro(Guid macroId, string tag) {
+        var context = this.contextService.GetCurrentContext();
+        if (context.MacroTags.TryGetValue(macroId, out var tags) && tags.Remove(tag)) this.configurationService.Save();
     }
 
     public int GetTagEmoteCount(string tag) {
