@@ -1,8 +1,11 @@
 ﻿namespace RolePlayer.Tests.UI.Hotbar.Services;
 
 using NSubstitute;
+using RolePlayer.Core.Configuration.Contracts;
+using RolePlayer.Core.Macros.Models;
 using RolePlayer.UI.EmoteBrowser.Contracts;
 using RolePlayer.UI.EmoteBrowser.Models;
+using RolePlayer.UI.Hotbar.Contracts;
 using RolePlayer.UI.Hotbar.Models;
 using RolePlayer.UI.Hotbar.Services;
 using System.Collections.Generic;
@@ -19,54 +22,71 @@ public class HotbarResolverServiceTests {
     }
 
     [Fact]
-    public void ResolveEmotes_ManualMode_ReturnsOnlySpecifiedAndUnlockedEmotesWithIcons() {
+    public void ResolveItems_ManualMode_ReturnsOnlySpecifiedAndUnlockedEmotesWithIcons() {
         var mockGroupService = Substitute.For<IGroupManagementService>();
         var mockTagService = Substitute.For<ITagManagementService>();
-        var service = new HotbarResolverService(mockGroupService, mockTagService);
+        var mockMacroService = Substitute.For<IMacroManagementService>();
+        var mockContextService = Substitute.For<IContextManagementService>();
+
+        mockMacroService.GetMacros().Returns(new List<RoleplayMacro>());
+
+        var service = new HotbarResolverService(mockGroupService, mockTagService, mockMacroService, mockContextService);
 
         var config = new HotbarConfig {
             PopulationMode = HotbarPopulationMode.Manual,
             ManualEmoteIds = new List<uint> { 1, 3 } // 3 is locked, should be filtered out
         };
 
-        var result = service.ResolveEmotesForHotbar(config, this.GetDummyEmotes());
+        var result = service.ResolveItemsForHotbar(config, this.GetDummyEmotes());
 
         Assert.Single(result);
-        Assert.Equal(1u, result[0].Id);
+        Assert.Equal(1u, result[0].EmoteId);
     }
 
     [Fact]
-    public void ResolveEmotes_DynamicMode_FiltersBySearchQuery() {
+    public void ResolveItems_DynamicMode_FiltersBySearchQuery() {
         var mockGroupService = Substitute.For<IGroupManagementService>();
         var mockTagService = Substitute.For<ITagManagementService>();
-        var service = new HotbarResolverService(mockGroupService, mockTagService);
+        var mockMacroService = Substitute.For<IMacroManagementService>();
+        var mockContextService = Substitute.For<IContextManagementService>();
+
+        mockMacroService.GetMacros().Returns(new List<RoleplayMacro>());
+
+        var service = new HotbarResolverService(mockGroupService, mockTagService, mockMacroService, mockContextService);
 
         var config = new HotbarConfig {
             PopulationMode = HotbarPopulationMode.Dynamic,
-            SearchQuery = "dance"
+            SearchQuery = "dance",
+            TargetType = HotbarTargetType.Emotes
         };
 
-        var result = service.ResolveEmotesForHotbar(config, this.GetDummyEmotes());
+        var result = service.ResolveItemsForHotbar(config, this.GetDummyEmotes());
 
         Assert.Equal(2, result.Count);
-        Assert.Contains(result, e => e.Id == 2);
-        Assert.Contains(result, e => e.Id == 4);
+        Assert.Contains(result, e => e.EmoteId == 2);
+        Assert.Contains(result, e => e.EmoteId == 4);
     }
 
     [Fact]
-    public void ResolveEmotes_DynamicMode_FiltersByModdedOnly() {
+    public void ResolveItems_DynamicMode_FiltersByModdedOnly() {
         var mockGroupService = Substitute.For<IGroupManagementService>();
         var mockTagService = Substitute.For<ITagManagementService>();
-        var service = new HotbarResolverService(mockGroupService, mockTagService);
+        var mockMacroService = Substitute.For<IMacroManagementService>();
+        var mockContextService = Substitute.For<IContextManagementService>();
+
+        mockMacroService.GetMacros().Returns(new List<RoleplayMacro>());
+
+        var service = new HotbarResolverService(mockGroupService, mockTagService, mockMacroService, mockContextService);
 
         var config = new HotbarConfig {
             PopulationMode = HotbarPopulationMode.Dynamic,
-            ShowModdedOnly = true
+            ShowModdedOnly = true,
+            TargetType = HotbarTargetType.Emotes
         };
 
-        var result = service.ResolveEmotesForHotbar(config, this.GetDummyEmotes());
+        var result = service.ResolveItemsForHotbar(config, this.GetDummyEmotes());
 
         Assert.Single(result);
-        Assert.Equal(4u, result[0].Id);
+        Assert.Equal(4u, result[0].EmoteId);
     }
 }
