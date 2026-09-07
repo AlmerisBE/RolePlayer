@@ -101,7 +101,7 @@
   "config_macro_del_warn": "Cette macro sera retirée de toutes les barres.",
   "config_macro_settings": "Paramètres de la Macro",
   "config_macro_icon_select": "Sélectionner l'icône",
-  "config_macro_lines_hint": "Saisissez jusqu'à 15 lignes de commandes...",
+  "config_macro_lines_hint": "Saisissez jusqu'à 15 lignes de commandes...\nUtilisez <wait.x> pour enchaîner les emotes.",
   "config_macro_icon_picker": "Sélecteur d'icônes",
   "config_macro_icon_tab_macros": "Icônes de Macro",
   "config_macro_icon_tab_emotes": "Icônes d'Emotes",
