@@ -235,23 +235,25 @@ public class MacrosConfigSubTab {
 
     private void DrawIconGrid(string id, uint startId, uint endId, List<uint>? specificIcons, ref bool changed) {
         if (ImGui.BeginChild(id, new Vector2(0, 300), false, ImGuiWindowFlags.AlwaysVerticalScrollbar)) {
-            int columns = (int)(ImGui.GetContentRegionAvail().X / 46f);
-            if (columns < 1) columns = 1;
+            // Adjust calculation to account for scrollbar width and cell padding to prevent right-side clipping
+            int columns = Math.Max(1, (int)(ImGui.GetContentRegionAvail().X / 48f));
 
             if (ImGui.BeginTable($"{id}Table", columns, ImGuiTableFlags.SizingFixedFit)) {
                 var iconsToRender = specificIcons ?? Enumerable.Range((int)startId, (int)(endId - startId + 1)).Select(i => (uint)i).ToList();
 
-                for (int i = 0; i < iconsToRender.Count; i++) {
-                    if (i % columns == 0) ImGui.TableNextRow();
+                int drawnIconsCount = 0;
 
-                    ImGui.TableNextColumn();
-                    uint iconId = iconsToRender[i];
-
+                foreach (uint iconId in iconsToRender) {
                     try {
                         var lookup = new GameIconLookup { IconId = iconId, HiRes = false };
                         var iconWrap = this.textureProvider.GetFromGameIcon(lookup).GetWrapOrDefault();
 
+                        // Only advance the table cursor if the icon actually exists and is drawn
                         if (iconWrap != null) {
+                            if (drawnIconsCount % columns == 0) ImGui.TableNextRow();
+
+                            ImGui.TableNextColumn();
+
                             ImGui.PushID($"icon_{iconId}");
                             if (ImGui.ImageButton(iconWrap.Handle, new Vector2(38, 38))) {
                                 this.selectedMacro!.IconId = iconId;
@@ -259,6 +261,8 @@ public class MacrosConfigSubTab {
                                 ImGui.CloseCurrentPopup();
                             }
                             ImGui.PopID();
+
+                            drawnIconsCount++;
                         }
                     }
                     catch (IconNotFoundException) { }
