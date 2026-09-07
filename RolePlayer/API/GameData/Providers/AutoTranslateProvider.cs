@@ -25,9 +25,11 @@ public class AutoTranslateProvider : IAutoTranslateService {
             if (string.IsNullOrWhiteSpace(text)) continue;
             if (row.Group == 0 || row.Key == 0) continue;
 
+            var safeText = text.Replace(">", "").Replace("<", "");
+
             this.cache.Add(new AutoTranslateResult {
                 DisplayText = text,
-                Payload = $"\uE040{text}\uE041"
+                Payload = $"<at:{row.Group}:{row.Key}:{safeText}>"
             });
         }
 
