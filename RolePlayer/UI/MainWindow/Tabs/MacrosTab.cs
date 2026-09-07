@@ -109,14 +109,14 @@ public class MacrosTab : IEmoteBrowserTab, IDisposable {
 
                 ImGui.TableNextColumn();
                 float iconSize = 24f;
-                float iconOffsetY = (rowHeight - iconSize) / 2f;
-                if (iconOffsetY > 0) ImGui.SetCursorPosY(ImGui.GetCursorPosY() + iconOffsetY);
+                float startY = ImGui.GetCursorPosY() - ImGui.GetStyle().CellPadding.Y;
+                ImGui.SetCursorPosY(startY + (rowHeight - iconSize) / 2f);
                 this.DrawIconPreview(macro.IconId, iconSize);
 
                 ImGui.TableNextColumn();
                 float buttonHeight = ImGui.GetFrameHeight();
-                float offsetY = (rowHeight - buttonHeight) / 2f;
-                if (offsetY > 0) ImGui.SetCursorPosY(ImGui.GetCursorPosY() + offsetY);
+                startY = ImGui.GetCursorPosY() - ImGui.GetStyle().CellPadding.Y;
+                ImGui.SetCursorPosY(startY + (rowHeight - buttonHeight) / 2f);
 
                 ImGui.PushFont(UiBuilder.IconFont);
 
@@ -198,32 +198,42 @@ public class MacrosTab : IEmoteBrowserTab, IDisposable {
         ImGui.Separator();
         ImGui.Spacing();
 
+        // Calcul exact de la hauteur nécessaire pour occuper l'espace du label ET du champ texte
+        float totalHeight = ImGui.GetTextLineHeight() + ImGui.GetStyle().ItemSpacing.Y + ImGui.GetFrameHeight();
+        float btnSizeXY = totalHeight;
+        float imgSize = btnSizeXY - (ImGui.GetStyle().FramePadding.Y * 2);
+        float inputWidth = ImGui.GetContentRegionAvail().X - btnSizeXY - ImGui.GetStyle().ItemSpacing.X;
+
+        // Le groupe permet d'encapsuler la hauteur totale des deux éléments de gauche
+        ImGui.BeginGroup();
+        ImGui.TextDisabled(this.localization.Translate("config_common_name"));
+
         string name = this.selectedMacro.Name;
-        if (ImGui.InputText(this.localization.Translate("config_common_name"), ref name, 64)) {
+        ImGui.SetNextItemWidth(inputWidth);
+        if (ImGui.InputText("##MacroNameEdit", ref name, 64)) {
             this.selectedMacro.Name = name;
             changed = true;
         }
+        ImGui.EndGroup();
 
-        ImGui.Spacing();
-        ImGui.TextDisabled(this.localization.Translate("config_macro_col_icon"));
+        // SameLine aligne la suite sur le haut du groupe précédent
+        ImGui.SameLine();
 
         bool openIconPicker = false;
+        ImGui.PushID("IconSelectButton");
+        try {
+            var lookup = new GameIconLookup { IconId = this.selectedMacro.IconId, HiRes = false };
+            var iconWrap = this.textureProvider.GetFromGameIcon(lookup).GetWrapOrDefault();
 
-        if (ImGui.BeginTable("MacroIconTable", 2, ImGuiTableFlags.SizingFixedFit)) {
-            ImGui.TableSetupColumn("IconPreview", ImGuiTableColumnFlags.WidthFixed, 42f);
-            ImGui.TableSetupColumn("IconSelect", ImGuiTableColumnFlags.WidthStretch);
-            ImGui.TableNextRow();
-
-            ImGui.TableNextColumn();
-            this.DrawIconPreview(this.selectedMacro.IconId, 42f);
-
-            ImGui.TableNextColumn();
-            ImGui.AlignTextToFramePadding();
-
-            if (ImGui.Button(this.localization.Translate("config_macro_icon_select"), new Vector2(-1, 42f))) openIconPicker = true;
-
-            ImGui.EndTable();
+            if (iconWrap != null && ImGui.ImageButton(iconWrap.Handle, new Vector2(imgSize, imgSize))) openIconPicker = true;
+            if (iconWrap == null && ImGui.Button("?", new Vector2(btnSizeXY, btnSizeXY))) openIconPicker = true;
         }
+        catch (IconNotFoundException) {
+            if (ImGui.Button("?", new Vector2(btnSizeXY, btnSizeXY))) openIconPicker = true;
+        }
+        ImGui.PopID();
+
+        if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_macro_icon_select"));
 
         if (openIconPicker) ImGui.OpenPopup("IconPickerPopup");
 
