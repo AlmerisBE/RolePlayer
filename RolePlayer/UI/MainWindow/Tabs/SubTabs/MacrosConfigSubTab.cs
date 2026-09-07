@@ -16,6 +16,7 @@ using System.Numerics;
 
 public class MacrosConfigSubTab {
     private IMacroManagementService macroService;
+    private IMacroExecutionService macroExecutionService;
     private ILocalizationService localization;
     private ITextureProvider textureProvider;
     private HotbarManagerComponent hotbarManager;
@@ -28,8 +29,15 @@ public class MacrosConfigSubTab {
 
     public bool IsSidePanelOpen => this.selectedMacro != null;
 
-    public MacrosConfigSubTab(IMacroManagementService macroService, ILocalizationService localization, ITextureProvider textureProvider, HotbarManagerComponent hotbarManager) {
+    public MacrosConfigSubTab(
+        IMacroManagementService macroService,
+        IMacroExecutionService macroExecutionService,
+        ILocalizationService localization,
+        ITextureProvider textureProvider,
+        HotbarManagerComponent hotbarManager) {
+
         this.macroService = macroService;
+        this.macroExecutionService = macroExecutionService;
         this.localization = localization;
         this.textureProvider = textureProvider;
         this.hotbarManager = hotbarManager;
@@ -68,17 +76,21 @@ public class MacrosConfigSubTab {
         if (ImGui.BeginTable("MacrosTable", 3, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit)) {
             ImGui.TableSetupColumn(this.localization.Translate("config_common_name"), ImGuiTableColumnFlags.WidthStretch);
             ImGui.TableSetupColumn(this.localization.Translate("config_macro_col_icon"), ImGuiTableColumnFlags.WidthFixed, 40f);
-            ImGui.TableSetupColumn(this.localization.Translate("config_common_actions"), ImGuiTableColumnFlags.WidthFixed, 40f);
+
+            // Largeur augmentée pour faire tenir les deux boutons (Play + Trash)
+            ImGui.TableSetupColumn(this.localization.Translate("config_common_actions"), ImGuiTableColumnFlags.WidthFixed, 68f);
+
             ImGui.TableHeadersRow();
 
             foreach (var macro in macros) {
-                ImGui.TableNextRow(ImGuiTableRowFlags.None, 32f);
+                float rowHeight = 32f;
+                ImGui.TableNextRow(ImGuiTableRowFlags.None, rowHeight);
 
                 bool isSelected = this.selectedMacro?.Id == macro.Id;
 
                 ImGui.TableNextColumn();
                 ImGui.PushStyleVar(ImGuiStyleVar.SelectableTextAlign, new Vector2(0.0f, 0.5f));
-                float selectableHeight = 32f - (ImGui.GetStyle().CellPadding.Y * 2);
+                float selectableHeight = rowHeight - (ImGui.GetStyle().CellPadding.Y * 2);
 
                 if (ImGui.Selectable($"{macro.Name}##sel_{macro.Id}", isSelected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowItemOverlap, new Vector2(0, selectableHeight))) this.selectedMacro = isSelected ? null : macro;
                 ImGui.PopStyleVar();
@@ -87,15 +99,35 @@ public class MacrosConfigSubTab {
                 this.DrawIconPreview(macro.IconId, 24f);
 
                 ImGui.TableNextColumn();
-                ImGui.AlignTextToFramePadding();
-                ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
+
+                // Centrage vertical dynamique des boutons
+                float buttonHeight = ImGui.GetFrameHeight();
+                float offsetY = (rowHeight - buttonHeight) / 2f;
+                if (offsetY > 0) ImGui.SetCursorPosY(ImGui.GetCursorPosY() + offsetY);
+
                 ImGui.PushFont(UiBuilder.IconFont);
+
+                // Bouton Exécuter
+                ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.2f, 0.6f, 0.2f, 1.0f));
+                if (ImGui.Button($"{FontAwesomeIcon.Play.ToIconString()}##Play_{macro.Id}")) this.macroExecutionService.Execute(macro);
+                ImGui.PopStyleColor();
+
+                if (ImGui.IsItemHovered()) {
+                    ImGui.PopFont();
+                    ImGui.SetTooltip(this.localization.Translate("config_macro_execute"));
+                    ImGui.PushFont(UiBuilder.IconFont);
+                }
+
+                ImGui.SameLine();
+
+                // Bouton Supprimer
+                ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
                 if (ImGui.Button($"{FontAwesomeIcon.Trash.ToIconString()}##Del_{macro.Id}")) {
                     this.macroToDelete = macro.Id;
                     this.isDeleteDialogOpen = true;
                 }
-                ImGui.PopFont();
                 ImGui.PopStyleColor();
+                ImGui.PopFont();
             }
             ImGui.EndTable();
         }
@@ -108,13 +140,17 @@ public class MacrosConfigSubTab {
 
         bool changed = false;
 
+        string playIcon = FontAwesomeIcon.Play.ToIconString();
         string closeIcon = FontAwesomeIcon.Times.ToIconString();
+
         ImGui.PushFont(UiBuilder.IconFont);
+        var playBtnWidth = ImGui.CalcTextSize(playIcon).X + ImGui.GetStyle().FramePadding.X * 2;
         var closeBtnWidth = ImGui.CalcTextSize(closeIcon).X + ImGui.GetStyle().FramePadding.X * 2;
         ImGui.PopFont();
 
-        if (ImGui.BeginTable("MacroSettingsHeaderTable", 2)) {
+        if (ImGui.BeginTable("MacroSettingsHeaderTable", 3)) {
             ImGui.TableSetupColumn("Title", ImGuiTableColumnFlags.WidthStretch);
+            ImGui.TableSetupColumn("PlayBtn", ImGuiTableColumnFlags.WidthFixed, playBtnWidth);
             ImGui.TableSetupColumn("CloseBtn", ImGuiTableColumnFlags.WidthFixed, closeBtnWidth);
 
             ImGui.TableNextRow();
@@ -125,6 +161,15 @@ public class MacrosConfigSubTab {
             string title = string.IsNullOrWhiteSpace(this.selectedMacro.Name) ? this.localization.Translate("config_macro_settings") : this.selectedMacro.Name;
             ImGui.TextUnformatted(title);
             ImGui.SetWindowFontScale(1.0f);
+
+            ImGui.TableNextColumn();
+            ImGui.PushFont(UiBuilder.IconFont);
+            ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.2f, 0.6f, 0.2f, 1.0f));
+            if (ImGui.Button($"{playIcon}##PlayMacroDetails")) this.macroExecutionService.Execute(this.selectedMacro);
+            ImGui.PopStyleColor();
+            ImGui.PopFont();
+
+            if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_macro_execute"));
 
             ImGui.TableNextColumn();
             ImGui.PushFont(UiBuilder.IconFont);
@@ -235,7 +280,6 @@ public class MacrosConfigSubTab {
 
     private void DrawIconGrid(string id, uint startId, uint endId, List<uint>? specificIcons, ref bool changed) {
         if (ImGui.BeginChild(id, new Vector2(0, 300), false, ImGuiWindowFlags.AlwaysVerticalScrollbar)) {
-            // Adjust calculation to account for scrollbar width and cell padding to prevent right-side clipping
             int columns = Math.Max(1, (int)(ImGui.GetContentRegionAvail().X / 48f));
 
             if (ImGui.BeginTable($"{id}Table", columns, ImGuiTableFlags.SizingFixedFit)) {
@@ -248,7 +292,6 @@ public class MacrosConfigSubTab {
                         var lookup = new GameIconLookup { IconId = iconId, HiRes = false };
                         var iconWrap = this.textureProvider.GetFromGameIcon(lookup).GetWrapOrDefault();
 
-                        // Only advance the table cursor if the icon actually exists and is drawn
                         if (iconWrap != null) {
                             if (drawnIconsCount % columns == 0) ImGui.TableNextRow();
 

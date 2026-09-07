@@ -1,11 +1,9 @@
 ﻿namespace RolePlayer.API.GameData.Providers;
 
 using Dalamud.Plugin.Services;
-using FFXIVClientStructs.FFXIV.Client.System.String;
 using FFXIVClientStructs.FFXIV.Client.UI;
-using FFXIVClientStructs.FFXIV.Client.UI.Misc;
-using FFXIVClientStructs.FFXIV.Client.UI.Shell;
 using Lumina.Excel.Sheets;
+using RolePlayer.API.Interop.Contracts;
 using RolePlayer.Core.Logging.Contracts;
 using RolePlayer.UI.EmoteBrowser.Contracts;
 using System;
@@ -21,25 +19,28 @@ public class EmoteExecutionProvider : IEmoteExecutionService {
     private IDataManager dataManager;
     private IPlayerStateProvider playerStateProvider;
     private ILoggerService logger;
+    private INativeExecutionService nativeExecution;
 
-    public EmoteExecutionProvider(IDataManager dataManager, IPlayerStateProvider playerStateProvider, ILoggerService logger) {
+    public EmoteExecutionProvider(
+        IDataManager dataManager,
+        IPlayerStateProvider playerStateProvider,
+        ILoggerService logger,
+        INativeExecutionService nativeExecution) {
+
         this.dataManager = dataManager;
         this.playerStateProvider = playerStateProvider;
         this.logger = logger;
+        this.nativeExecution = nativeExecution;
     }
 
-    public unsafe void ExecuteEmote(uint emoteId) {
+    public void ExecuteEmote(uint emoteId) {
         this.logger.Debug($"Attempting to execute emote ID: {emoteId}");
 
         var emoteSheet = this.dataManager.GetExcelSheet<Emote>();
-        if (emoteSheet == null) {
-            return;
-        }
+        if (emoteSheet == null) return;
 
         var emoteRow = emoteSheet.GetRowOrDefault(emoteId);
-        if (!emoteRow.HasValue) {
-            return;
-        }
+        if (!emoteRow.HasValue) return;
 
         if (emoteRow.Value.UnlockLink != 0 && !this.playerStateProvider.IsEmoteUnlocked(emoteId)) {
             this.logger.Warning($"Emote {emoteId} is locked. Execution aborted.");
@@ -50,10 +51,9 @@ public class EmoteExecutionProvider : IEmoteExecutionService {
             uint activeId = this.playerStateProvider.GetActiveEmoteId();
             bool isTransitioning = this.lastExecutionTime.TryGetValue(emoteId, out var lastTime) && (DateTime.Now - lastTime).TotalSeconds < 2.5;
 
-            // Si une emote est jouée (ou en transition) ET qu'il s'agit bien de la même emote persistante déclenchée précédemment
             if ((activeId != 0 || isTransitioning) && this.lastPersistentEmoteId == emoteId) {
                 this.logger.Debug($"Emote {emoteId} variation sequence detected. Injecting /cpose variation command.");
-                this.ExecuteCommand("/cpose");
+                this.nativeExecution.Execute("/cpose");
                 this.lastExecutionTime[emoteId] = DateTime.Now;
                 return;
             }
@@ -61,53 +61,23 @@ public class EmoteExecutionProvider : IEmoteExecutionService {
             this.lastPersistentEmoteId = emoteId;
         }
         else {
-            this.lastPersistentEmoteId = 0; // Réinitialisation si on clique une emote normale
+            this.lastPersistentEmoteId = 0;
         }
 
         var textCommandRef = emoteRow.Value.TextCommand;
-        if (!textCommandRef.IsValid) {
-            return;
-        }
+        if (!textCommandRef.IsValid) return;
 
         var command = textCommandRef.Value.Command.ToString();
-        if (string.IsNullOrEmpty(command)) {
-            return;
-        }
+        if (string.IsNullOrEmpty(command)) return;
 
-        this.ExecuteCommand($"{command} motion");
+        this.nativeExecution.Execute($"{command} motion");
         this.lastExecutionTime[emoteId] = DateTime.Now;
-    }
-
-    private unsafe void ExecuteCommand(string commandText) {
-        var raptureShellModule = RaptureShellModule.Instance();
-        if (raptureShellModule == null) {
-            return;
-        }
-
-        var message = new Utf8String();
-        message.Ctor();
-        message.SetString(commandText);
-
-        var macro = new RaptureMacroModule.Macro();
-        macro.Lines[0] = message;
-
-        try {
-            raptureShellModule->ExecuteMacro(&macro);
-        }
-        catch (Exception ex) {
-            this.logger.Error(ex, "Exception thrown during RaptureShellModule invocation.");
-        }
-        finally {
-            message.Dtor();
-        }
     }
 
     public unsafe void OpenNativeEmoteWindow() {
         try {
             var uiModule = UIModule.Instance();
-            if (uiModule != null) {
-                uiModule->ExecuteMainCommand(EmoteWindowCommandId);
-            }
+            if (uiModule != null) uiModule->ExecuteMainCommand(EmoteWindowCommandId);
         }
         catch (Exception ex) {
             this.logger.Error(ex, "Failed to open native Emote window.");
