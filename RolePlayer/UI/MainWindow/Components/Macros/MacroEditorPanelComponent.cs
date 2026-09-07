@@ -67,16 +67,19 @@ public class MacroEditorPanelComponent {
 
         bool changed = false;
 
+        string copyIcon = FontAwesomeIcon.Copy.ToIconString();
         string playIcon = FontAwesomeIcon.Play.ToIconString();
         string closeIcon = FontAwesomeIcon.Times.ToIconString();
 
         ImGui.PushFont(UiBuilder.IconFont);
+        var copyBtnWidth = ImGui.CalcTextSize(copyIcon).X + ImGui.GetStyle().FramePadding.X * 2;
         var playBtnWidth = ImGui.CalcTextSize(playIcon).X + ImGui.GetStyle().FramePadding.X * 2;
         var closeBtnWidth = ImGui.CalcTextSize(closeIcon).X + ImGui.GetStyle().FramePadding.X * 2;
         ImGui.PopFont();
 
-        if (ImGui.BeginTable("MacroSettingsHeaderTable", 3)) {
+        if (ImGui.BeginTable("MacroSettingsHeaderTable", 4)) {
             ImGui.TableSetupColumn("Title", ImGuiTableColumnFlags.WidthStretch);
+            ImGui.TableSetupColumn("CopyBtn", ImGuiTableColumnFlags.WidthFixed, copyBtnWidth);
             ImGui.TableSetupColumn("PlayBtn", ImGuiTableColumnFlags.WidthFixed, playBtnWidth);
             ImGui.TableSetupColumn("CloseBtn", ImGuiTableColumnFlags.WidthFixed, closeBtnWidth);
 
@@ -88,6 +91,13 @@ public class MacroEditorPanelComponent {
             string title = string.IsNullOrWhiteSpace(macro.Name) ? this.localization.Translate("config_macro_settings") : macro.Name;
             ImGui.TextUnformatted(title);
             ImGui.SetWindowFontScale(1.0f);
+
+            ImGui.TableNextColumn();
+            ImGui.PushFont(UiBuilder.IconFont);
+            if (ImGui.Button($"{copyIcon}##CopyMacroDetails")) ImGui.SetClipboardText(macro.Content);
+            ImGui.PopFont();
+
+            if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_macro_copy"));
 
             ImGui.TableNextColumn();
             ImGui.PushFont(UiBuilder.IconFont);

@@ -39,6 +39,8 @@ public class MacroContextMenuComponent {
 
     public void Draw(RoleplayMacro macro) {
         if (ImGui.BeginPopupContextItem($"MacroContextMenu_{macro.Id}")) {
+            if (ImGui.MenuItem(this.localization.Translate("config_macro_copy"))) ImGui.SetClipboardText(macro.Content);
+
             if (ImGui.MenuItem(this.localization.Translate("browser_ctx_execute"))) this.macroExecutionService.Execute(macro);
 
             ImGui.Separator();

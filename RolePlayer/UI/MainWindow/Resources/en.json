@@ -112,5 +112,6 @@
   "config_macro_autotranslate_desc": "Use this dictionary to insert auto-translate terms into your macro. They will be seamlessly converted into native game tags upon execution.",
   "config_macro_search_hint": "Search by name or tags...",
   "config_macro_group": "Group",
-  "config_macro_tags": "Tags"
+  "config_macro_tags": "Tags",
+  "config_macro_copy": "Copy Macro Content"
 }
