@@ -148,6 +148,8 @@ public class MacrosConfigSubTab {
         ImGui.Spacing();
         ImGui.TextDisabled(this.localization.Translate("config_macro_col_icon"));
 
+        bool openIconPicker = false;
+
         if (ImGui.BeginTable("MacroIconTable", 2, ImGuiTableFlags.SizingFixedFit)) {
             ImGui.TableSetupColumn("IconPreview", ImGuiTableColumnFlags.WidthFixed, 42f);
             ImGui.TableSetupColumn("IconSelect", ImGuiTableColumnFlags.WidthStretch);
@@ -158,10 +160,15 @@ public class MacrosConfigSubTab {
 
             ImGui.TableNextColumn();
             ImGui.AlignTextToFramePadding();
-            if (ImGui.Button(this.localization.Translate("config_macro_icon_select"), new Vector2(-1, 42f))) ImGui.OpenPopup("IconPickerPopup");
+
+            // Capture le clic sans ouvrir la popup directement dans la table
+            if (ImGui.Button(this.localization.Translate("config_macro_icon_select"), new Vector2(-1, 42f))) openIconPicker = true;
 
             ImGui.EndTable();
         }
+
+        // Ouvre la popup dans le même contexte ID que le BeginPopup
+        if (openIconPicker) ImGui.OpenPopup("IconPickerPopup");
 
         this.DrawIconPickerPopup(ref changed);
 
@@ -173,7 +180,7 @@ public class MacrosConfigSubTab {
         ImGui.Spacing();
 
         string content = this.selectedMacro.Content;
-        float inputHeight = ImGui.GetTextLineHeight() * 16f; // Allows approximately 15 lines visually
+        float inputHeight = ImGui.GetTextLineHeight() * 16f;
 
         if (ImGui.InputTextMultiline("##MacroContent", ref content, 2048, new Vector2(-1, inputHeight))) {
             this.selectedMacro.Content = content;
