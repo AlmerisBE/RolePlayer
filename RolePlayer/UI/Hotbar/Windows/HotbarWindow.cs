@@ -49,7 +49,11 @@ public class HotbarWindow : Window {
 
         this.SizeCondition = ImGuiCond.Always;
         this.BgAlpha = 0.7f;
-        this.IsOpen = true;
+    }
+
+    public override void Update() {
+        // En mettant à jour IsOpen ici, Dalamud évitera d'appeler ImGui.Begin() si la fenêtre doit être cachée, supprimant ainsi l'artefact visuel.
+        this.IsOpen = this.config.IsVisible && !this.shouldHideHotbars();
     }
 
     public override void PreDraw() {
@@ -66,9 +70,6 @@ public class HotbarWindow : Window {
     }
 
     public override void Draw() {
-        if (!this.config.IsVisible) return;
-        if (this.shouldHideHotbars()) return;
-
         var allEmotes = this.emoteCacheProvider();
         var resolvedEmotes = this.resolverService.ResolveEmotesForHotbar(this.config, allEmotes);
 
@@ -80,8 +81,6 @@ public class HotbarWindow : Window {
             var displayedEmotes = resolvedEmotes.Skip(this.currentPage * MaxItemsPerPage).Take(MaxItemsPerPage).ToList();
 
             int maxColumns = this.GetColumnsForLayout(this.config.Layout);
-
-            // Plafonnement du nombre de colonnes au nombre réel d'emotes affichées
             int actualColumns = Math.Max(1, Math.Min(maxColumns, displayedEmotes.Count));
             float columnWidth = IconSize;
 

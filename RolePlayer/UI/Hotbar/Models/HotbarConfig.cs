@@ -24,6 +24,7 @@ public class HotbarConfig {
     public float Scale { get; set; } = 1.0f;
 
     public List<uint> ManualEmoteIds { get; set; } = new();
+    public List<Guid> ManualMacroIds { get; set; } = new();
 
     public string SearchQuery { get; set; } = string.Empty;
     public HashSet<string> SelectedCategories { get; set; } = new();
