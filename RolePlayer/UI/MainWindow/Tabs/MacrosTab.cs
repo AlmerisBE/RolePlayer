@@ -239,7 +239,6 @@ public class MacrosTab : IEmoteBrowserTab, IDisposable {
         string content = this.selectedMacro.Content;
         float inputHeight = ImGui.GetTextLineHeight() * 10f;
 
-        // Limite drastiquement augmentée (8192) pour accommoder le poids visuel des balises textuelles.
         if (ImGui.InputTextMultiline("##MacroContent", ref content, 8192, new Vector2(-1, inputHeight))) {
             this.selectedMacro.Content = content;
             changed = true;
