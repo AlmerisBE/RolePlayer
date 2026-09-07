@@ -6,9 +6,11 @@ using Dalamud.Interface.Textures;
 using Dalamud.Interface.Textures.Internal;
 using Dalamud.Plugin.Services;
 using RolePlayer.Core.Macros.Models;
+using RolePlayer.UI.Hotbar.Components;
 using RolePlayer.UI.Hotbar.Contracts;
 using RolePlayer.UI.Localization.Contracts;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 
@@ -16,20 +18,21 @@ public class MacrosConfigSubTab {
     private IMacroManagementService macroService;
     private ILocalizationService localization;
     private ITextureProvider textureProvider;
+    private HotbarManagerComponent hotbarManager;
 
     private string newMacroName = string.Empty;
 
     private RoleplayMacro? selectedMacro;
     private Guid macroToDelete = Guid.Empty;
     private bool isDeleteDialogOpen = false;
-    private bool isIconPickerOpen = false;
 
     public bool IsSidePanelOpen => this.selectedMacro != null;
 
-    public MacrosConfigSubTab(IMacroManagementService macroService, ILocalizationService localization, ITextureProvider textureProvider) {
+    public MacrosConfigSubTab(IMacroManagementService macroService, ILocalizationService localization, ITextureProvider textureProvider, HotbarManagerComponent hotbarManager) {
         this.macroService = macroService;
         this.localization = localization;
         this.textureProvider = textureProvider;
+        this.hotbarManager = hotbarManager;
     }
 
     public void Draw() {
@@ -161,13 +164,11 @@ public class MacrosConfigSubTab {
             ImGui.TableNextColumn();
             ImGui.AlignTextToFramePadding();
 
-            // Capture le clic sans ouvrir la popup directement dans la table
             if (ImGui.Button(this.localization.Translate("config_macro_icon_select"), new Vector2(-1, 42f))) openIconPicker = true;
 
             ImGui.EndTable();
         }
 
-        // Ouvre la popup dans le même contexte ID que le BeginPopup
         if (openIconPicker) ImGui.OpenPopup("IconPickerPopup");
 
         this.DrawIconPickerPopup(ref changed);
@@ -208,44 +209,63 @@ public class MacrosConfigSubTab {
     }
 
     private void DrawIconPickerPopup(ref bool changed) {
-        ImGui.SetNextWindowSize(new Vector2(300, 400), ImGuiCond.FirstUseEver);
+        ImGui.SetNextWindowSize(new Vector2(340, 400), ImGuiCond.FirstUseEver);
 
         if (ImGui.BeginPopup("IconPickerPopup")) {
             ImGui.TextDisabled(this.localization.Translate("config_macro_icon_picker"));
             ImGui.Separator();
 
-            if (ImGui.BeginChild("IconGrid", new Vector2(0, 0), false, ImGuiWindowFlags.AlwaysVerticalScrollbar)) {
-                int columns = (int)(ImGui.GetContentRegionAvail().X / 46f);
-                if (columns < 1) columns = 1;
-
-                if (ImGui.BeginTable("IconGridTable", columns, ImGuiTableFlags.SizingFixedFit)) {
-                    // Standard FFXIV macro icons range from 66001 to approx 66344
-                    for (uint iconId = 66001; iconId <= 66344; iconId++) {
-                        if ((iconId - 66001) % columns == 0) ImGui.TableNextRow();
-
-                        ImGui.TableNextColumn();
-
-                        try {
-                            var lookup = new GameIconLookup { IconId = iconId, HiRes = false };
-                            var iconWrap = this.textureProvider.GetFromGameIcon(lookup).GetWrapOrDefault();
-
-                            if (iconWrap != null) {
-                                ImGui.PushID($"icon_{iconId}");
-                                if (ImGui.ImageButton(iconWrap.Handle, new Vector2(38, 38))) {
-                                    this.selectedMacro!.IconId = iconId;
-                                    changed = true;
-                                    ImGui.CloseCurrentPopup();
-                                }
-                                ImGui.PopID();
-                            }
-                        }
-                        catch (IconNotFoundException) { }
-                    }
-                    ImGui.EndTable();
+            if (ImGui.BeginTabBar("IconPickerTabs")) {
+                if (ImGui.BeginTabItem(this.localization.Translate("config_macro_icon_tab_macros"))) {
+                    this.DrawIconGrid("MacroIconsGrid", 66001, 66344, null, ref changed);
+                    ImGui.EndTabItem();
                 }
-                ImGui.EndChild();
+
+                if (ImGui.BeginTabItem(this.localization.Translate("config_macro_icon_tab_emotes"))) {
+                    var emoteIcons = this.hotbarManager.GetEmoteCache().Select(e => e.IconId).Distinct().ToList();
+                    this.DrawIconGrid("EmoteIconsGrid", 0, 0, emoteIcons, ref changed);
+                    ImGui.EndTabItem();
+                }
+
+                ImGui.EndTabBar();
             }
             ImGui.EndPopup();
+        }
+    }
+
+    private void DrawIconGrid(string id, uint startId, uint endId, List<uint>? specificIcons, ref bool changed) {
+        if (ImGui.BeginChild(id, new Vector2(0, 0), false, ImGuiWindowFlags.AlwaysVerticalScrollbar)) {
+            int columns = (int)(ImGui.GetContentRegionAvail().X / 46f);
+            if (columns < 1) columns = 1;
+
+            if (ImGui.BeginTable($"{id}Table", columns, ImGuiTableFlags.SizingFixedFit)) {
+                var iconsToRender = specificIcons ?? Enumerable.Range((int)startId, (int)(endId - startId + 1)).Select(i => (uint)i).ToList();
+
+                for (int i = 0; i < iconsToRender.Count; i++) {
+                    if (i % columns == 0) ImGui.TableNextRow();
+
+                    ImGui.TableNextColumn();
+                    uint iconId = iconsToRender[i];
+
+                    try {
+                        var lookup = new GameIconLookup { IconId = iconId, HiRes = false };
+                        var iconWrap = this.textureProvider.GetFromGameIcon(lookup).GetWrapOrDefault();
+
+                        if (iconWrap != null) {
+                            ImGui.PushID($"icon_{iconId}");
+                            if (ImGui.ImageButton(iconWrap.Handle, new Vector2(38, 38))) {
+                                this.selectedMacro!.IconId = iconId;
+                                changed = true;
+                                ImGui.CloseCurrentPopup();
+                            }
+                            ImGui.PopID();
+                        }
+                    }
+                    catch (IconNotFoundException) { }
+                }
+                ImGui.EndTable();
+            }
+            ImGui.EndChild();
         }
     }
 

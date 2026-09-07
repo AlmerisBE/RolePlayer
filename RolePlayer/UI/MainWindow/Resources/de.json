@@ -102,5 +102,7 @@
   "config_macro_settings": "Makro-Einstellungen",
   "config_macro_icon_select": "Symbol auswählen",
   "config_macro_lines_hint": "Gib bis zu 15 Zeilen Makrobefehle ein...",
-  "config_macro_icon_picker": "Symbolauswahl"
+  "config_macro_icon_picker": "Symbolauswahl",
+  "config_macro_icon_tab_macros": "Makro-Symbole",
+  "config_macro_icon_tab_emotes": "Emote-Symbole"
 }
