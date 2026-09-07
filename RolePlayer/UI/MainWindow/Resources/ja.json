@@ -104,5 +104,6 @@
   "config_macro_lines_hint": "最大15行のマクロコマンドを入力...",
   "config_macro_icon_picker": "アイコン選択",
   "config_macro_icon_tab_macros": "マクロアイコン",
-  "config_macro_icon_tab_emotes": "エモートアイコン"
+  "config_macro_icon_tab_emotes": "エモートアイコン",
+  "config_macro_execute": "マクロを実行"
 }

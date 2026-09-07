@@ -104,5 +104,6 @@
   "config_macro_lines_hint": "Enter up to 15 lines of macro commands...",
   "config_macro_icon_picker": "Icon Picker",
   "config_macro_icon_tab_macros": "Macro Icons",
-  "config_macro_icon_tab_emotes": "Emote Icons"
+  "config_macro_icon_tab_emotes": "Emote Icons",
+  "config_macro_execute": "Execute Macro"
 }
