@@ -11,11 +11,14 @@ using System.Text;
 using System.Text.RegularExpressions;
 
 public unsafe class NativeExecutionService : INativeExecutionService, IDisposable {
-    private RaptureMacroModule.Macro* executionMacro;
+    private RaptureMacroModule.Macro* executionMacro = null;
 
-    public NativeExecutionService() {
+    public NativeExecutionService() { }
+
+    private void EnsureMacroAllocated() {
+        if (this.executionMacro != null) return;
+
         this.executionMacro = (RaptureMacroModule.Macro*)NativeMemory.AllocZeroed((nuint)sizeof(RaptureMacroModule.Macro));
-
         this.executionMacro->Name.Ctor();
         for (int i = 0; i < 15; i++) this.executionMacro->Lines[i].Ctor();
     }
@@ -25,6 +28,8 @@ public unsafe class NativeExecutionService : INativeExecutionService, IDisposabl
 
         var shellModule = RaptureShellModule.Instance();
         if (shellModule == null) return;
+
+        this.EnsureMacroAllocated();
 
         var lines = commandOrMacroContent.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
 
