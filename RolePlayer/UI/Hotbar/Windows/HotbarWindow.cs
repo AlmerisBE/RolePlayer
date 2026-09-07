@@ -78,7 +78,6 @@ public class HotbarWindow : Window {
             this.Flags &= ~ImGuiWindowFlags.NoMove;
         }
 
-        // Tighter window paddings to mimic vanilla UI
         ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(2f, 2f));
         ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(2f, 2f));
     }
@@ -99,7 +98,8 @@ public class HotbarWindow : Window {
             float columnWidth = IconSize;
 
             ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, Vector2.Zero);
-            ImGui.PushStyleVar(ImGuiStyleVar.CellPadding, new Vector2(1f, 1f)); // Minimal padding between icons
+            // On ajuste le padding de cellule à 2 pixels pour correspondre à l'interface native
+            ImGui.PushStyleVar(ImGuiStyleVar.CellPadding, new Vector2(2f, 2f));
             ImGui.PushStyleColor(ImGuiCol.Button, Vector4.Zero);
 
             if (ImGui.BeginTable($"HotbarGrid_{this.config.Id}", actualColumns, ImGuiTableFlags.SizingFixedFit)) {
