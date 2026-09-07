@@ -50,12 +50,11 @@ public class HotbarWindow : Window {
         this.localization = localization;
 
         this.SizeConstraints = new WindowSizeConstraints {
-            MinimumSize = new Vector2(IconSize + 4f, IconSize + 4f),
+            MinimumSize = new Vector2(IconSize + 16f, IconSize + 16f),
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
         };
 
         this.SizeCondition = ImGuiCond.Always;
-        this.BgAlpha = 0.7f;
         this.IsOpen = config.IsVisible;
     }
 
@@ -67,6 +66,8 @@ public class HotbarWindow : Window {
         catch {
             this.IsOpen = this.config.IsVisible;
         }
+
+        this.BgAlpha = this.config.IsLocked ? 0.0f : 0.7f;
     }
 
     public override void PreDraw() {
@@ -78,7 +79,7 @@ public class HotbarWindow : Window {
             this.Flags &= ~ImGuiWindowFlags.NoMove;
         }
 
-        ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(2f, 2f));
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(8f, 8f));
         ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(2f, 2f));
     }
 
@@ -98,7 +99,6 @@ public class HotbarWindow : Window {
             float columnWidth = IconSize;
 
             ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, Vector2.Zero);
-            // On ajuste le padding de cellule à 2 pixels pour correspondre à l'interface native
             ImGui.PushStyleVar(ImGuiStyleVar.CellPadding, new Vector2(2f, 2f));
             ImGui.PushStyleColor(ImGuiCol.Button, Vector4.Zero);
 
