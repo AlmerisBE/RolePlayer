@@ -12,18 +12,15 @@ public class ConfigurationTab : IEmoteBrowserTab, IDisposable {
     public string TabName => this.localization.Translate("config_tab_config");
     public int SortOrder => 99;
 
-    public bool IsSidePanelOpen => (this.isHotbarTabActive && this.hotbarConfigSubTab.IsSidePanelOpen) ||
-                                   (this.isMacrosTabActive && this.macrosConfigSubTab.IsSidePanelOpen);
+    public bool IsSidePanelOpen => this.isHotbarTabActive && this.hotbarConfigSubTab.IsSidePanelOpen;
 
     private GeneralConfigSubTab generalConfigSubTab;
     private HotbarConfigSubTab hotbarConfigSubTab;
     private GroupsConfigSubTab groupsConfigSubTab;
     private TagsConfigSubTab tagsConfigSubTab;
     private ContextsConfigSubTab contextsConfigSubTab;
-    private MacrosConfigSubTab macrosConfigSubTab;
 
     private bool isHotbarTabActive = true;
-    private bool isMacrosTabActive = false;
 
     public ConfigurationTab(
         GeneralConfigSubTab generalConfigSubTab,
@@ -31,7 +28,6 @@ public class ConfigurationTab : IEmoteBrowserTab, IDisposable {
         GroupsConfigSubTab groupsConfigSubTab,
         TagsConfigSubTab tagsConfigSubTab,
         ContextsConfigSubTab contextsConfigSubTab,
-        MacrosConfigSubTab macrosConfigSubTab,
         ILocalizationService localization) {
 
         this.generalConfigSubTab = generalConfigSubTab;
@@ -39,13 +35,11 @@ public class ConfigurationTab : IEmoteBrowserTab, IDisposable {
         this.groupsConfigSubTab = groupsConfigSubTab;
         this.tagsConfigSubTab = tagsConfigSubTab;
         this.contextsConfigSubTab = contextsConfigSubTab;
-        this.macrosConfigSubTab = macrosConfigSubTab;
         this.localization = localization;
     }
 
     private void ResetTabStates() {
         this.isHotbarTabActive = false;
-        this.isMacrosTabActive = false;
     }
 
     public void Draw() {
@@ -69,13 +63,6 @@ public class ConfigurationTab : IEmoteBrowserTab, IDisposable {
                 ImGui.EndTabItem();
             }
 
-            if (ImGui.BeginTabItem(this.localization.Translate("config_tab_macros"))) {
-                this.ResetTabStates();
-                this.isMacrosTabActive = true;
-                this.macrosConfigSubTab.Draw();
-                ImGui.EndTabItem();
-            }
-
             if (ImGui.BeginTabItem(this.localization.Translate("config_tab_groups"))) {
                 this.ResetTabStates();
                 this.groupsConfigSubTab.Draw();
@@ -94,7 +81,6 @@ public class ConfigurationTab : IEmoteBrowserTab, IDisposable {
 
     public void DrawSidePanel() {
         if (this.isHotbarTabActive) this.hotbarConfigSubTab.DrawSidePanel();
-        if (this.isMacrosTabActive) this.macrosConfigSubTab.DrawSidePanel();
     }
 
     public void Dispose() { }

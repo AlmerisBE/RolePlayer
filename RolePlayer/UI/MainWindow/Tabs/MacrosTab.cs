@@ -1,4 +1,4 @@
-﻿namespace RolePlayer.UI.MainWindow.Tabs.SubTabs;
+﻿namespace RolePlayer.UI.MainWindow.Tabs;
 
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
@@ -6,6 +6,7 @@ using Dalamud.Interface.Textures;
 using Dalamud.Interface.Textures.Internal;
 using Dalamud.Plugin.Services;
 using RolePlayer.Core.Macros.Models;
+using RolePlayer.UI.EmoteBrowser.Contracts;
 using RolePlayer.UI.Hotbar.Components;
 using RolePlayer.UI.Hotbar.Contracts;
 using RolePlayer.UI.Localization.Contracts;
@@ -14,7 +15,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 
-public class MacrosConfigSubTab {
+public class MacrosTab : IEmoteBrowserTab, IDisposable {
     private IMacroManagementService macroService;
     private IMacroExecutionService macroExecutionService;
     private ILocalizationService localization;
@@ -27,9 +28,11 @@ public class MacrosConfigSubTab {
     private Guid macroToDelete = Guid.Empty;
     private bool isDeleteDialogOpen = false;
 
+    public string TabName => this.localization.Translate("main_tab_macros");
+    public int SortOrder => 20; // Se place après la liste des emotes (généralement 10) et avant la configuration (99)
     public bool IsSidePanelOpen => this.selectedMacro != null;
 
-    public MacrosConfigSubTab(
+    public MacrosTab(
         IMacroManagementService macroService,
         IMacroExecutionService macroExecutionService,
         ILocalizationService localization,
@@ -58,7 +61,7 @@ public class MacrosConfigSubTab {
         if (ImGui.Button($"{FontAwesomeIcon.Plus.ToIconString()}##AddMacro", new Vector2(buttonWidth, 0)) && !string.IsNullOrWhiteSpace(this.newMacroName)) {
             var newMacro = new RoleplayMacro {
                 Name = this.newMacroName.Trim(),
-                IconId = 66001 // Default macro icon (M)
+                IconId = 66001
             };
             this.macroService.CreateMacro(newMacro);
             this.selectedMacro = newMacro;
@@ -76,8 +79,6 @@ public class MacrosConfigSubTab {
         if (ImGui.BeginTable("MacrosTable", 3, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit)) {
             ImGui.TableSetupColumn(this.localization.Translate("config_common_name"), ImGuiTableColumnFlags.WidthStretch);
             ImGui.TableSetupColumn(this.localization.Translate("config_macro_col_icon"), ImGuiTableColumnFlags.WidthFixed, 40f);
-
-            // Largeur augmentée pour faire tenir les deux boutons (Play + Trash)
             ImGui.TableSetupColumn(this.localization.Translate("config_common_actions"), ImGuiTableColumnFlags.WidthFixed, 68f);
 
             ImGui.TableHeadersRow();
@@ -100,14 +101,12 @@ public class MacrosConfigSubTab {
 
                 ImGui.TableNextColumn();
 
-                // Centrage vertical dynamique des boutons
                 float buttonHeight = ImGui.GetFrameHeight();
                 float offsetY = (rowHeight - buttonHeight) / 2f;
                 if (offsetY > 0) ImGui.SetCursorPosY(ImGui.GetCursorPosY() + offsetY);
 
                 ImGui.PushFont(UiBuilder.IconFont);
 
-                // Bouton Exécuter
                 ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.2f, 0.6f, 0.2f, 1.0f));
                 if (ImGui.Button($"{FontAwesomeIcon.Play.ToIconString()}##Play_{macro.Id}")) this.macroExecutionService.Execute(macro);
                 ImGui.PopStyleColor();
@@ -120,7 +119,6 @@ public class MacrosConfigSubTab {
 
                 ImGui.SameLine();
 
-                // Bouton Supprimer
                 ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
                 if (ImGui.Button($"{FontAwesomeIcon.Trash.ToIconString()}##Del_{macro.Id}")) {
                     this.macroToDelete = macro.Id;
@@ -284,7 +282,6 @@ public class MacrosConfigSubTab {
 
             if (ImGui.BeginTable($"{id}Table", columns, ImGuiTableFlags.SizingFixedFit)) {
                 var iconsToRender = specificIcons ?? Enumerable.Range((int)startId, (int)(endId - startId + 1)).Select(i => (uint)i).ToList();
-
                 int drawnIconsCount = 0;
 
                 foreach (uint iconId in iconsToRender) {
@@ -342,4 +339,6 @@ public class MacrosConfigSubTab {
             ImGui.EndPopup();
         }
     }
+
+    public void Dispose() { }
 }

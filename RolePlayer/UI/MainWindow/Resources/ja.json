@@ -105,5 +105,6 @@
   "config_macro_icon_picker": "アイコン選択",
   "config_macro_icon_tab_macros": "マクロアイコン",
   "config_macro_icon_tab_emotes": "エモートアイコン",
-  "config_macro_execute": "マクロを実行"
+  "config_macro_execute": "マクロを実行",
+  "main_tab_macros": "マクロ"
 }

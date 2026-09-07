@@ -26,14 +26,14 @@ public class MainWindowFeature : IFeatureModule {
         services.AddSingleton<GroupsConfigSubTab>();
         services.AddSingleton<TagsConfigSubTab>();
         services.AddSingleton<ContextsConfigSubTab>();
-        services.AddSingleton<MacrosConfigSubTab>();
 
         services.AddSingleton<Window>(provider => provider.GetRequiredService<MainWindow>());
         services.AddSingleton<ICommand, OpenMainWindowCommand>();
 
-        // Tab registrations
+        // Enregistrement des onglets principaux (IEmoteBrowserTab)
         services.AddSingleton<IEmoteBrowserTab, ConfigurationTab>();
         services.AddSingleton<IEmoteBrowserTab, AboutTab>();
+        services.AddSingleton<IEmoteBrowserTab, MacrosTab>();
 
         services.AddSingleton<ILocalizationProvider, MainWindowLocalizationProvider>();
     }
