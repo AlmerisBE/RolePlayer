@@ -209,7 +209,7 @@ public class MacrosConfigSubTab {
     }
 
     private void DrawIconPickerPopup(ref bool changed) {
-        ImGui.SetNextWindowSize(new Vector2(340, 400), ImGuiCond.FirstUseEver);
+        ImGui.SetNextWindowSize(new Vector2(340, 400), ImGuiCond.Appearing);
 
         if (ImGui.BeginPopup("IconPickerPopup")) {
             ImGui.TextDisabled(this.localization.Translate("config_macro_icon_picker"));
@@ -234,7 +234,7 @@ public class MacrosConfigSubTab {
     }
 
     private void DrawIconGrid(string id, uint startId, uint endId, List<uint>? specificIcons, ref bool changed) {
-        if (ImGui.BeginChild(id, new Vector2(0, 0), false, ImGuiWindowFlags.AlwaysVerticalScrollbar)) {
+        if (ImGui.BeginChild(id, new Vector2(0, 300), false, ImGuiWindowFlags.AlwaysVerticalScrollbar)) {
             int columns = (int)(ImGui.GetContentRegionAvail().X / 46f);
             if (columns < 1) columns = 1;
 
