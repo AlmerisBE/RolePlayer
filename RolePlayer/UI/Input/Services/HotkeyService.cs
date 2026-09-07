@@ -2,6 +2,7 @@
 
 using Dalamud.Bindings.ImGui;
 using Dalamud.Game.ClientState.Keys;
+using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using RolePlayer.Core.Configuration.Contracts;
@@ -10,42 +11,37 @@ using System;
 
 public class HotkeyService : IHotkeyService, IDisposable {
     private IKeyState keyState;
-    private IFramework framework;
+    private IDalamudPluginInterface pluginInterface;
     private IConfigurationService configService;
     private bool wasKeyPressed = false;
 
     public event Action? OnHotkeyPressed;
 
-    public HotkeyService(IKeyState keyState, IFramework framework, IConfigurationService configService) {
+    public HotkeyService(IKeyState keyState, IDalamudPluginInterface pluginInterface, IConfigurationService configService) {
         this.keyState = keyState;
-        this.framework = framework;
+        this.pluginInterface = pluginInterface;
         this.configService = configService;
 
-        this.framework.Update += this.OnUpdate;
+        // On écoute la boucle de rendu ImGui pour garantir l'intégrité de l'état WantCaptureKeyboard
+        this.pluginInterface.UiBuilder.Draw += this.OnDraw;
     }
 
-    private unsafe void OnUpdate(IFramework fw) {
+    private unsafe void OnDraw() {
         var config = this.configService.GetConfig();
         var targetKey = config.Hotkey;
 
-        if (targetKey == 0) {
-            return;
-        }
+        if (targetKey == 0) return;
 
         bool isKeyPressed = this.keyState[targetKey];
         bool isInputFocused = false;
 
         try {
-            if (ImGui.GetIO().WantCaptureKeyboard) {
-                isInputFocused = true;
-            }
+            if (ImGui.GetIO().WantCaptureKeyboard) isInputFocused = true;
 
             var uiModule = UIModule.Instance();
             if (uiModule != null) {
                 var raptureAtkModule = uiModule->GetRaptureAtkModule();
-                if (raptureAtkModule != null && raptureAtkModule->AtkModule.IsTextInputActive()) {
-                    isInputFocused = true;
-                }
+                if (raptureAtkModule != null && raptureAtkModule->AtkModule.IsTextInputActive()) isInputFocused = true;
             }
         }
         catch { }
@@ -64,6 +60,6 @@ public class HotkeyService : IHotkeyService, IDisposable {
     }
 
     public void Dispose() {
-        this.framework.Update -= this.OnUpdate;
+        this.pluginInterface.UiBuilder.Draw -= this.OnDraw;
     }
 }
