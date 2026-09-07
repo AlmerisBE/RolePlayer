@@ -14,6 +14,7 @@ public class HotbarConfig {
     public bool HideInCombat { get; set; } = false;
     public bool HideInDuty { get; set; } = false;
 
+    public int ButtonCount { get; set; } = 16;
     public HotbarLayout Layout { get; set; } = HotbarLayout.Grid16x1;
     public HotbarPopulationMode PopulationMode { get; set; } = HotbarPopulationMode.Manual;
     public HotbarTargetType TargetType { get; set; } = HotbarTargetType.Emotes;

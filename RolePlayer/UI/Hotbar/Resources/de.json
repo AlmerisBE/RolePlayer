@@ -4,5 +4,6 @@
   "config_hb_target_emotes": "Emotes",
   "config_hb_target_macros": "Makros",
   "config_hb_target_mixed": "Gemischt",
-  "config_common_empty": "Leer"
+  "config_common_empty": "Leer",
+  "config_hb_button_count": "Anzahl der Schaltflächen"
 }

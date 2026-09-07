@@ -216,8 +216,25 @@ public class HotbarConfigSubTab {
             configChanged = true;
         }
 
+        ImGui.TextDisabled(this.localization.Translate("config_hb_button_count"));
+        int currentCount = this.selectedHotbar.ButtonCount;
+
+        if (ImGui.RadioButton("16", currentCount == 16)) {
+            this.selectedHotbar.ButtonCount = 16;
+            if (!this.IsLayoutValidForCount(this.selectedHotbar.Layout, 16)) this.selectedHotbar.Layout = HotbarLayout.Grid16x1;
+            configChanged = true;
+        }
+        ImGui.SameLine();
+        if (ImGui.RadioButton("36", currentCount == 36)) {
+            this.selectedHotbar.ButtonCount = 36;
+            if (!this.IsLayoutValidForCount(this.selectedHotbar.Layout, 36)) this.selectedHotbar.Layout = HotbarLayout.Grid6x6;
+            configChanged = true;
+        }
+
         if (ImGui.BeginCombo(this.localization.Translate("config_hb_layout"), this.selectedHotbar.Layout.ToString())) {
             foreach (HotbarLayout layout in Enum.GetValues(typeof(HotbarLayout))) {
+                if (!this.IsLayoutValidForCount(layout, this.selectedHotbar.ButtonCount)) continue;
+
                 if (ImGui.Selectable(layout.ToString(), this.selectedHotbar.Layout == layout)) {
                     this.selectedHotbar.Layout = layout;
                     configChanged = true;
@@ -316,6 +333,16 @@ public class HotbarConfigSubTab {
         }
 
         this.DrawDeleteConfirmationModal();
+    }
+
+    private bool IsLayoutValidForCount(HotbarLayout layout, int count) {
+        if (count == 16) {
+            return layout == HotbarLayout.Grid16x1 || layout == HotbarLayout.Grid8x2 || layout == HotbarLayout.Grid4x4 || layout == HotbarLayout.Grid2x8 || layout == HotbarLayout.Grid1x16;
+        }
+        else if (count == 36) {
+            return layout == HotbarLayout.Grid18x2 || layout == HotbarLayout.Grid12x3 || layout == HotbarLayout.Grid9x4 || layout == HotbarLayout.Grid6x6 || layout == HotbarLayout.Grid4x9 || layout == HotbarLayout.Grid3x12 || layout == HotbarLayout.Grid2x18;
+        }
+        return false;
     }
 
     private void DrawDeleteConfirmationModal() {

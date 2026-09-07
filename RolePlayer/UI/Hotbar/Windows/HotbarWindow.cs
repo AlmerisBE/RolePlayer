@@ -87,12 +87,14 @@ public class HotbarWindow : Window {
         var allEmotes = this.emoteCacheProvider();
         var resolvedItems = this.resolverService.ResolveItemsForHotbar(this.config, allEmotes);
 
+        int maxItemsPerPage = this.config.ButtonCount;
+
         if (resolvedItems.Count > 0) {
-            int totalPages = (int)Math.Ceiling(resolvedItems.Count / (double)MaxItemsPerPage);
+            int totalPages = (int)Math.Ceiling(resolvedItems.Count / (double)maxItemsPerPage);
             if (this.currentPage >= totalPages && totalPages > 0) this.currentPage = totalPages - 1;
             if (totalPages == 0) this.currentPage = 0;
 
-            var displayedItems = resolvedItems.Skip(this.currentPage * MaxItemsPerPage).Take(MaxItemsPerPage).ToList();
+            var displayedItems = resolvedItems.Skip(this.currentPage * maxItemsPerPage).Take(maxItemsPerPage).ToList();
 
             int maxColumns = this.GetColumnsForLayout(this.config.Layout);
             int actualColumns = Math.Max(1, Math.Min(maxColumns, displayedItems.Count));
@@ -166,6 +168,13 @@ public class HotbarWindow : Window {
             HotbarLayout.Grid4x4 => 4,
             HotbarLayout.Grid2x8 => 2,
             HotbarLayout.Grid1x16 => 1,
+            HotbarLayout.Grid18x2 => 18,
+            HotbarLayout.Grid12x3 => 12,
+            HotbarLayout.Grid9x4 => 9,
+            HotbarLayout.Grid6x6 => 6,
+            HotbarLayout.Grid4x9 => 4,
+            HotbarLayout.Grid3x12 => 3,
+            HotbarLayout.Grid2x18 => 2,
             _ => 16
         };
     }

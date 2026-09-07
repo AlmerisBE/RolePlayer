@@ -4,5 +4,6 @@
   "config_hb_target_emotes": "エモート",
   "config_hb_target_macros": "マクロ",
   "config_hb_target_mixed": "混合",
-  "config_common_empty": "空"
+  "config_common_empty": "空",
+  "config_hb_button_count": "ボタンの数"
 }
