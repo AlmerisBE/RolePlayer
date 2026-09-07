@@ -98,10 +98,8 @@ public class HotbarResolverService : IHotbarResolverService {
 
         if (config.TargetType == HotbarTargetType.Macros || config.TargetType == HotbarTargetType.Mixed) {
             foreach (var macro in allMacros) {
-                if (config.ShowModdedOnly) continue;
-                if (hasCatFilter) continue;
-
                 var tags = this.tagManagementService.GetTagsForMacro(macro.Id);
+
                 if (hasSearch) {
                     bool matchesName = macro.Name.ToLowerInvariant().Contains(query);
                     bool matchesTag = tags.Any(t => t.ToLowerInvariant().Contains(query));
