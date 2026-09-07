@@ -147,185 +147,190 @@ public class HotbarConfigSubTab {
         }
 
         ImGui.Separator();
-        ImGui.Spacing();
 
-        var eyeIcon = this.selectedHotbar.IsVisible ? FontAwesomeIcon.Eye.ToIconString() : FontAwesomeIcon.EyeSlash.ToIconString();
-        ImGui.PushFont(UiBuilder.IconFont);
-        bool toggleVis = ImGui.Button(eyeIcon);
-        ImGui.PopFont();
+        // Zone de défilement isolée pour le contenu
+        if (ImGui.BeginChild("HotbarSettingsScrollArea")) {
+            ImGui.Spacing();
 
-        if (toggleVis) {
-            this.selectedHotbar.IsVisible = !this.selectedHotbar.IsVisible;
-            configChanged = true;
-        }
-        if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_hb_tooltip_vis"));
+            var eyeIcon = this.selectedHotbar.IsVisible ? FontAwesomeIcon.Eye.ToIconString() : FontAwesomeIcon.EyeSlash.ToIconString();
+            ImGui.PushFont(UiBuilder.IconFont);
+            bool toggleVis = ImGui.Button(eyeIcon);
+            ImGui.PopFont();
 
-        ImGui.SameLine();
-
-        var lockIcon = this.selectedHotbar.IsLocked ? FontAwesomeIcon.Lock.ToIconString() : FontAwesomeIcon.Unlock.ToIconString();
-        ImGui.PushFont(UiBuilder.IconFont);
-        bool toggleLock = ImGui.Button(lockIcon);
-        ImGui.PopFont();
-
-        if (toggleLock) {
-            this.selectedHotbar.IsLocked = !this.selectedHotbar.IsLocked;
-            configChanged = true;
-        }
-        if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_hb_tooltip_lock"));
-
-        ImGui.SameLine();
-        ImGui.SetCursorPosX(ImGui.GetWindowContentRegionMax().X - 30f);
-
-        ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
-        ImGui.PushFont(UiBuilder.IconFont);
-        bool doDelete = ImGui.Button(FontAwesomeIcon.Trash.ToIconString());
-        ImGui.PopFont();
-        ImGui.PopStyleColor();
-
-        if (doDelete) {
-            this.hotbarToDelete = this.selectedHotbar;
-            this.isDeleteDialogOpen = true;
-        }
-        if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_hb_tooltip_del"));
-
-        ImGui.Spacing();
-
-        ImGui.TextDisabled(this.localization.Translate("config_hb_auto_hide"));
-
-        bool hideCombat = this.selectedHotbar.HideInCombat;
-        if (ImGui.Checkbox($"{this.localization.Translate("config_hb_combat")}##hideCombat", ref hideCombat)) {
-            this.selectedHotbar.HideInCombat = hideCombat;
-            configChanged = true;
-        }
-
-        ImGui.SameLine();
-
-        bool hideDuty = this.selectedHotbar.HideInDuty;
-        if (ImGui.Checkbox($"{this.localization.Translate("config_hb_duty")}##hideDuty", ref hideDuty)) {
-            this.selectedHotbar.HideInDuty = hideDuty;
-            configChanged = true;
-        }
-
-        ImGui.Spacing();
-        ImGui.Separator();
-        ImGui.Spacing();
-
-        string name = this.selectedHotbar.Name;
-        if (ImGui.InputText(this.localization.Translate("config_common_name"), ref name, 64)) {
-            this.selectedHotbar.Name = name;
-            configChanged = true;
-        }
-
-        ImGui.TextDisabled(this.localization.Translate("config_hb_button_count"));
-        int currentCount = this.selectedHotbar.ButtonCount;
-
-        if (ImGui.RadioButton("16", currentCount == 16)) {
-            this.selectedHotbar.ButtonCount = 16;
-            if (!this.IsLayoutValidForCount(this.selectedHotbar.Layout, 16)) this.selectedHotbar.Layout = HotbarLayout.Grid16x1;
-            configChanged = true;
-        }
-        ImGui.SameLine();
-        if (ImGui.RadioButton("36", currentCount == 36)) {
-            this.selectedHotbar.ButtonCount = 36;
-            if (!this.IsLayoutValidForCount(this.selectedHotbar.Layout, 36)) this.selectedHotbar.Layout = HotbarLayout.Grid6x6;
-            configChanged = true;
-        }
-
-        if (ImGui.BeginCombo(this.localization.Translate("config_hb_layout"), this.selectedHotbar.Layout.ToString())) {
-            foreach (HotbarLayout layout in Enum.GetValues(typeof(HotbarLayout))) {
-                if (!this.IsLayoutValidForCount(layout, this.selectedHotbar.ButtonCount)) continue;
-
-                if (ImGui.Selectable(layout.ToString(), this.selectedHotbar.Layout == layout)) {
-                    this.selectedHotbar.Layout = layout;
-                    configChanged = true;
-                }
+            if (toggleVis) {
+                this.selectedHotbar.IsVisible = !this.selectedHotbar.IsVisible;
+                configChanged = true;
             }
-            ImGui.EndCombo();
-        }
+            if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_hb_tooltip_vis"));
 
-        if (ImGui.BeginCombo(this.localization.Translate("config_hb_anchor"), this.selectedHotbar.Anchor.ToString())) {
-            foreach (HotbarAnchor anchor in Enum.GetValues(typeof(HotbarAnchor))) {
-                if (ImGui.Selectable(anchor.ToString(), this.selectedHotbar.Anchor == anchor)) {
-                    this.selectedHotbar.Anchor = anchor;
-                    this.selectedHotbar.PositionInitialized = false;
-                    configChanged = true;
-                }
+            ImGui.SameLine();
+
+            var lockIcon = this.selectedHotbar.IsLocked ? FontAwesomeIcon.Lock.ToIconString() : FontAwesomeIcon.Unlock.ToIconString();
+            ImGui.PushFont(UiBuilder.IconFont);
+            bool toggleLock = ImGui.Button(lockIcon);
+            ImGui.PopFont();
+
+            if (toggleLock) {
+                this.selectedHotbar.IsLocked = !this.selectedHotbar.IsLocked;
+                configChanged = true;
             }
-            ImGui.EndCombo();
-        }
+            if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_hb_tooltip_lock"));
 
-        string currentPopModeStr = this.selectedHotbar.PopulationMode == HotbarPopulationMode.Manual ? this.localization.Translate("config_hb_pop_manual") : this.localization.Translate("config_hb_pop_dynamic");
+            ImGui.SameLine();
+            ImGui.SetCursorPosX(ImGui.GetWindowContentRegionMax().X - 30f);
 
-        if (ImGui.BeginCombo(this.localization.Translate("config_hb_pop_mode"), currentPopModeStr)) {
-            foreach (HotbarPopulationMode mode in Enum.GetValues(typeof(HotbarPopulationMode))) {
-                string modeStr = mode == HotbarPopulationMode.Manual ? this.localization.Translate("config_hb_pop_manual") : this.localization.Translate("config_hb_pop_dynamic");
+            ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
+            ImGui.PushFont(UiBuilder.IconFont);
+            bool doDelete = ImGui.Button(FontAwesomeIcon.Trash.ToIconString());
+            ImGui.PopFont();
+            ImGui.PopStyleColor();
 
-                if (ImGui.Selectable(modeStr, this.selectedHotbar.PopulationMode == mode)) {
-                    this.selectedHotbar.PopulationMode = mode;
-                    configChanged = true;
-                }
+            if (doDelete) {
+                this.hotbarToDelete = this.selectedHotbar;
+                this.isDeleteDialogOpen = true;
             }
-            ImGui.EndCombo();
-        }
+            if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_hb_tooltip_del"));
 
-        ImGui.Spacing();
-        float scalePercent = this.selectedHotbar.Scale * 100f;
-        if (ImGui.SliderFloat(this.localization.Translate("config_hb_scale"), ref scalePercent, 75f, 125f, "%.0f%%")) {
-            this.selectedHotbar.Scale = scalePercent / 100f;
-            configChanged = true;
-        }
+            ImGui.Spacing();
 
-        ImGui.Spacing();
-        ImGui.Separator();
-        ImGui.Spacing();
+            ImGui.TextDisabled(this.localization.Translate("config_hb_auto_hide"));
 
-        if (this.selectedHotbar.PopulationMode == HotbarPopulationMode.Dynamic) {
-            ImGui.Text(this.localization.Translate("config_hb_dyn_filters"));
+            bool hideCombat = this.selectedHotbar.HideInCombat;
+            if (ImGui.Checkbox($"{this.localization.Translate("config_hb_combat")}##hideCombat", ref hideCombat)) {
+                this.selectedHotbar.HideInCombat = hideCombat;
+                configChanged = true;
+            }
 
-            ImGui.SetNextItemWidth(120f);
-            if (ImGui.BeginCombo("##TargetTypeCombo", this.localization.Translate($"config_hb_target_{this.selectedHotbar.TargetType.ToString().ToLowerInvariant()}"))) {
-                foreach (HotbarTargetType type in Enum.GetValues(typeof(HotbarTargetType))) {
-                    if (ImGui.Selectable(this.localization.Translate($"config_hb_target_{type.ToString().ToLowerInvariant()}"), this.selectedHotbar.TargetType == type)) {
-                        this.selectedHotbar.TargetType = type;
+            ImGui.SameLine();
+
+            bool hideDuty = this.selectedHotbar.HideInDuty;
+            if (ImGui.Checkbox($"{this.localization.Translate("config_hb_duty")}##hideDuty", ref hideDuty)) {
+                this.selectedHotbar.HideInDuty = hideDuty;
+                configChanged = true;
+            }
+
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
+
+            string name = this.selectedHotbar.Name;
+            if (ImGui.InputText(this.localization.Translate("config_common_name"), ref name, 64)) {
+                this.selectedHotbar.Name = name;
+                configChanged = true;
+            }
+
+            ImGui.TextDisabled(this.localization.Translate("config_hb_button_count"));
+            int currentCount = this.selectedHotbar.ButtonCount;
+
+            if (ImGui.RadioButton("16", currentCount == 16)) {
+                this.selectedHotbar.ButtonCount = 16;
+                if (!this.IsLayoutValidForCount(this.selectedHotbar.Layout, 16)) this.selectedHotbar.Layout = HotbarLayout.Grid16x1;
+                configChanged = true;
+            }
+            ImGui.SameLine();
+            if (ImGui.RadioButton("36", currentCount == 36)) {
+                this.selectedHotbar.ButtonCount = 36;
+                if (!this.IsLayoutValidForCount(this.selectedHotbar.Layout, 36)) this.selectedHotbar.Layout = HotbarLayout.Grid6x6;
+                configChanged = true;
+            }
+
+            if (ImGui.BeginCombo(this.localization.Translate("config_hb_layout"), this.selectedHotbar.Layout.ToString())) {
+                foreach (HotbarLayout layout in Enum.GetValues(typeof(HotbarLayout))) {
+                    if (!this.IsLayoutValidForCount(layout, this.selectedHotbar.ButtonCount)) continue;
+
+                    if (ImGui.Selectable(layout.ToString(), this.selectedHotbar.Layout == layout)) {
+                        this.selectedHotbar.Layout = layout;
                         configChanged = true;
                     }
                 }
                 ImGui.EndCombo();
             }
-            ImGui.SameLine();
 
-            string searchQuery = this.selectedHotbar.SearchQuery;
-            ImGui.SetNextItemWidth(-1f);
-            if (ImGui.InputTextWithHint("##HotbarSearch", this.localization.Translate("config_hb_search"), ref searchQuery, 128)) {
-                this.selectedHotbar.SearchQuery = searchQuery;
-                configChanged = true;
+            if (ImGui.BeginCombo(this.localization.Translate("config_hb_anchor"), this.selectedHotbar.Anchor.ToString())) {
+                foreach (HotbarAnchor anchor in Enum.GetValues(typeof(HotbarAnchor))) {
+                    if (ImGui.Selectable(anchor.ToString(), this.selectedHotbar.Anchor == anchor)) {
+                        this.selectedHotbar.Anchor = anchor;
+                        this.selectedHotbar.PositionInitialized = false;
+                        configChanged = true;
+                    }
+                }
+                ImGui.EndCombo();
             }
 
-            bool moddedOnly = this.selectedHotbar.ShowModdedOnly;
-            if (ImGui.Checkbox(this.localization.Translate("config_hb_modded_only"), ref moddedOnly)) {
-                this.selectedHotbar.ShowModdedOnly = moddedOnly;
+            string currentPopModeStr = this.selectedHotbar.PopulationMode == HotbarPopulationMode.Manual ? this.localization.Translate("config_hb_pop_manual") : this.localization.Translate("config_hb_pop_dynamic");
+
+            if (ImGui.BeginCombo(this.localization.Translate("config_hb_pop_mode"), currentPopModeStr)) {
+                foreach (HotbarPopulationMode mode in Enum.GetValues(typeof(HotbarPopulationMode))) {
+                    string modeStr = mode == HotbarPopulationMode.Manual ? this.localization.Translate("config_hb_pop_manual") : this.localization.Translate("config_hb_pop_dynamic");
+
+                    if (ImGui.Selectable(modeStr, this.selectedHotbar.PopulationMode == mode)) {
+                        this.selectedHotbar.PopulationMode = mode;
+                        configChanged = true;
+                    }
+                }
+                ImGui.EndCombo();
+            }
+
+            ImGui.Spacing();
+            float scalePercent = this.selectedHotbar.Scale * 100f;
+            if (ImGui.SliderFloat(this.localization.Translate("config_hb_scale"), ref scalePercent, 75f, 125f, "%.0f%%")) {
+                this.selectedHotbar.Scale = scalePercent / 100f;
                 configChanged = true;
             }
 
             ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
 
-            var categories = this.hotbarManager.GetEmoteCache().Select(e => e.Category).Where(c => !string.IsNullOrEmpty(c)).Distinct().ToList();
-            this.DrawMultiSelectCombo(this.localization.Translate("config_common_categories"), categories, this.selectedHotbar.SelectedCategories, ref configChanged);
+            if (this.selectedHotbar.PopulationMode == HotbarPopulationMode.Dynamic) {
+                ImGui.Text(this.localization.Translate("config_hb_dyn_filters"));
 
-            var groups = context.EmoteGroups.Select(g => g.Name).ToList();
-            this.DrawMultiSelectCombo(this.localization.Translate("config_common_groups"), groups, this.selectedHotbar.SelectedGroups, ref configChanged);
+                ImGui.SetNextItemWidth(120f);
+                if (ImGui.BeginCombo("##TargetTypeCombo", this.localization.Translate($"config_hb_target_{this.selectedHotbar.TargetType.ToString().ToLowerInvariant()}"))) {
+                    foreach (HotbarTargetType type in Enum.GetValues(typeof(HotbarTargetType))) {
+                        if (ImGui.Selectable(this.localization.Translate($"config_hb_target_{type.ToString().ToLowerInvariant()}"), this.selectedHotbar.TargetType == type)) {
+                            this.selectedHotbar.TargetType = type;
+                            configChanged = true;
+                        }
+                    }
+                    ImGui.EndCombo();
+                }
+                ImGui.SameLine();
 
-            var tags = context.AvailableTags.ToList();
-            this.DrawMultiSelectCombo(this.localization.Translate("config_common_tags"), tags, this.selectedHotbar.SelectedTags, ref configChanged);
+                string searchQuery = this.selectedHotbar.SearchQuery;
+                ImGui.SetNextItemWidth(-1f);
+                if (ImGui.InputTextWithHint("##HotbarSearch", this.localization.Translate("config_hb_search"), ref searchQuery, 128)) {
+                    this.selectedHotbar.SearchQuery = searchQuery;
+                    configChanged = true;
+                }
+
+                bool moddedOnly = this.selectedHotbar.ShowModdedOnly;
+                if (ImGui.Checkbox(this.localization.Translate("config_hb_modded_only"), ref moddedOnly)) {
+                    this.selectedHotbar.ShowModdedOnly = moddedOnly;
+                    configChanged = true;
+                }
+
+                ImGui.Spacing();
+
+                var categories = this.hotbarManager.GetEmoteCache().Select(e => e.Category).Where(c => !string.IsNullOrEmpty(c)).Distinct().ToList();
+                this.DrawMultiSelectCombo(this.localization.Translate("config_common_categories"), categories, this.selectedHotbar.SelectedCategories, ref configChanged);
+
+                var groups = context.EmoteGroups.Select(g => g.Name).ToList();
+                this.DrawMultiSelectCombo(this.localization.Translate("config_common_groups"), groups, this.selectedHotbar.SelectedGroups, ref configChanged);
+
+                var tags = context.AvailableTags.ToList();
+                this.DrawMultiSelectCombo(this.localization.Translate("config_common_tags"), tags, this.selectedHotbar.SelectedTags, ref configChanged);
+            }
+            else {
+                ImGui.Text(this.localization.Translate("config_hb_manual_pop"));
+                ImGui.TextDisabled(this.localization.Translate("config_hb_manual_desc"));
+            }
+
+            ImGui.Spacing();
+
+            this.DrawPreview();
         }
-        else {
-            ImGui.Text(this.localization.Translate("config_hb_manual_pop"));
-            ImGui.TextDisabled(this.localization.Translate("config_hb_manual_desc"));
-        }
-
-        ImGui.Spacing();
-
-        this.DrawPreview();
+        ImGui.EndChild();
 
         if (configChanged) {
             this.configService.Save();

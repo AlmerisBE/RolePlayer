@@ -104,7 +104,6 @@ public class MacroEditorPanelComponent {
             ImGui.TableNextColumn();
             ImGui.PushFont(UiBuilder.IconFont);
 
-            // Fix: Store the state before the button is drawn to avoid ImGui stack leaks
             bool wasLocked = macro.IsLocked;
             if (wasLocked) ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
 
@@ -139,193 +138,198 @@ public class MacroEditorPanelComponent {
         }
 
         ImGui.Separator();
-        ImGui.Spacing();
 
-        float totalHeight = ImGui.GetTextLineHeight() + ImGui.GetStyle().ItemSpacing.Y + ImGui.GetFrameHeight();
-        float btnSizeXY = totalHeight;
-        float imgSize = btnSizeXY - (ImGui.GetStyle().FramePadding.Y * 2);
-        float inputWidth = ImGui.GetContentRegionAvail().X - btnSizeXY - ImGui.GetStyle().ItemSpacing.X;
+        // Zone de défilement isolée pour le contenu
+        if (ImGui.BeginChild("MacroEditorScrollArea")) {
+            ImGui.Spacing();
 
-        ImGui.BeginDisabled(macro.IsLocked);
+            float totalHeight = ImGui.GetTextLineHeight() + ImGui.GetStyle().ItemSpacing.Y + ImGui.GetFrameHeight();
+            float btnSizeXY = totalHeight;
+            float imgSize = btnSizeXY - (ImGui.GetStyle().FramePadding.Y * 2);
+            float inputWidth = ImGui.GetContentRegionAvail().X - btnSizeXY - ImGui.GetStyle().ItemSpacing.X;
 
-        ImGui.BeginGroup();
-        ImGui.TextDisabled(this.localization.Translate("config_common_name"));
+            ImGui.BeginDisabled(macro.IsLocked);
 
-        string name = macro.Name;
-        ImGui.SetNextItemWidth(inputWidth);
-        if (ImGui.InputText("##MacroNameEdit", ref name, 64)) {
-            macro.Name = name;
-            changed = true;
-        }
-        ImGui.EndGroup();
+            ImGui.BeginGroup();
+            ImGui.TextDisabled(this.localization.Translate("config_common_name"));
 
-        ImGui.SameLine();
-
-        bool openIconPicker = false;
-        ImGui.PushID("IconSelectButton");
-        try {
-            var lookup = new GameIconLookup { IconId = macro.IconId, HiRes = false };
-            var iconWrap = this.textureProvider.GetFromGameIcon(lookup).GetWrapOrDefault();
-
-            if (iconWrap != null && ImGui.ImageButton(iconWrap.Handle, new Vector2(imgSize, imgSize))) openIconPicker = true;
-            if (iconWrap == null && ImGui.Button("?", new Vector2(btnSizeXY, btnSizeXY))) openIconPicker = true;
-        }
-        catch (IconNotFoundException) {
-            if (ImGui.Button("?", new Vector2(btnSizeXY, btnSizeXY))) openIconPicker = true;
-        }
-        ImGui.PopID();
-
-        if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_macro_icon_select"));
-
-        if (openIconPicker) ImGui.OpenPopup("IconPickerPopup");
-
-        this.DrawIconPickerPopup(macro, ref changed);
-
-        ImGui.EndDisabled();
-
-        ImGui.Spacing();
-        ImGui.Separator();
-        ImGui.Spacing();
-
-        this.DrawStaticHotbarAssignment(macro.Id);
-
-        ImGui.Spacing();
-        ImGui.Separator();
-        ImGui.Spacing();
-
-        ImGui.TextDisabled(this.localization.Translate("config_macro_group"));
-        ImGui.SetNextItemWidth(-1f);
-        var groups = this.groupService.GetGroups().Select(g => g.Name).ToList();
-        var currentGroup = this.groupService.GetGroupForMacro(macro.Id);
-
-        if (ImGui.BeginCombo("##MacroGroupCombo", string.IsNullOrEmpty(currentGroup) ? this.localization.Translate("browser_none") : currentGroup)) {
-            if (ImGui.Selectable(this.localization.Translate("browser_none"), string.IsNullOrEmpty(currentGroup))) {
-                this.groupService.RemoveMacroFromGroup(macro.Id);
+            string name = macro.Name;
+            ImGui.SetNextItemWidth(inputWidth);
+            if (ImGui.InputText("##MacroNameEdit", ref name, 64)) {
+                macro.Name = name;
+                changed = true;
             }
-            foreach (var g in groups) {
-                if (ImGui.Selectable(g, currentGroup == g)) {
-                    this.groupService.AssignMacroToGroup(macro.Id, g);
+            ImGui.EndGroup();
+
+            ImGui.SameLine();
+
+            bool openIconPicker = false;
+            ImGui.PushID("IconSelectButton");
+            try {
+                var lookup = new GameIconLookup { IconId = macro.IconId, HiRes = false };
+                var iconWrap = this.textureProvider.GetFromGameIcon(lookup).GetWrapOrDefault();
+
+                if (iconWrap != null && ImGui.ImageButton(iconWrap.Handle, new Vector2(imgSize, imgSize))) openIconPicker = true;
+                if (iconWrap == null && ImGui.Button("?", new Vector2(btnSizeXY, btnSizeXY))) openIconPicker = true;
+            }
+            catch (IconNotFoundException) {
+                if (ImGui.Button("?", new Vector2(btnSizeXY, btnSizeXY))) openIconPicker = true;
+            }
+            ImGui.PopID();
+
+            if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_macro_icon_select"));
+
+            if (openIconPicker) ImGui.OpenPopup("IconPickerPopup");
+
+            this.DrawIconPickerPopup(macro, ref changed);
+
+            ImGui.EndDisabled();
+
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
+
+            this.DrawStaticHotbarAssignment(macro.Id);
+
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
+
+            ImGui.TextDisabled(this.localization.Translate("config_macro_group"));
+            ImGui.SetNextItemWidth(-1f);
+            var groups = this.groupService.GetGroups().Select(g => g.Name).ToList();
+            var currentGroup = this.groupService.GetGroupForMacro(macro.Id);
+
+            if (ImGui.BeginCombo("##MacroGroupCombo", string.IsNullOrEmpty(currentGroup) ? this.localization.Translate("browser_none") : currentGroup)) {
+                if (ImGui.Selectable(this.localization.Translate("browser_none"), string.IsNullOrEmpty(currentGroup))) {
+                    this.groupService.RemoveMacroFromGroup(macro.Id);
+                }
+                foreach (var g in groups) {
+                    if (ImGui.Selectable(g, currentGroup == g)) {
+                        this.groupService.AssignMacroToGroup(macro.Id, g);
+                    }
+                }
+                ImGui.EndCombo();
+            }
+
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
+
+            ImGui.TextDisabled(this.localization.Translate("config_macro_tags"));
+
+            var macroTags = this.tagService.GetTagsForMacro(macro.Id).ToList();
+
+            if (ImGui.BeginTable("MacroTagsTable", 2, ImGuiTableFlags.BordersInnerH | ImGuiTableFlags.RowBg)) {
+                ImGui.TableSetupColumn(this.localization.Translate("config_common_tags"), ImGuiTableColumnFlags.WidthStretch);
+                ImGui.TableSetupColumn(this.localization.Translate("config_common_actions"), ImGuiTableColumnFlags.WidthFixed, 60f);
+
+                if (macroTags.Count == 0) {
+                    ImGui.TableNextRow();
+                    ImGui.TableNextColumn();
+                    ImGui.TextDisabled(this.localization.Translate("browser_details_no_assigned_tags"));
+                    ImGui.TableNextColumn();
+                }
+
+                string? tagToRemove = null;
+                foreach (var tag in macroTags) {
+                    ImGui.TableNextRow();
+                    ImGui.TableNextColumn();
+                    ImGui.AlignTextToFramePadding();
+                    ImGui.TextUnformatted(tag);
+
+                    ImGui.TableNextColumn();
+                    if (ImGui.Button($"{this.localization.Translate("browser_details_remove")}##{tag}", new Vector2(-1f, 0))) tagToRemove = tag;
+                }
+                ImGui.EndTable();
+
+                if (tagToRemove != null) {
+                    this.tagService.RemoveTagFromMacro(macro.Id, tagToRemove);
                 }
             }
-            ImGui.EndCombo();
-        }
 
-        ImGui.Spacing();
-        ImGui.Separator();
-        ImGui.Spacing();
+            ImGui.Spacing();
 
-        ImGui.TextDisabled(this.localization.Translate("config_macro_tags"));
+            var availableTags = this.tagService.GetAvailableTags().Except(macroTags).ToList();
 
-        var macroTags = this.tagService.GetTagsForMacro(macro.Id).ToList();
-
-        if (ImGui.BeginTable("MacroTagsTable", 2, ImGuiTableFlags.BordersInnerH | ImGuiTableFlags.RowBg)) {
-            ImGui.TableSetupColumn(this.localization.Translate("config_common_tags"), ImGuiTableColumnFlags.WidthStretch);
-            ImGui.TableSetupColumn(this.localization.Translate("config_common_actions"), ImGuiTableColumnFlags.WidthFixed, 60f);
-
-            if (macroTags.Count == 0) {
+            if (ImGui.BeginTable("AddMacroTagTable", 1, ImGuiTableFlags.None)) {
+                ImGui.TableSetupColumn("Combo", ImGuiTableColumnFlags.WidthStretch);
                 ImGui.TableNextRow();
                 ImGui.TableNextColumn();
-                ImGui.TextDisabled(this.localization.Translate("browser_details_no_assigned_tags"));
-                ImGui.TableNextColumn();
+
+                ImGui.SetNextItemWidth(-1f);
+                if (availableTags.Count > 0) {
+                    if (ImGui.BeginCombo("##addTagMacroCombo", this.localization.Translate("browser_details_select_tag"))) {
+                        foreach (var tag in availableTags) {
+                            if (ImGui.Selectable(tag)) {
+                                this.tagService.AddTagToMacro(macro.Id, tag);
+                            }
+                        }
+                        ImGui.EndCombo();
+                    }
+                }
+                else {
+                    ImGui.BeginDisabled();
+                    if (ImGui.BeginCombo("##addTagMacroCombo", this.localization.Translate("browser_details_no_available_tags"))) ImGui.EndCombo();
+                    ImGui.EndDisabled();
+                }
+                ImGui.EndTable();
             }
 
-            string? tagToRemove = null;
-            foreach (var tag in macroTags) {
-                ImGui.TableNextRow();
-                ImGui.TableNextColumn();
-                ImGui.AlignTextToFramePadding();
-                ImGui.TextUnformatted(tag);
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
 
-                ImGui.TableNextColumn();
-                if (ImGui.Button($"{this.localization.Translate("browser_details_remove")}##{tag}", new Vector2(-1f, 0))) tagToRemove = tag;
+            ImGui.BeginDisabled(macro.IsLocked);
+
+            ImGui.TextDisabled(this.localization.Translate("config_macro_col_content"));
+            ImGui.Spacing();
+
+            string content = macro.Content;
+            float inputHeight = ImGui.GetTextLineHeight() * 10f;
+
+            if (ImGui.InputTextMultiline("##MacroContent", ref content, 8192, new Vector2(-1, inputHeight))) {
+                macro.Content = content;
+                changed = true;
             }
-            ImGui.EndTable();
 
-            if (tagToRemove != null) {
-                this.tagService.RemoveTagFromMacro(macro.Id, tagToRemove);
-            }
-        }
+            if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_macro_lines_hint"));
 
-        ImGui.Spacing();
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
 
-        var availableTags = this.tagService.GetAvailableTags().Except(macroTags).ToList();
+            ImGui.TextDisabled(this.localization.Translate("config_macro_autotranslate_title"));
+            ImGui.Spacing();
 
-        if (ImGui.BeginTable("AddMacroTagTable", 1, ImGuiTableFlags.None)) {
-            ImGui.TableSetupColumn("Combo", ImGuiTableColumnFlags.WidthStretch);
-            ImGui.TableNextRow();
-            ImGui.TableNextColumn();
+            ImGui.TextWrapped(this.localization.Translate("config_macro_autotranslate_desc"));
+            ImGui.Spacing();
 
             ImGui.SetNextItemWidth(-1f);
-            if (availableTags.Count > 0) {
-                if (ImGui.BeginCombo("##addTagMacroCombo", this.localization.Translate("browser_details_select_tag"))) {
-                    foreach (var tag in availableTags) {
-                        if (ImGui.Selectable(tag)) {
-                            this.tagService.AddTagToMacro(macro.Id, tag);
+
+            if (ImGui.InputTextWithHint("##AutoTranslateSearch", this.localization.Translate("config_macro_autotranslate_hint"), ref this.autoTranslateSearch, 64)) {
+                if (this.autoTranslateSearch.Length >= 2) this.autoTranslateResults = this.autoTranslateService.Search(this.autoTranslateSearch).ToList();
+                else this.autoTranslateResults.Clear();
+            }
+
+            if (this.autoTranslateResults.Count > 0) {
+                if (ImGui.BeginChild("AutoTranslateResultsList", new Vector2(0, 150), true)) {
+                    foreach (var result in this.autoTranslateResults) {
+                        if (ImGui.Selectable($"{result.DisplayText}##{result.Payload}")) {
+                            macro.Content += result.Payload;
+                            changed = true;
+                            this.autoTranslateSearch = string.Empty;
+                            this.autoTranslateResults.Clear();
+                            break;
                         }
                     }
-                    ImGui.EndCombo();
+                    ImGui.EndChild();
                 }
             }
-            else {
-                ImGui.BeginDisabled();
-                if (ImGui.BeginCombo("##addTagMacroCombo", this.localization.Translate("browser_details_no_available_tags"))) ImGui.EndCombo();
-                ImGui.EndDisabled();
-            }
-            ImGui.EndTable();
+
+            ImGui.EndDisabled();
         }
-
-        ImGui.Spacing();
-        ImGui.Separator();
-        ImGui.Spacing();
-
-        ImGui.BeginDisabled(macro.IsLocked);
-
-        ImGui.TextDisabled(this.localization.Translate("config_macro_col_content"));
-        ImGui.Spacing();
-
-        string content = macro.Content;
-        float inputHeight = ImGui.GetTextLineHeight() * 10f;
-
-        if (ImGui.InputTextMultiline("##MacroContent", ref content, 8192, new Vector2(-1, inputHeight))) {
-            macro.Content = content;
-            changed = true;
-        }
-
-        if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_macro_lines_hint"));
-
-        ImGui.Spacing();
-        ImGui.Separator();
-        ImGui.Spacing();
-
-        ImGui.TextDisabled(this.localization.Translate("config_macro_autotranslate_title"));
-        ImGui.Spacing();
-
-        ImGui.TextWrapped(this.localization.Translate("config_macro_autotranslate_desc"));
-        ImGui.Spacing();
-
-        ImGui.SetNextItemWidth(-1f);
-
-        if (ImGui.InputTextWithHint("##AutoTranslateSearch", this.localization.Translate("config_macro_autotranslate_hint"), ref this.autoTranslateSearch, 64)) {
-            if (this.autoTranslateSearch.Length >= 2) this.autoTranslateResults = this.autoTranslateService.Search(this.autoTranslateSearch).ToList();
-            else this.autoTranslateResults.Clear();
-        }
-
-        if (this.autoTranslateResults.Count > 0) {
-            if (ImGui.BeginChild("AutoTranslateResultsList", new Vector2(0, 150), true)) {
-                foreach (var result in this.autoTranslateResults) {
-                    if (ImGui.Selectable($"{result.DisplayText}##{result.Payload}")) {
-                        macro.Content += result.Payload;
-                        changed = true;
-                        this.autoTranslateSearch = string.Empty;
-                        this.autoTranslateResults.Clear();
-                        break;
-                    }
-                }
-                ImGui.EndChild();
-            }
-        }
-
-        ImGui.EndDisabled();
+        ImGui.EndChild();
 
         if (changed) {
             this.macroService.UpdateMacro(macro.Id, macro.Name, macro.Content, macro.IconId, macro.IsLocked);

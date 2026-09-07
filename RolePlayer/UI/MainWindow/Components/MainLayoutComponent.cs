@@ -41,15 +41,14 @@ public class MainLayoutComponent {
         if (ImGui.BeginChild("MainContent", new Vector2(contentWidth, -footerHeight), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)) {
             drawMainContent();
         }
-
         ImGui.EndChild();
 
         if (isPanelOpen && !skipSidePanelRender) {
             ImGui.SameLine();
-            if (ImGui.BeginChild("SidePanel", new Vector2(SidePanelWidth, -footerHeight), true)) {
+            // Ajout des flags pour désactiver le défilement sur le conteneur parent
+            if (ImGui.BeginChild("SidePanel", new Vector2(SidePanelWidth, -footerHeight), true, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)) {
                 drawSidePanel();
             }
-
             ImGui.EndChild();
         }
     }

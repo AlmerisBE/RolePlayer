@@ -83,94 +83,100 @@ public class EmoteDetailsPanel {
             ImGui.EndTable();
         }
 
-        ImGui.Spacing();
-
-        if (!string.IsNullOrEmpty(emote.Category)) ImGui.Text(this.localization.Translate("browser_details_category", emote.Category));
-
-        string isUnlockedStr = emote.IsUnlocked ? this.localization.Translate("browser_details_yes") : this.localization.Translate("browser_details_no");
-        ImGui.Text(this.localization.Translate("browser_details_unlocked", isUnlockedStr));
-
-        if (emote.IsUnlockable && !string.IsNullOrEmpty(emote.UnlockRequirement)) {
-            ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.7f, 0.7f, 0.7f, 1.0f));
-            ImGui.TextWrapped(this.localization.Translate("browser_details_unlock_source", emote.UnlockRequirement));
-            ImGui.PopStyleColor();
-        }
-
-        var modName = this.modStateProvider.GetModNameModifyingEmote(emote.Id);
-        if (!string.IsNullOrEmpty(modName)) ImGui.TextColored(new Vector4(0.2f, 0.8f, 0.2f, 1.0f), this.localization.Translate("browser_details_modified_by", modName));
-
-        ImGui.Spacing();
-
-        if (ImGui.BeginTable("CommandsTable", 2, ImGuiTableFlags.BordersInnerH)) {
-            ImGui.TableSetupColumn("Lang", ImGuiTableColumnFlags.WidthFixed, 70f);
-            ImGui.TableSetupColumn("Cmd", ImGuiTableColumnFlags.WidthStretch);
-
-            ImGui.TableNextRow();
-            ImGui.TableNextColumn(); ImGui.TextDisabled(this.localization.Translate("browser_details_command"));
-            ImGui.TableNextColumn(); ImGui.TextUnformatted(emote.LocalizedCommand);
-
-            if (!string.IsNullOrEmpty(emote.EnglishCommand) && emote.EnglishCommand != emote.LocalizedCommand) {
-                ImGui.TableNextRow();
-                ImGui.TableNextColumn(); ImGui.TextDisabled(this.localization.Translate("browser_details_english"));
-                ImGui.TableNextColumn(); ImGui.TextUnformatted(emote.EnglishCommand);
-            }
-            ImGui.EndTable();
-        }
-
-        ImGui.Spacing();
         ImGui.Separator();
-        ImGui.Spacing();
 
-        if (emote.IsUnlocked) {
-            if (ImGui.Button(this.localization.Translate("browser_details_execute"), new Vector2(-1, 30))) this.executionService.ExecuteEmote(emote.Id);
+        // Zone de défilement isolée pour le contenu
+        if (ImGui.BeginChild("EmoteDetailsScrollArea")) {
+            ImGui.Spacing();
+
+            if (!string.IsNullOrEmpty(emote.Category)) ImGui.Text(this.localization.Translate("browser_details_category", emote.Category));
+
+            string isUnlockedStr = emote.IsUnlocked ? this.localization.Translate("browser_details_yes") : this.localization.Translate("browser_details_no");
+            ImGui.Text(this.localization.Translate("browser_details_unlocked", isUnlockedStr));
+
+            if (emote.IsUnlockable && !string.IsNullOrEmpty(emote.UnlockRequirement)) {
+                ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.7f, 0.7f, 0.7f, 1.0f));
+                ImGui.TextWrapped(this.localization.Translate("browser_details_unlock_source", emote.UnlockRequirement));
+                ImGui.PopStyleColor();
+            }
+
+            var modName = this.modStateProvider.GetModNameModifyingEmote(emote.Id);
+            if (!string.IsNullOrEmpty(modName)) ImGui.TextColored(new Vector4(0.2f, 0.8f, 0.2f, 1.0f), this.localization.Translate("browser_details_modified_by", modName));
 
             ImGui.Spacing();
 
-            ImGui.SetNextItemWidth(-1f);
-            if (ImGui.BeginCombo("##AppendToMacroCombo", this.localization.Translate("browser_ctx_append_macro"))) {
-                var unlockedMacros = this.macroService.GetMacros().Where(m => !m.IsLocked).ToList();
-                if (!unlockedMacros.Any()) {
-                    ImGui.Selectable(this.localization.Translate("browser_ctx_no_unlocked_macros"), false, ImGuiSelectableFlags.Disabled);
+            if (ImGui.BeginTable("CommandsTable", 2, ImGuiTableFlags.BordersInnerH)) {
+                ImGui.TableSetupColumn("Lang", ImGuiTableColumnFlags.WidthFixed, 70f);
+                ImGui.TableSetupColumn("Cmd", ImGuiTableColumnFlags.WidthStretch);
+
+                ImGui.TableNextRow();
+                ImGui.TableNextColumn(); ImGui.TextDisabled(this.localization.Translate("browser_details_command"));
+                ImGui.TableNextColumn(); ImGui.TextUnformatted(emote.LocalizedCommand);
+
+                if (!string.IsNullOrEmpty(emote.EnglishCommand) && emote.EnglishCommand != emote.LocalizedCommand) {
+                    ImGui.TableNextRow();
+                    ImGui.TableNextColumn(); ImGui.TextDisabled(this.localization.Translate("browser_details_english"));
+                    ImGui.TableNextColumn(); ImGui.TextUnformatted(emote.EnglishCommand);
                 }
-                else {
-                    foreach (var m in unlockedMacros) {
-                        if (ImGui.Selectable(m.Name)) {
-                            string prefix = string.IsNullOrEmpty(m.Content) ? string.Empty : "\r\n";
-                            m.Content += $"{prefix}{emote.LocalizedCommand}";
-                            this.macroService.UpdateMacro(m.Id, m.Name, m.Content, m.IconId, m.IsLocked);
+                ImGui.EndTable();
+            }
+
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
+
+            if (emote.IsUnlocked) {
+                if (ImGui.Button(this.localization.Translate("browser_details_execute"), new Vector2(-1, 30))) this.executionService.ExecuteEmote(emote.Id);
+
+                ImGui.Spacing();
+
+                ImGui.SetNextItemWidth(-1f);
+                if (ImGui.BeginCombo("##AppendToMacroCombo", this.localization.Translate("browser_ctx_append_macro"))) {
+                    var unlockedMacros = this.macroService.GetMacros().Where(m => !m.IsLocked).ToList();
+                    if (!unlockedMacros.Any()) {
+                        ImGui.Selectable(this.localization.Translate("browser_ctx_no_unlocked_macros"), false, ImGuiSelectableFlags.Disabled);
+                    }
+                    else {
+                        foreach (var m in unlockedMacros) {
+                            if (ImGui.Selectable(m.Name)) {
+                                string prefix = string.IsNullOrEmpty(m.Content) ? string.Empty : "\r\n";
+                                m.Content += $"{prefix}{emote.LocalizedCommand}";
+                                this.macroService.UpdateMacro(m.Id, m.Name, m.Content, m.IconId, m.IsLocked);
+                            }
                         }
                     }
+                    ImGui.EndCombo();
                 }
-                ImGui.EndCombo();
             }
+            else {
+                ImGui.TextDisabled(this.localization.Translate("browser_details_not_unlocked"));
+            }
+
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
+
+            this.DrawStaticHotbarAssignment(emote.Id);
+
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
+
+            this.DrawGroupManagement(emote.Id);
+
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
+
+            this.DrawTagManagement(emote.Id);
+
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
+
+            if (ImGui.Button(this.localization.Translate("browser_details_debug"), new Vector2(-1, 0))) this.debugService.LogEmoteDetails(emote.Id);
         }
-        else {
-            ImGui.TextDisabled(this.localization.Translate("browser_details_not_unlocked"));
-        }
-
-        ImGui.Spacing();
-        ImGui.Separator();
-        ImGui.Spacing();
-
-        this.DrawStaticHotbarAssignment(emote.Id);
-
-        ImGui.Spacing();
-        ImGui.Separator();
-        ImGui.Spacing();
-
-        this.DrawGroupManagement(emote.Id);
-
-        ImGui.Spacing();
-        ImGui.Separator();
-        ImGui.Spacing();
-
-        this.DrawTagManagement(emote.Id);
-
-        ImGui.Spacing();
-        ImGui.Separator();
-        ImGui.Spacing();
-
-        if (ImGui.Button(this.localization.Translate("browser_details_debug"), new Vector2(-1, 0))) this.debugService.LogEmoteDetails(emote.Id);
+        ImGui.EndChild();
     }
 
     private void DrawStaticHotbarAssignment(uint emoteId) {
