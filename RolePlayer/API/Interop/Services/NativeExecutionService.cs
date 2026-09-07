@@ -59,20 +59,9 @@ public unsafe class NativeExecutionService : INativeExecutionService, IDisposabl
             }
 
             if (uint.TryParse(match.Groups[1].Value, out uint group) && uint.TryParse(match.Groups[2].Value, out uint key)) {
-                var text = match.Groups[3].Value;
-
-                // 1. Octets d'ouverture (AutoTranslatePayload)
                 var payload = new AutoTranslatePayload(group, key);
                 var payloadBytes = payload.Encode();
                 ms.Write(payloadBytes, 0, payloadBytes.Length);
-
-                // 2. Texte brut de l'expression
-                var translateTextBytes = Encoding.UTF8.GetBytes(text);
-                ms.Write(translateTextBytes, 0, translateTextBytes.Length);
-
-                // 3. Octets de fermeture natifs FFXIV (Longueur 0 encodée en 0x01)
-                var endBytes = new byte[] { 0x02, 0x27, 0x01, 0x03 };
-                ms.Write(endBytes, 0, endBytes.Length);
             }
 
             lastIndex = match.Index + match.Length;
@@ -83,7 +72,7 @@ public unsafe class NativeExecutionService : INativeExecutionService, IDisposabl
             ms.Write(textBytes, 0, textBytes.Length);
         }
 
-        ms.WriteByte(0); // Terminateur C natif
+        ms.WriteByte(0);
         return ms.ToArray();
     }
 

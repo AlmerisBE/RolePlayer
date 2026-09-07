@@ -23,13 +23,13 @@ public class AutoTranslateProvider : IAutoTranslateService {
         foreach (var row in sheet) {
             var text = row.Text.ToString();
             if (string.IsNullOrWhiteSpace(text)) continue;
-            if (row.Group == 0 || row.Key == 0) continue;
+            if (row.Group == 0) continue;
 
             var safeText = text.Replace(">", "").Replace("<", "");
 
             this.cache.Add(new AutoTranslateResult {
                 DisplayText = text,
-                Payload = $"<at:{row.Group}:{row.Key}:{safeText}>"
+                Payload = $"<at:{row.Group}:{row.RowId}:{safeText}>"
             });
         }
 
