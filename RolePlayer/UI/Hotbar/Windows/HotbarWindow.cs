@@ -50,7 +50,7 @@ public class HotbarWindow : Window {
         this.localization = localization;
 
         this.SizeConstraints = new WindowSizeConstraints {
-            MinimumSize = new Vector2(IconSize + 6f, IconSize + 6f),
+            MinimumSize = new Vector2(IconSize + 4f, IconSize + 4f),
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
         };
 
@@ -78,8 +78,9 @@ public class HotbarWindow : Window {
             this.Flags &= ~ImGuiWindowFlags.NoMove;
         }
 
-        ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(3f, 3f));
-        ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(4f, 4f));
+        // Tighter window paddings to mimic vanilla UI
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(2f, 2f));
+        ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(2f, 2f));
     }
 
     public override void Draw() {
@@ -98,6 +99,7 @@ public class HotbarWindow : Window {
             float columnWidth = IconSize;
 
             ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, Vector2.Zero);
+            ImGui.PushStyleVar(ImGuiStyleVar.CellPadding, new Vector2(1f, 1f)); // Minimal padding between icons
             ImGui.PushStyleColor(ImGuiCol.Button, Vector4.Zero);
 
             if (ImGui.BeginTable($"HotbarGrid_{this.config.Id}", actualColumns, ImGuiTableFlags.SizingFixedFit)) {
@@ -113,9 +115,12 @@ public class HotbarWindow : Window {
             }
 
             ImGui.PopStyleColor();
-            ImGui.PopStyleVar();
+            ImGui.PopStyleVar(2);
 
-            if (totalPages > 1) this.DrawPagination(totalPages);
+            if (totalPages > 1) {
+                ImGui.Spacing();
+                this.DrawPagination(totalPages);
+            }
         }
         else if (!this.config.IsLocked) {
             ImGui.Dummy(new Vector2(IconSize, IconSize));
