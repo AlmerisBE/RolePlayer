@@ -108,5 +108,6 @@
   "config_macro_execute": "Execute Macro",
   "main_tab_macros": "Macros",
   "config_macro_autotranslate_title": "Auto-Translate Dictionary",
-  "config_macro_autotranslate_hint": "Search for a term (min 2 chars)..."
+  "config_macro_autotranslate_hint": "Search for a term (min 2 chars)...",
+  "config_macro_autotranslate_desc": "Use this dictionary to insert auto-translate terms into your macro. They will be seamlessly converted into native game tags upon execution."
 }

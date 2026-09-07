@@ -239,7 +239,8 @@ public class MacrosTab : IEmoteBrowserTab, IDisposable {
         string content = this.selectedMacro.Content;
         float inputHeight = ImGui.GetTextLineHeight() * 10f;
 
-        if (ImGui.InputTextMultiline("##MacroContent", ref content, 2048, new Vector2(-1, inputHeight))) {
+        // Limite drastiquement augmentée (8192) pour accommoder le poids visuel des balises textuelles.
+        if (ImGui.InputTextMultiline("##MacroContent", ref content, 8192, new Vector2(-1, inputHeight))) {
             this.selectedMacro.Content = content;
             changed = true;
         }
@@ -251,6 +252,11 @@ public class MacrosTab : IEmoteBrowserTab, IDisposable {
         ImGui.Spacing();
 
         ImGui.TextDisabled(this.localization.Translate("config_macro_autotranslate_title"));
+        ImGui.Spacing();
+
+        ImGui.TextWrapped(this.localization.Translate("config_macro_autotranslate_desc"));
+        ImGui.Spacing();
+
         ImGui.SetNextItemWidth(-1f);
 
         if (ImGui.InputTextWithHint("##AutoTranslateSearch", this.localization.Translate("config_macro_autotranslate_hint"), ref this.autoTranslateSearch, 64)) {
@@ -266,7 +272,7 @@ public class MacrosTab : IEmoteBrowserTab, IDisposable {
                         changed = true;
                         this.autoTranslateSearch = string.Empty;
                         this.autoTranslateResults.Clear();
-                        break; // Important pour éviter une exception de modification de collection
+                        break;
                     }
                 }
                 ImGui.EndChild();
@@ -278,7 +284,6 @@ public class MacrosTab : IEmoteBrowserTab, IDisposable {
         }
     }
 
-    // Le reste du fichier (DrawIconPreview, DrawIconPickerPopup, DrawIconGrid, DrawDeleteConfirmationModal, Dispose) reste strictement identique.
     private void DrawIconPreview(uint iconId, float size) {
         try {
             var lookup = new GameIconLookup { IconId = iconId, HiRes = false };

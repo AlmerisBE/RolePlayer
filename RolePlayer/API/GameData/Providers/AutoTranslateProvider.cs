@@ -1,13 +1,11 @@
 ﻿namespace RolePlayer.API.GameData.Providers;
 
-using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Plugin.Services;
 using Lumina.Excel.Sheets;
 using RolePlayer.UI.MainWindow.Contracts;
 using RolePlayer.UI.MainWindow.Models;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 public class AutoTranslateProvider : IAutoTranslateService {
     private IDataManager dataManager;
@@ -27,18 +25,12 @@ public class AutoTranslateProvider : IAutoTranslateService {
             if (string.IsNullOrWhiteSpace(text)) continue;
             if (row.Group == 0 || row.Key == 0) continue;
 
-            try {
-                // Correct cast to uint as expected by Dalamud's AutoTranslatePayload constructor
-                var payload = new AutoTranslatePayload(row.Group, row.Key);
-                var bytes = payload.Encode();
-                var payloadString = Encoding.UTF8.GetString(bytes);
+            var safeText = text.Replace(">", "").Replace("<", "");
 
-                this.cache.Add(new AutoTranslateResult {
-                    DisplayText = text,
-                    Payload = payloadString
-                });
-            }
-            catch { }
+            this.cache.Add(new AutoTranslateResult {
+                DisplayText = text,
+                Payload = $"<at:{row.Group}:{row.Key}:{safeText}>"
+            });
         }
 
         this.isLoaded = true;

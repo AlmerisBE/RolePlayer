@@ -108,5 +108,6 @@
   "config_macro_execute": "Exécuter la Macro",
   "main_tab_macros": "Macros",
   "config_macro_autotranslate_title": "Dictionnaire de Traduction",
-  "config_macro_autotranslate_hint": "Rechercher un terme (min 2 carac)..."
+  "config_macro_autotranslate_hint": "Rechercher un terme (min 2 carac)...",
+  "config_macro_autotranslate_desc": "Utilisez ce dictionnaire pour insérer des termes traduits automatiquement dans votre macro. Ils seront convertis lors de l'exécution."
 }

@@ -108,5 +108,6 @@
   "config_macro_execute": "マクロを実行",
   "main_tab_macros": "マクロ",
   "config_macro_autotranslate_title": "定型文辞書",
-  "config_macro_autotranslate_hint": "用語を検索（2文字以上）..."
+  "config_macro_autotranslate_hint": "用語を検索（2文字以上）...",
+  "config_macro_autotranslate_desc": "この辞書を使用して、マクロに定型文を挿入します。実行時に自動的に変換されます。"
 }
