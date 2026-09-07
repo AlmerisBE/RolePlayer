@@ -88,5 +88,15 @@
   "about_feature_3": "Create dynamic and manual hotbars for quick access.",
   "about_feature_4": "Seamless Penumbra integration to identify modified emotes.",
   "about_discord": "Discord Server",
-  "about_github": "GitHub Repository"
+  "about_github": "GitHub Repository",
+  "config_tab_macros": "Macros",
+  "config_macro_create": "Create New Macro",
+  "config_macro_name_hint": "Macro Name",
+  "config_macro_content_hint": "Macro Content (e.g. /em smiles warmly.)",
+  "config_macro_icon_hint": "Icon ID",
+  "config_macro_col_icon": "Icon",
+  "config_macro_col_content": "Content",
+  "config_macro_del_title": "Delete Macro",
+  "config_macro_del_desc": "Are you sure you want to delete the macro '{0}'?",
+  "config_macro_del_warn": "This macro will be removed from all hotbars."
 }

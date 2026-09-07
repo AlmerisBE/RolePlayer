@@ -88,5 +88,15 @@
   "about_feature_3": "Dynamische und manuelle Aktionsleisten für schnellen Zugriff erstellen.",
   "about_feature_4": "Nahtlose Penumbra-Integration zur Identifizierung modifizierter Emotes.",
   "about_discord": "Discord-Server",
-  "about_github": "GitHub-Repository"
+  "about_github": "GitHub-Repository",
+  "config_tab_macros": "Makros",
+  "config_macro_create": "Neues Makro erstellen",
+  "config_macro_name_hint": "Makroname",
+  "config_macro_content_hint": "Inhalt (z.B. /em lächelt warm.)",
+  "config_macro_icon_hint": "Symbol-ID",
+  "config_macro_col_icon": "Symbol",
+  "config_macro_col_content": "Inhalt",
+  "config_macro_del_title": "Makro löschen",
+  "config_macro_del_desc": "Möchtest du das Makro '{0}' wirklich löschen?",
+  "config_macro_del_warn": "Dieses Makro wird aus allen Leisten entfernt."
 }

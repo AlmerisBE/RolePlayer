@@ -88,5 +88,15 @@
   "about_feature_3": "迅速にアクセスするための動的および手動ホットバーの作成。",
   "about_feature_4": "変更されたエモートを識別するためのシームレスなPenumbra統合。",
   "about_discord": "Discordサーバー",
-  "about_github": "GitHubリポジトリ"
+  "about_github": "GitHubリポジトリ",
+  "config_tab_macros": "マクロ",
+  "config_macro_create": "新規マクロ作成",
+  "config_macro_name_hint": "マクロ名",
+  "config_macro_content_hint": "内容（例: /em は微笑んだ。）",
+  "config_macro_icon_hint": "アイコンID",
+  "config_macro_col_icon": "アイコン",
+  "config_macro_col_content": "内容",
+  "config_macro_del_title": "マクロを削除",
+  "config_macro_del_desc": "本当にマクロ '{0}' を削除しますか？",
+  "config_macro_del_warn": "このマクロはすべてのホットバーから削除されます。"
 }

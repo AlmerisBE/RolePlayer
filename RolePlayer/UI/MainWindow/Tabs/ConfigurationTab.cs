@@ -19,6 +19,7 @@ public class ConfigurationTab : IEmoteBrowserTab, IDisposable {
     private GroupsConfigSubTab groupsConfigSubTab;
     private TagsConfigSubTab tagsConfigSubTab;
     private ContextsConfigSubTab contextsConfigSubTab;
+    private MacrosConfigSubTab macrosConfigSubTab;
 
     private bool isHotbarTabActive = true;
 
@@ -28,6 +29,7 @@ public class ConfigurationTab : IEmoteBrowserTab, IDisposable {
         GroupsConfigSubTab groupsConfigSubTab,
         TagsConfigSubTab tagsConfigSubTab,
         ContextsConfigSubTab contextsConfigSubTab,
+        MacrosConfigSubTab macrosConfigSubTab,
         ILocalizationService localization) {
 
         this.generalConfigSubTab = generalConfigSubTab;
@@ -35,6 +37,7 @@ public class ConfigurationTab : IEmoteBrowserTab, IDisposable {
         this.groupsConfigSubTab = groupsConfigSubTab;
         this.tagsConfigSubTab = tagsConfigSubTab;
         this.contextsConfigSubTab = contextsConfigSubTab;
+        this.macrosConfigSubTab = macrosConfigSubTab;
         this.localization = localization;
     }
 
@@ -55,6 +58,12 @@ public class ConfigurationTab : IEmoteBrowserTab, IDisposable {
             if (ImGui.BeginTabItem(this.localization.Translate("config_tab_hotbars"))) {
                 this.isHotbarTabActive = true;
                 this.hotbarConfigSubTab.Draw();
+                ImGui.EndTabItem();
+            }
+
+            if (ImGui.BeginTabItem(this.localization.Translate("config_tab_macros"))) {
+                this.isHotbarTabActive = false;
+                this.macrosConfigSubTab.Draw();
                 ImGui.EndTabItem();
             }
 
