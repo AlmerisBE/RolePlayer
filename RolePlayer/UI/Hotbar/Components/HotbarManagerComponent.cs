@@ -97,6 +97,7 @@ public class HotbarManagerComponent : IDisposable {
     }
 
     private bool EvaluateHotbarVisibility(HotbarConfig config) {
+        if (!this.playerStateProvider.IsPlayerValid) return true;
         if (!this.configService.GetConfig().EnableHotbars) return true;
         if (this.condition[ConditionFlag.WatchingCutscene]) return true;
         if (config.HideInCombat && this.condition[ConditionFlag.InCombat]) return true;
