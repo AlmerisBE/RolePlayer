@@ -1,4 +1,4 @@
-﻿namespace RolePlayer.Core.GameHost.Models;
+﻿namespace RolePlayer.Core.GameEngine.Models;
 
 public enum SessionState {
     Inactive,

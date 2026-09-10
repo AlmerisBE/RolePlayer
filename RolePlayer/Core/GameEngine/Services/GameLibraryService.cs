@@ -1,8 +1,8 @@
-﻿namespace RolePlayer.Core.GameHost.Services;
+﻿namespace RolePlayer.Core.GameEngine.Services;
 
 using Dalamud.Plugin;
-using RolePlayer.Core.GameHost.Contracts;
-using RolePlayer.Core.GameHost.Models;
+using RolePlayer.Core.GameEngine.Contracts;
+using RolePlayer.Core.GameEngine.Models;
 using RolePlayer.Core.Logging.Contracts;
 using System;
 using System.Collections.Generic;

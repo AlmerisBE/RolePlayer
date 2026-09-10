@@ -1,15 +1,15 @@
-﻿namespace RolePlayer.Core.GameHost.Commands;
+﻿namespace RolePlayer.UI.GameDashboard.Commands;
 
-using RolePlayer.Core.GameHost.Windows;
 using RolePlayer.UI.Command.Contracts;
+using RolePlayer.UI.GameDashboard.Windows;
 
-public class HostCommand : ICommand {
-    private GameHostWindow window;
+public class DashboardCommand : ICommand {
+    private GameDashboardWindow window;
 
     public string CommandTrigger => "host";
     public string Description => "Ouvre le tableau de bord du Maître du Jeu.";
 
-    public HostCommand(GameHostWindow window) {
+    public DashboardCommand(GameDashboardWindow window) {
         this.window = window;
     }
 

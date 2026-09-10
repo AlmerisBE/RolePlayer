@@ -1,6 +1,6 @@
-﻿namespace RolePlayer.Core.GameHost.Contracts;
+﻿namespace RolePlayer.Core.GameEngine.Contracts;
 
-using RolePlayer.Core.GameHost.Models;
+using RolePlayer.Core.GameEngine.Models;
 using System.Collections.Generic;
 
 public interface IGameLibraryService {

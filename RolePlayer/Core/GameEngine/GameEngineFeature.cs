@@ -1,11 +1,11 @@
-﻿namespace RolePlayer.Core.GameHost;
+﻿namespace RolePlayer.Core.GameEngine;
 
 using Microsoft.Extensions.DependencyInjection;
 using RolePlayer.Core.Framework;
-using RolePlayer.Core.GameHost.Contracts;
-using RolePlayer.Core.GameHost.Services;
+using RolePlayer.Core.GameEngine.Contracts;
+using RolePlayer.Core.GameEngine.Services;
 
-public class GameHostFeature : IFeatureModule {
+public class GameEngineFeature : IFeatureModule {
     public void RegisterServices(IServiceCollection services) {
         services.AddSingleton<IGameLibraryService, GameLibraryService>();
         services.AddSingleton<IGameSessionService, GameSessionService>();

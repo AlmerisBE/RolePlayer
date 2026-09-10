@@ -1,19 +1,19 @@
-﻿namespace RolePlayer.Core.GameHost.Windows;
+﻿namespace RolePlayer.UI.GameDashboard.Windows;
 
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Windowing;
-using RolePlayer.Core.GameHost.Models;
-using RolePlayer.UI.GameHost.Contracts;
+using RolePlayer.Core.GameEngine.Models;
+using RolePlayer.UI.GameDashboard.Contracts;
 using RolePlayer.UI.Localization.Contracts;
 using System;
 using System.Numerics;
 
-public class GameHostWindow : Window {
-    private IGameHostPresenter presenter;
+public class GameDashboardWindow : Window {
+    private IGameDashboardPresenter presenter;
     private ILocalizationService localization;
 
-    public GameHostWindow(IGameHostPresenter presenter, ILocalizationService localization)
+    public GameDashboardWindow(IGameDashboardPresenter presenter, ILocalizationService localization)
         : base("Game Master Dashboard###RolePlayer_GameHost", ImGuiWindowFlags.NoScrollbar) {
 
         this.presenter = presenter;

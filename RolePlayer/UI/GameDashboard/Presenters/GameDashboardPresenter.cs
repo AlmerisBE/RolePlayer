@@ -1,12 +1,12 @@
-﻿namespace RolePlayer.Core.GameHost.Presenters;
+﻿namespace RolePlayer.UI.GameDashboard.Presenters;
 
-using RolePlayer.Core.GameHost.Contracts;
-using RolePlayer.Core.GameHost.Models;
-using RolePlayer.UI.GameHost.Contracts;
+using RolePlayer.Core.GameEngine.Contracts;
+using RolePlayer.Core.GameEngine.Models;
+using RolePlayer.UI.GameDashboard.Contracts;
 using System.Collections.Generic;
 using System.Linq;
 
-public class GameHostPresenter : IGameHostPresenter {
+public class GameDashboardPresenter : IGameDashboardPresenter {
     private IGameLibraryService libraryService;
     private IGameSessionService sessionService;
 
@@ -15,7 +15,7 @@ public class GameHostPresenter : IGameHostPresenter {
     public HashSet<GameChatChannel> SelectedChannels { get; private set; } = new();
     public SessionState CurrentState => this.sessionService.CurrentState;
 
-    public GameHostPresenter(IGameLibraryService libraryService, IGameSessionService sessionService) {
+    public GameDashboardPresenter(IGameLibraryService libraryService, IGameSessionService sessionService) {
         this.libraryService = libraryService;
         this.sessionService = sessionService;
     }

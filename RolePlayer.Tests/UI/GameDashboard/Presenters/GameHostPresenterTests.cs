@@ -1,9 +1,9 @@
-﻿namespace RolePlayer.Tests.UI.GameHost.Presenters;
+﻿namespace RolePlayer.Tests.UI.GameDashboard.Presenters;
 
 using NSubstitute;
-using RolePlayer.Core.GameHost.Contracts;
-using RolePlayer.Core.GameHost.Models;
-using RolePlayer.Core.GameHost.Presenters;
+using RolePlayer.Core.GameEngine.Contracts;
+using RolePlayer.Core.GameEngine.Models;
+using RolePlayer.UI.GameDashboard.Presenters;
 using System.Collections.Generic;
 using System.Linq;
 using Xunit;
@@ -17,7 +17,7 @@ public class GameHostPresenterTests {
         var testGame = new GameDefinition { Name = "Test Game" };
         mockLibraryService.GetAvailableGames().Returns(new List<GameDefinition> { testGame });
 
-        using var presenter = new GameHostPresenter(mockLibraryService, mockSessionService);
+        using var presenter = new GameDashboardPresenter(mockLibraryService, mockSessionService);
 
         presenter.SelectGame(testGame);
         presenter.ToggleChannel(GameChatChannel.Say);
@@ -38,7 +38,7 @@ public class GameHostPresenterTests {
         var mockLibraryService = Substitute.For<IGameLibraryService>();
         var mockSessionService = Substitute.For<IGameSessionService>();
 
-        using var presenter = new GameHostPresenter(mockLibraryService, mockSessionService);
+        using var presenter = new GameDashboardPresenter(mockLibraryService, mockSessionService);
 
         presenter.ToggleChannel(GameChatChannel.Say);
         Assert.Contains(GameChatChannel.Say, presenter.SelectedChannels);

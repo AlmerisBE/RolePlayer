@@ -1,9 +1,9 @@
-﻿namespace RolePlayer.Tests.Core.GameHost.Services;
+﻿namespace RolePlayer.Tests.Core.GameEngine.Services;
 
 using Dalamud.Plugin;
 using NSubstitute;
-using RolePlayer.Core.GameHost.Models;
-using RolePlayer.Core.GameHost.Services;
+using RolePlayer.Core.GameEngine.Models;
+using RolePlayer.Core.GameEngine.Services;
 using RolePlayer.Core.Logging.Contracts;
 using System.IO;
 using System.Linq;
