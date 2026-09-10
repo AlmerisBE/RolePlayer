@@ -9,4 +9,5 @@ public interface IMacroManagementService {
     void CreateMacro(RoleplayMacro macro);
     void UpdateMacro(Guid id, string name, string content, uint iconId, bool isLocked);
     void DeleteMacro(Guid id);
+    void AppendToMacro(Guid id, string command);
 }

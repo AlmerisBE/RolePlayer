@@ -40,4 +40,16 @@ public class MacroManagementService : IMacroManagementService {
         var profile = this.configService.GetCurrentProfile();
         if (profile.Macros.RemoveAll(m => m.Id == id) > 0) this.configService.Save();
     }
+
+    public void AppendToMacro(Guid id, string command) {
+        if (string.IsNullOrWhiteSpace(command)) return;
+
+        var macro = this.configService.GetCurrentProfile().Macros.FirstOrDefault(m => m.Id == id);
+        if (macro == null || macro.IsLocked) return;
+
+        string prefix = string.IsNullOrEmpty(macro.Content) ? string.Empty : "\n";
+        macro.Content += $"{prefix}{command.Trim()}";
+
+        this.configService.Save();
+    }
 }

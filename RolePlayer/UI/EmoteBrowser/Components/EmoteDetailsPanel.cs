@@ -138,11 +138,7 @@ public class EmoteDetailsPanel {
                     }
                     else {
                         foreach (var m in unlockedMacros) {
-                            if (ImGui.Selectable(m.Name)) {
-                                string prefix = string.IsNullOrEmpty(m.Content) ? string.Empty : "\r\n";
-                                m.Content += $"{prefix}{emote.LocalizedCommand}";
-                                this.macroService.UpdateMacro(m.Id, m.Name, m.Content, m.IconId, m.IsLocked);
-                            }
+                            if (ImGui.Selectable(m.Name)) this.macroService.AppendToMacro(m.Id, emote.LocalizedCommand);
                         }
                     }
                     ImGui.EndCombo();

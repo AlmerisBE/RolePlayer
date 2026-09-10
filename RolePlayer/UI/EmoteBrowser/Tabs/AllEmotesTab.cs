@@ -230,11 +230,7 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
                 }
                 else {
                     foreach (var m in unlockedMacros) {
-                        if (ImGui.MenuItem(m.Name)) {
-                            string prefix = string.IsNullOrEmpty(m.Content) ? string.Empty : "\r\n";
-                            m.Content += $"{prefix}{emote.LocalizedCommand}";
-                            this.macroService.UpdateMacro(m.Id, m.Name, m.Content, m.IconId, m.IsLocked);
-                        }
+                        if (ImGui.MenuItem(m.Name)) this.macroService.AppendToMacro(m.Id, emote.LocalizedCommand);
                     }
                 }
                 ImGui.EndMenu();
