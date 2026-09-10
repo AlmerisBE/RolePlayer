@@ -10,6 +10,7 @@ public class DeathRollEngine : IGameEngine {
     public bool IsRunning { get; private set; }
 
     private GameSessionConfig? config;
+    private int currentMaxRoll;
 
     public event Action<string>? BroadcastRequested;
     public event Action? GameFinished;
@@ -20,20 +21,39 @@ public class DeathRollEngine : IGameEngine {
 
     public void Start() {
         if (this.config == null) return;
-        this.IsRunning = true;
 
-        string startRoll = this.config.Game?.Parameters.GetValueOrDefault("StartingRoll", "999") ?? "999";
-        this.BroadcastRequested?.Invoke($"The Death Roll begins! First to roll 1 loses. Starting roll: 1-{startRoll}. Type /random {startRoll} to start!");
+        string startRollStr = this.config.Game?.Parameters.GetValueOrDefault("StartingRoll", "999") ?? "999";
+        if (!int.TryParse(startRollStr, out this.currentMaxRoll)) this.currentMaxRoll = 999;
+
+        this.IsRunning = true;
+        this.BroadcastRequested?.Invoke($"The Death Roll begins! First to roll 1 loses. Starting roll: 1-{this.currentMaxRoll}. Type /random {this.currentMaxRoll} to start!");
     }
 
     public void Stop() {
+        if (!this.IsRunning) return;
         this.IsRunning = false;
         this.GameFinished?.Invoke();
     }
 
-    public void ProcessMessage(string sender, string message, GameChatChannel channel) {
+    public void ProcessEvent(GameEvent gameEvent) {
         if (!this.IsRunning) return;
 
-        // Logique de parsing des dés à implémenter plus tard.
+        if (gameEvent is DiceRollGameEvent diceRoll) {
+            this.HandleDiceRoll(diceRoll);
+        }
+    }
+
+    private void HandleDiceRoll(DiceRollGameEvent diceRoll) {
+        if (diceRoll.OutOf != this.currentMaxRoll) return;
+
+        this.currentMaxRoll = diceRoll.Roll;
+
+        if (this.currentMaxRoll == 1) {
+            this.BroadcastRequested?.Invoke($"{diceRoll.Sender} rolled a 1 and died! The game is over!");
+            this.Stop();
+        }
+        else {
+            this.BroadcastRequested?.Invoke($"{diceRoll.Sender} rolled {this.currentMaxRoll}. Next player, type /random {this.currentMaxRoll}");
+        }
     }
 }

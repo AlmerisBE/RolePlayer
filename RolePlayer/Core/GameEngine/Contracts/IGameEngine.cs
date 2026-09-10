@@ -13,5 +13,5 @@ public interface IGameEngine {
     void Initialize(GameSessionConfig config);
     void Start();
     void Stop();
-    void ProcessMessage(string sender, string message, GameChatChannel channel);
+    void ProcessEvent(GameEvent gameEvent);
 }

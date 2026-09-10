@@ -4,11 +4,13 @@ using RolePlayer.Core.GameEngine.Contracts;
 using RolePlayer.Core.GameEngine.Models;
 using RolePlayer.Core.Logging.Contracts;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 public class GameSessionService : IGameSessionService {
     private ILoggerService logger;
     private IGameEngineFactory engineFactory;
+    private IEnumerable<IGameEventWatcher> eventWatchers;
     private IGameEngine? activeEngine;
 
     public event Action? SessionStateChanged;
@@ -16,9 +18,10 @@ public class GameSessionService : IGameSessionService {
     public SessionState CurrentState { get; private set; } = SessionState.Inactive;
     public GameSessionConfig? CurrentConfig { get; private set; }
 
-    public GameSessionService(ILoggerService logger, IGameEngineFactory engineFactory) {
+    public GameSessionService(ILoggerService logger, IGameEngineFactory engineFactory, IEnumerable<IGameEventWatcher> eventWatchers) {
         this.logger = logger;
         this.engineFactory = engineFactory;
+        this.eventWatchers = eventWatchers;
     }
 
     public bool StartSession(GameSessionConfig config) {
@@ -48,6 +51,12 @@ public class GameSessionService : IGameSessionService {
 
         this.activeEngine.GameFinished += this.OnGameFinished;
         this.activeEngine.Initialize(config);
+
+        foreach (var watcher in this.eventWatchers) {
+            watcher.EventFired += this.OnGameEventFired;
+            watcher.Start();
+        }
+
         this.activeEngine.Start();
 
         this.logger.Info($"Started new game session: {config.Game.Name} using {config.Game.EngineType}.");
@@ -58,6 +67,11 @@ public class GameSessionService : IGameSessionService {
 
     public void StopSession() {
         if (this.CurrentState == SessionState.Inactive) return;
+
+        foreach (var watcher in this.eventWatchers) {
+            watcher.EventFired -= this.OnGameEventFired;
+            watcher.Stop();
+        }
 
         if (this.activeEngine != null) {
             this.activeEngine.GameFinished -= this.OnGameFinished;
@@ -72,7 +86,12 @@ public class GameSessionService : IGameSessionService {
         this.SessionStateChanged?.Invoke();
     }
 
+    private void OnGameEventFired(GameEvent gameEvent) {
+        this.activeEngine?.ProcessEvent(gameEvent);
+    }
+
     private void OnGameFinished() {
+        this.StopSession();
         this.CurrentState = SessionState.Finished;
         this.SessionStateChanged?.Invoke();
     }
