@@ -28,12 +28,15 @@ public class LuminaEmoteProvider : IEmoteRepository {
         if (emoteSheet == null) return Enumerable.Empty<EmoteDisplayData>();
 
         return emoteSheet
-            .Where(e => !string.IsNullOrEmpty(e.Name.ToString()) && e.Icon != 0)
+            .Where(e => !string.IsNullOrEmpty(e.Name.ToString()) &&
+                        e.Icon != 0 &&
+                        e.TextCommand.IsValid &&
+                        !string.IsNullOrWhiteSpace(e.TextCommand.Value.Command.ToString()))
             .Select(e => {
-                var localizedCommand = e.TextCommand.IsValid ? e.TextCommand.Value.Command.ToString() : string.Empty;
+                var localizedCommand = e.TextCommand.Value.Command.ToString();
                 var englishCommand = string.Empty;
 
-                if (e.TextCommand.IsValid && textCommandSheetEn != null) {
+                if (textCommandSheetEn != null) {
                     var enRow = textCommandSheetEn.GetRowOrDefault(e.TextCommand.RowId);
                     if (enRow.HasValue) englishCommand = enRow.Value.Command.ToString();
                 }

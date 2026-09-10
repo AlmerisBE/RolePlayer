@@ -17,7 +17,6 @@ public class EmoteFilterComponent {
     private ILocalizationService localization;
 
     public string SearchQuery = string.Empty;
-    public bool HideEmotesWithoutCommand { get; set; } = true;
 
     private int sortColumn = -1;
     private bool sortDescending = false;
@@ -64,12 +63,6 @@ public class EmoteFilterComponent {
         if (isFilterActive) ImGui.PopStyleColor();
 
         if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("browser_tooltip_filters"));
-
-        bool hideNoCmd = this.HideEmotesWithoutCommand;
-        if (ImGui.Checkbox(this.localization.Translate("browser_filter_hide_no_command"), ref hideNoCmd)) {
-            this.HideEmotesWithoutCommand = hideNoCmd;
-            filtersChanged = true;
-        }
 
         if (context.ShowFilters) {
             ImGui.Spacing();
@@ -225,8 +218,6 @@ public class EmoteFilterComponent {
         bool hasTagFilter = context.SelectedTags.Count > 0;
 
         foreach (var emote in emotesCache) {
-            if (this.HideEmotesWithoutCommand && string.IsNullOrWhiteSpace(emote.LocalizedCommand)) continue;
-
             if (context.ShowModdedOnly && !emote.IsModded) continue;
 
             if (context.UnlockFilter == UnlockFilterMode.Unlocked && !emote.IsUnlocked) continue;
