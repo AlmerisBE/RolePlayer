@@ -4,7 +4,6 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Game;
 using Dalamud.Interface;
 using Dalamud.Interface.Textures;
-using Dalamud.Interface.Textures.Internal;
 using Dalamud.Plugin.Services;
 using RolePlayer.Core.Configuration.Models;
 using RolePlayer.UI.EmoteBrowser.Contracts;
@@ -87,30 +86,7 @@ public class EmoteListComponent {
 
                             ImGui.SameLine();
 
-                            if (emote.IconId > 0) {
-                                try {
-                                    var lookup = new GameIconLookup { IconId = emote.IconId, HiRes = false };
-                                    var iconWrap = this.textureProvider.GetFromGameIcon(lookup).GetWrapOrDefault();
-
-                                    if (iconWrap != null) {
-                                        var cursorPos = ImGui.GetCursorScreenPos();
-                                        ImGui.Image(iconWrap.Handle, new Vector2(24, 24));
-
-                                        if (emote.HasVariations) {
-                                            var drawList = ImGui.GetWindowDrawList();
-                                            ImGui.PushFont(UiBuilder.IconFont);
-                                            var indicatorText = FontAwesomeIcon.Sync.ToIconString();
-                                            var textSize = ImGui.CalcTextSize(indicatorText);
-                                            ImGui.PopFont();
-
-                                            var indicatorPos = new Vector2(cursorPos.X + 24f - textSize.X - 1f, cursorPos.Y + 24f - textSize.Y - 1f);
-                                            drawList.AddText(UiBuilder.IconFont, ImGui.GetFontSize(), new Vector2(indicatorPos.X + 1, indicatorPos.Y + 1), 0xFF000000, indicatorText);
-                                            drawList.AddText(UiBuilder.IconFont, ImGui.GetFontSize(), indicatorPos, 0xFF40DD40, indicatorText);
-                                        }
-                                    }
-                                }
-                                catch (IconNotFoundException) { }
-                            }
+                            this.DrawIconPreview(emote, 24f);
 
                             ImGui.TableNextColumn();
                             var displayName = emote.IsModded ? $"★ {emote.Name}" : emote.Name;
@@ -140,19 +116,41 @@ public class EmoteListComponent {
                     }
                 }
             }
+            ImGui.EndChild();
         }
-        ImGui.EndChild();
 
         return needsFilterApply;
     }
 
-    private void DrawIconPreview(uint iconId, float size) {
+    private void DrawIconPreview(EmoteDisplayData emote, float size) {
+        if (emote.IconId == 0) {
+            ImGui.Dummy(new Vector2(size, size));
+            return;
+        }
+
         try {
-            var lookup = new GameIconLookup { IconId = iconId, HiRes = false };
+            var lookup = new GameIconLookup { IconId = emote.IconId, HiRes = false };
             var iconWrap = this.textureProvider.GetFromGameIcon(lookup).GetWrapOrDefault();
 
-            if (iconWrap != null) ImGui.Image(iconWrap.Handle, new Vector2(size, size));
-            else ImGui.Dummy(new Vector2(size, size));
+            if (iconWrap != null) {
+                var cursorPos = ImGui.GetCursorScreenPos();
+                ImGui.Image(iconWrap.Handle, new Vector2(size, size));
+
+                if (emote.HasVariations) {
+                    var drawList = ImGui.GetWindowDrawList();
+                    ImGui.PushFont(UiBuilder.IconFont);
+                    var indicatorText = FontAwesomeIcon.Sync.ToIconString();
+                    var textSize = ImGui.CalcTextSize(indicatorText);
+                    ImGui.PopFont();
+
+                    var indicatorPos = new Vector2(cursorPos.X + size - textSize.X - 1f, cursorPos.Y + size - textSize.Y - 1f);
+                    drawList.AddText(UiBuilder.IconFont, ImGui.GetFontSize(), new Vector2(indicatorPos.X + 1, indicatorPos.Y + 1), 0xFF000000, indicatorText);
+                    drawList.AddText(UiBuilder.IconFont, ImGui.GetFontSize(), indicatorPos, 0xFF40DD40, indicatorText);
+                }
+            }
+            else {
+                ImGui.Dummy(new Vector2(size, size));
+            }
         }
         catch (Exception) {
             ImGui.Dummy(new Vector2(size, size));
