@@ -107,4 +107,9 @@ public class GameDashboardWindow : Window {
             ImGui.EndTable();
         }
     }
+
+    public void OpenForGame() {
+        this.IsOpen = true;
+        ImGui.SetWindowFocus();
+    }
 }

@@ -8,6 +8,7 @@ using RolePlayer.UI.EmoteBrowser.Contracts;
 using RolePlayer.UI.Localization.Contracts;
 using RolePlayer.UI.MainWindow.Commands;
 using RolePlayer.UI.MainWindow.Components;
+using RolePlayer.UI.MainWindow.Components.Games;
 using RolePlayer.UI.MainWindow.Components.Macros;
 using RolePlayer.UI.MainWindow.Contracts;
 using RolePlayer.UI.MainWindow.Providers;
@@ -44,9 +45,15 @@ public class MainWindowFeature : IFeatureModule {
         services.AddSingleton<Window>(provider => provider.GetRequiredService<MainWindow>());
         services.AddSingleton<ICommand, OpenMainWindowCommand>();
 
+        // Injection d'état et composants pour les Jeux
+        services.AddSingleton<IGameSelectionState, GameSelectionState>();
+        services.AddSingleton<GamesListComponent>();
+        services.AddSingleton<GameEditorPanelComponent>();
+
         services.AddSingleton<IEmoteBrowserTab, ConfigurationTab>();
         services.AddSingleton<IEmoteBrowserTab, AboutTab>();
         services.AddSingleton<IEmoteBrowserTab, MacrosTab>();
+        services.AddSingleton<IEmoteBrowserTab, GamesTab>();
 
         services.AddSingleton<ILocalizationProvider, MainWindowLocalizationProvider>();
     }
