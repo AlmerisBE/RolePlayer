@@ -8,5 +8,6 @@ using RolePlayer.Core.GameHost.Services;
 public class GameHostFeature : IFeatureModule {
     public void RegisterServices(IServiceCollection services) {
         services.AddSingleton<IGameLibraryService, GameLibraryService>();
+        services.AddSingleton<IGameSessionService, GameSessionService>();
     }
 }
