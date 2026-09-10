@@ -53,5 +53,6 @@
   "src_mogstation": "Objet : {0} (Kiosque Mog / Événement)",
   "src_item": "Objet : {0}",
   "src_default": "Emote de base",
-  "src_unknown": "Source inconnue"
+  "src_unknown": "Source inconnue",
+  "browser_filter_hide_no_command": "Masquer les emotes sans commande"
 }

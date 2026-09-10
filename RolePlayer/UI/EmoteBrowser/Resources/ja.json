@@ -53,5 +53,6 @@
   "src_mogstation": "アイテム: {0} (オンラインストア / イベント)",
   "src_item": "アイテム: {0}",
   "src_default": "初期エモート",
-  "src_unknown": "取得元不明"
+  "src_unknown": "取得元不明",
+  "browser_filter_hide_no_command": "コマンドなしのエモートを隠す"
 }

@@ -53,5 +53,6 @@
   "src_mogstation": "Item: {0} (Mog Station / Event)",
   "src_item": "Item: {0}",
   "src_default": "Default Emote",
-  "src_unknown": "Unknown Source"
+  "src_unknown": "Unknown Source",
+  "browser_filter_hide_no_command": "Hide emotes without command"
 }

@@ -53,5 +53,6 @@
   "src_mogstation": "Gegenstand: {0} (Mogry-Station / Ereignis)",
   "src_item": "Gegenstand: {0}",
   "src_default": "Standard-Emote",
-  "src_unknown": "Unbekannte Quelle"
+  "src_unknown": "Unbekannte Quelle",
+  "browser_filter_hide_no_command": "Emotes ohne Befehl ausblenden"
 }
