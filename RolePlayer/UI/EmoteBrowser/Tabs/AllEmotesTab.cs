@@ -5,7 +5,6 @@ using RolePlayer.UI.EmoteBrowser.Components;
 using RolePlayer.UI.EmoteBrowser.Contracts;
 using RolePlayer.UI.Localization.Contracts;
 using System;
-using System.Linq;
 
 public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
     private IEmoteBrowserPresenter presenter;
@@ -44,13 +43,7 @@ public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
         this.filterComponent.Draw(this.presenter);
 
         var context = this.contextService.GetCurrentContext();
-        bool listTriggeredFilterUpdate = this.listComponent.Draw(
-            this.presenter.GroupedEmotes.ToDictionary(k => k.Key, v => v.Value.ToList()),
-            context,
-            (col, desc) => this.presenter.SetSort(col, desc)
-        );
-
-        if (listTriggeredFilterUpdate) this.presenter.ApplyFilters();
+        this.listComponent.Draw(this.presenter, context);
     }
 
     public void DrawSidePanel() => this.detailsPanel.Draw();

@@ -10,7 +10,6 @@ using RolePlayer.UI.EmoteBrowser.Contracts;
 using RolePlayer.UI.EmoteBrowser.Models;
 using RolePlayer.UI.Localization.Contracts;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 
@@ -38,13 +37,13 @@ public class EmoteListComponent {
         this.contextMenuComponent = contextMenuComponent;
     }
 
-    public bool Draw(Dictionary<string, List<EmoteDisplayData>> groupedEmotes, EmoteContext context, Action<int, bool> onSortRequested) {
-        bool needsFilterApply = false;
+    public void Draw(IEmoteBrowserPresenter presenter, EmoteContext context) {
+        bool refreshRequested = false;
 
         if (ImGui.BeginChild("EmoteListScrollArea", new Vector2(0, 0), false, ImGuiWindowFlags.None)) {
             var tableFlags = ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.Sortable | ImGuiTableFlags.SizingFixedFit;
 
-            foreach (var groupKvp in groupedEmotes.OrderBy(k => k.Key)) {
+            foreach (var groupKvp in presenter.GroupedEmotes.OrderBy(k => k.Key)) {
                 bool isNodeOpen = true;
 
                 if (context.CurrentGrouping != GroupingMode.None) isNodeOpen = ImGui.CollapsingHeader($"{groupKvp.Key} ({groupKvp.Value.Count})###Header_{groupKvp.Key}", ImGuiTreeNodeFlags.DefaultOpen);
@@ -59,8 +58,7 @@ public class EmoteListComponent {
 
                         var sortSpecs = ImGui.TableGetSortSpecs();
                         if (sortSpecs.SpecsDirty) {
-                            onSortRequested(sortSpecs.Specs.ColumnIndex, sortSpecs.Specs.SortDirection == ImGuiSortDirection.Descending);
-                            needsFilterApply = true;
+                            presenter.SetSort(sortSpecs.Specs.ColumnIndex, sortSpecs.Specs.SortDirection == ImGuiSortDirection.Descending);
                             sortSpecs.SpecsDirty = false;
                         }
 
@@ -82,7 +80,8 @@ public class EmoteListComponent {
                             ImGui.TableNextColumn();
                             if (ImGui.Selectable($"##select_{emote.Id}", isSelected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowItemOverlap, new Vector2(0, 24))) this.selectionState.SelectedEmote = isSelected ? null : emote;
 
-                            if (this.contextMenuComponent.Draw(emote, context)) needsFilterApply = true;
+                            // Captures the need to refresh without mutating the collection during iteration
+                            if (this.contextMenuComponent.Draw(emote, context)) refreshRequested = true;
 
                             ImGui.SameLine();
 
@@ -116,10 +115,11 @@ public class EmoteListComponent {
                     }
                 }
             }
-            ImGui.EndChild();
         }
+        ImGui.EndChild();
 
-        return needsFilterApply;
+        // Safely apply filters after the ImGui table rendering is complete to avoid InvalidOperationException
+        if (refreshRequested) presenter.ApplyFilters();
     }
 
     private void DrawIconPreview(EmoteDisplayData emote, float size) {
