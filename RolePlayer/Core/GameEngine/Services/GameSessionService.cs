@@ -8,14 +8,17 @@ using System.Linq;
 
 public class GameSessionService : IGameSessionService {
     private ILoggerService logger;
+    private IGameEngineFactory engineFactory;
+    private IGameEngine? activeEngine;
 
     public event Action? SessionStateChanged;
 
     public SessionState CurrentState { get; private set; } = SessionState.Inactive;
     public GameSessionConfig? CurrentConfig { get; private set; }
 
-    public GameSessionService(ILoggerService logger) {
+    public GameSessionService(ILoggerService logger, IGameEngineFactory engineFactory) {
         this.logger = logger;
+        this.engineFactory = engineFactory;
     }
 
     public bool StartSession(GameSessionConfig config) {
@@ -24,8 +27,8 @@ public class GameSessionService : IGameSessionService {
             return false;
         }
 
-        if (config == null || config.Game == null) {
-            this.logger.Warning("Attempted to start a game session with a missing GameDefinition.");
+        if (config == null || config.Game == null || string.IsNullOrWhiteSpace(config.Game.EngineType)) {
+            this.logger.Warning("Attempted to start a game session with a missing or invalid GameDefinition.");
             return false;
         }
 
@@ -34,10 +37,20 @@ public class GameSessionService : IGameSessionService {
             return false;
         }
 
+        this.activeEngine = this.engineFactory.CreateEngine(config.Game.EngineType);
+        if (this.activeEngine == null) {
+            this.logger.Error($"Failed to resolve game engine for type: {config.Game.EngineType}");
+            return false;
+        }
+
         this.CurrentConfig = config;
         this.CurrentState = SessionState.WaitingForPlayers;
 
-        this.logger.Info($"Started new game session: {config.Game.Name}. Listening on {config.ListeningChannels.Count} channels.");
+        this.activeEngine.GameFinished += this.OnGameFinished;
+        this.activeEngine.Initialize(config);
+        this.activeEngine.Start();
+
+        this.logger.Info($"Started new game session: {config.Game.Name} using {config.Game.EngineType}.");
         this.SessionStateChanged?.Invoke();
 
         return true;
@@ -46,10 +59,21 @@ public class GameSessionService : IGameSessionService {
     public void StopSession() {
         if (this.CurrentState == SessionState.Inactive) return;
 
+        if (this.activeEngine != null) {
+            this.activeEngine.GameFinished -= this.OnGameFinished;
+            this.activeEngine.Stop();
+            this.activeEngine = null;
+        }
+
         this.CurrentState = SessionState.Inactive;
         this.CurrentConfig = null;
 
         this.logger.Info("Game session has been stopped.");
+        this.SessionStateChanged?.Invoke();
+    }
+
+    private void OnGameFinished() {
+        this.CurrentState = SessionState.Finished;
         this.SessionStateChanged?.Invoke();
     }
 }
