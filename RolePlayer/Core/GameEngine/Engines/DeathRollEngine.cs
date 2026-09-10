@@ -35,4 +35,9 @@ public class DeathRollEngine : IGameEngine {
 
         // Logique de parsing des dés à implémenter plus tard.
     }
+
+    private void FinishGame() {
+        this.IsRunning = false;
+        this.GameFinished?.Invoke();
+    }
 }

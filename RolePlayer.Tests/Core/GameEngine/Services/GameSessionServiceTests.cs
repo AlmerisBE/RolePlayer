@@ -1,6 +1,7 @@
 ﻿namespace RolePlayer.Tests.Core.GameEngine.Services;
 
 using NSubstitute;
+using RolePlayer.Core.GameEngine.Contracts;
 using RolePlayer.Core.GameEngine.Models;
 using RolePlayer.Core.GameEngine.Services;
 using RolePlayer.Core.Logging.Contracts;
@@ -10,10 +11,15 @@ public class GameSessionServiceTests {
     [Fact]
     public void StartSession_WithValidConfig_ChangesStateToWaitingForPlayers() {
         var mockLogger = Substitute.For<ILoggerService>();
-        var service = new GameSessionService(mockLogger);
+        var mockFactory = Substitute.For<IGameEngineFactory>();
+        var mockEngine = Substitute.For<IGameEngine>();
+
+        mockFactory.CreateEngine(Arg.Any<string>()).Returns(mockEngine);
+
+        var service = new GameSessionService(mockLogger, mockFactory);
 
         var config = new GameSessionConfig {
-            Game = new GameDefinition { Name = "Test Game" }
+            Game = new GameDefinition { Name = "Test Game", EngineType = "TestEngine" }
         };
         config.ListeningChannels.Add(GameChatChannel.Say);
 
@@ -26,12 +32,15 @@ public class GameSessionServiceTests {
         Assert.Equal(SessionState.WaitingForPlayers, service.CurrentState);
         Assert.NotNull(service.CurrentConfig);
         Assert.True(eventTriggered);
+        mockEngine.Received(1).Initialize(config);
+        mockEngine.Received(1).Start();
     }
 
     [Fact]
     public void StartSession_WithNoGameDefinition_ReturnsFalseAndStaysInactive() {
         var mockLogger = Substitute.For<ILoggerService>();
-        var service = new GameSessionService(mockLogger);
+        var mockFactory = Substitute.For<IGameEngineFactory>();
+        var service = new GameSessionService(mockLogger, mockFactory);
 
         var config = new GameSessionConfig {
             Game = null
@@ -47,10 +56,11 @@ public class GameSessionServiceTests {
     [Fact]
     public void StartSession_WithNoListeningChannels_ReturnsFalseAndStaysInactive() {
         var mockLogger = Substitute.For<ILoggerService>();
-        var service = new GameSessionService(mockLogger);
+        var mockFactory = Substitute.For<IGameEngineFactory>();
+        var service = new GameSessionService(mockLogger, mockFactory);
 
         var config = new GameSessionConfig {
-            Game = new GameDefinition { Name = "Test Game" }
+            Game = new GameDefinition { Name = "Test Game", EngineType = "TestEngine" }
         };
 
         bool result = service.StartSession(config);
@@ -62,9 +72,16 @@ public class GameSessionServiceTests {
     [Fact]
     public void StopSession_WhenActive_ResetsStateToInactiveAndClearsConfig() {
         var mockLogger = Substitute.For<ILoggerService>();
-        var service = new GameSessionService(mockLogger);
+        var mockFactory = Substitute.For<IGameEngineFactory>();
+        var mockEngine = Substitute.For<IGameEngine>();
 
-        var config = new GameSessionConfig { Game = new GameDefinition { Name = "Test Game" } };
+        mockFactory.CreateEngine(Arg.Any<string>()).Returns(mockEngine);
+
+        var service = new GameSessionService(mockLogger, mockFactory);
+
+        var config = new GameSessionConfig {
+            Game = new GameDefinition { Name = "Test Game", EngineType = "TestEngine" }
+        };
         config.ListeningChannels.Add(GameChatChannel.Party);
         service.StartSession(config);
 
@@ -76,5 +93,6 @@ public class GameSessionServiceTests {
         Assert.Equal(SessionState.Inactive, service.CurrentState);
         Assert.Null(service.CurrentConfig);
         Assert.True(eventTriggered);
+        mockEngine.Received(1).Stop();
     }
 }
