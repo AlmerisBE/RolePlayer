@@ -14,7 +14,10 @@ public class EmoteBrowserFeature : IFeatureModule {
         services.AddSingleton<ILocalizationProvider, EmoteBrowserLocalizationProvider>();
 
         services.AddSingleton<EmoteFilterComponent>();
+        services.AddSingleton<EmoteContextMenuComponent>();
+        services.AddSingleton<EmoteListComponent>();
         services.AddSingleton<EmoteDetailsPanel>();
+
         services.AddSingleton<IEmoteSelectionState, EmoteSelectionState>();
         services.AddSingleton<IEmoteBrowserTab, AllEmotesTab>();
     }

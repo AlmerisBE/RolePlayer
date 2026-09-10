@@ -1,153 +1,130 @@
 ﻿namespace RolePlayer.UI.EmoteBrowser.Tabs;
 
-using Dalamud.Bindings.ImGui;
-using Dalamud.Interface;
-using Dalamud.Interface.Textures;
-using Dalamud.Plugin.Services;
+using RolePlayer.Core.Configuration.Contracts;
+using RolePlayer.Core.Logging.Contracts;
+using RolePlayer.UI.EmoteBrowser.Components;
 using RolePlayer.UI.EmoteBrowser.Contracts;
 using RolePlayer.UI.EmoteBrowser.Models;
-using RolePlayer.UI.Hotbar.Contracts;
 using RolePlayer.UI.Localization.Contracts;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
+using System.Threading.Tasks;
 
 public class AllEmotesTab : IEmoteBrowserTab, IDisposable {
     private IEmoteRepository emoteRepository;
+    private IPlayerStateProvider playerStateProvider;
     private IEmoteSelectionState selectionState;
-    private IEmoteExecutionService executionService;
+    private IModStateProvider modStateProvider;
+    private ILoggerService logger;
+    private IContextManagementService contextService;
+    private EmoteFilterComponent filterComponent;
+    private EmoteListComponent listComponent;
+    private EmoteDetailsPanel detailsPanel;
     private ILocalizationService localization;
-    private IMacroManagementService macroService;
-    private ITextureProvider textureProvider;
 
-    private string searchQuery = string.Empty;
-    private bool hideEmotesWithoutCommand = true;
-    private List<EmoteDisplayData> cachedEmotes = new();
+    private List<EmoteDisplayData> emotesCache = new();
+    private List<string> availableCategories = new();
+    private Dictionary<string, List<EmoteDisplayData>> groupedEmotes = new();
+
+    private bool needsRefresh = false;
+    private bool needsFilterApply = false;
+    private bool isRefreshing = false;
 
     public string TabName => this.localization.Translate("browser_tab_all_emotes");
-    public int SortOrder => 10;
+    public int SortOrder => 0;
     public bool IsSidePanelOpen => this.selectionState.SelectedEmote != null;
 
     public AllEmotesTab(
         IEmoteRepository emoteRepository,
+        IPlayerStateProvider playerStateProvider,
         IEmoteSelectionState selectionState,
-        IEmoteExecutionService executionService,
-        ILocalizationService localization,
-        IMacroManagementService macroService,
-        ITextureProvider textureProvider) {
+        IModStateProvider modStateProvider,
+        ILoggerService logger,
+        IContextManagementService contextService,
+        EmoteFilterComponent filterComponent,
+        EmoteListComponent listComponent,
+        EmoteDetailsPanel detailsPanel,
+        ILocalizationService localization) {
 
         this.emoteRepository = emoteRepository;
+        this.playerStateProvider = playerStateProvider;
         this.selectionState = selectionState;
-        this.executionService = executionService;
+        this.modStateProvider = modStateProvider;
+        this.logger = logger;
+        this.contextService = contextService;
+        this.filterComponent = filterComponent;
+        this.listComponent = listComponent;
+        this.detailsPanel = detailsPanel;
         this.localization = localization;
-        this.macroService = macroService;
-        this.textureProvider = textureProvider;
 
-        this.cachedEmotes = this.emoteRepository.GetBaseEmotes().ToList();
+        this.modStateProvider.ModStateChanged += this.OnModStateChanged;
+        this.playerStateProvider.PlayerStateValid += this.OnPlayerStateValid;
     }
+
+    private void OnModStateChanged() => this.needsRefresh = true;
+    private void OnPlayerStateValid() => this.needsRefresh = true;
 
     public void Draw() {
-        ImGui.SetNextItemWidth(-1f);
-        ImGui.InputTextWithHint("##EmoteSearch", this.localization.Translate("browser_search_hint"), ref this.searchQuery, 128);
+        if (this.needsRefresh && !this.isRefreshing) {
+            this.needsRefresh = false;
+            this.LoadEmotesAsync();
+        }
 
-        ImGui.Checkbox(this.localization.Translate("browser_filter_hide_no_command"), ref this.hideEmotesWithoutCommand);
+        if (!this.emotesCache.Any() && !this.isRefreshing) this.LoadEmotesAsync();
 
-        ImGui.Spacing();
-        ImGui.Separator();
-        ImGui.Spacing();
+        bool filtersChanged = this.filterComponent.Draw(this.availableCategories);
 
-        var query = this.searchQuery.Trim().ToLowerInvariant();
-        var filteredEmotes = this.cachedEmotes.Where(e => {
-            if (this.hideEmotesWithoutCommand && string.IsNullOrWhiteSpace(e.LocalizedCommand)) return false;
-            if (string.IsNullOrEmpty(query)) return true;
+        if (filtersChanged || this.needsFilterApply) {
+            this.groupedEmotes = this.filterComponent.Apply(this.emotesCache);
+            this.needsFilterApply = false;
+        }
 
-            return e.Name.ToLowerInvariant().Contains(query) ||
-                   (!string.IsNullOrEmpty(e.LocalizedCommand) && e.LocalizedCommand.ToLowerInvariant().Contains(query)) ||
-                   (!string.IsNullOrEmpty(e.EnglishCommand) && e.EnglishCommand.ToLowerInvariant().Contains(query));
-        }).ToList();
+        var context = this.contextService.GetCurrentContext();
+        bool listTriggeredFilterUpdate = this.listComponent.Draw(
+            this.groupedEmotes,
+            context,
+            (col, desc) => this.filterComponent.RegisterSort(col, desc)
+        );
 
-        if (ImGui.BeginTable("AllEmotesTable", 4, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.ScrollY)) {
-            ImGui.TableSetupScrollFreeze(0, 1);
-            ImGui.TableSetupColumn(this.localization.Translate("browser_col_icon"), ImGuiTableColumnFlags.WidthFixed, 40f);
-            ImGui.TableSetupColumn(this.localization.Translate("config_common_name"), ImGuiTableColumnFlags.WidthStretch);
-            ImGui.TableSetupColumn(this.localization.Translate("browser_col_command"), ImGuiTableColumnFlags.WidthStretch);
-            ImGui.TableSetupColumn(this.localization.Translate("config_common_actions"), ImGuiTableColumnFlags.WidthFixed, 30f);
-            ImGui.TableHeadersRow();
+        if (listTriggeredFilterUpdate) this.needsFilterApply = true;
+    }
 
-            foreach (var emote in filteredEmotes) {
-                ImGui.TableNextRow();
+    private void LoadEmotesAsync() {
+        if (!this.playerStateProvider.IsPlayerValid) return;
 
-                bool isSelected = this.selectionState.SelectedEmote?.Id == emote.Id;
+        this.isRefreshing = true;
+        Task.Run(() => {
+            try {
+                var baseEmotes = this.emoteRepository.GetBaseEmotes().ToList();
+                var uniqueCategories = new HashSet<string>();
+                var newCache = new List<EmoteDisplayData>();
 
-                ImGui.TableNextColumn();
-                this.DrawIconPreview(emote.IconId, 24f);
+                foreach (var emote in baseEmotes) {
+                    emote.IsUnlocked = !emote.IsUnlockable || this.playerStateProvider.IsEmoteUnlocked(emote.Id);
+                    emote.IsModded = !string.IsNullOrEmpty(this.modStateProvider.GetModNameModifyingEmote(emote.Id));
 
-                ImGui.TableNextColumn();
-                if (ImGui.Selectable($"{emote.Name}##sel_{emote.Id}", isSelected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowItemOverlap)) {
-                    this.selectionState.SelectedEmote = isSelected ? null : emote;
+                    newCache.Add(emote);
+                    if (!string.IsNullOrEmpty(emote.Category)) uniqueCategories.Add(emote.Category);
                 }
 
-                this.DrawContextMenu(emote);
-
-                ImGui.TableNextColumn();
-                ImGui.TextUnformatted(emote.LocalizedCommand ?? string.Empty);
-
-                ImGui.TableNextColumn();
-                ImGui.PushFont(UiBuilder.IconFont);
-                if (ImGui.Button($"{FontAwesomeIcon.Play.ToIconString()}##play_{emote.Id}")) {
-                    this.executionService.ExecuteEmote(emote.Id);
-                }
-                ImGui.PopFont();
+                this.emotesCache = newCache;
+                this.availableCategories = uniqueCategories.OrderBy(c => c).ToList();
+                this.needsFilterApply = true;
             }
-            ImGui.EndTable();
-        }
-    }
-
-    private void DrawContextMenu(EmoteDisplayData emote) {
-        if (ImGui.BeginPopupContextItem($"EmoteContextMenu_{emote.Id}")) {
-            bool hasCommand = !string.IsNullOrWhiteSpace(emote.LocalizedCommand);
-
-            if (hasCommand && ImGui.MenuItem(this.localization.Translate("browser_ctx_copy"))) ImGui.SetClipboardText(emote.LocalizedCommand);
-
-            if (ImGui.MenuItem(this.localization.Translate("browser_ctx_execute"), "", false, emote.IsUnlocked)) this.executionService.ExecuteEmote(emote.Id);
-
-            ImGui.Separator();
-
-            if (ImGui.BeginMenu(this.localization.Translate("browser_ctx_append_macro"))) {
-                if (!hasCommand) {
-                    ImGui.MenuItem(this.localization.Translate("browser_details_no_command"), "", false, false);
-                }
-                else {
-                    var unlockedMacros = this.macroService.GetMacros().Where(m => !m.IsLocked).ToList();
-                    if (!unlockedMacros.Any()) {
-                        ImGui.MenuItem(this.localization.Translate("browser_ctx_no_unlocked_macros"), "", false, false);
-                    }
-                    else {
-                        foreach (var m in unlockedMacros) {
-                            if (ImGui.MenuItem(m.Name)) this.macroService.AppendToMacro(m.Id, emote.LocalizedCommand);
-                        }
-                    }
-                }
-                ImGui.EndMenu();
+            catch (Exception ex) {
+                this.logger.Error(ex, "[AllEmotesTab] Background emote resolution failed unexpectedly.");
             }
-            ImGui.EndPopup();
-        }
+            finally {
+                this.isRefreshing = false;
+            }
+        });
     }
 
-    private void DrawIconPreview(uint iconId, float size) {
-        try {
-            var lookup = new GameIconLookup { IconId = iconId, HiRes = false };
-            var iconWrap = this.textureProvider.GetFromGameIcon(lookup).GetWrapOrDefault();
+    public void DrawSidePanel() => this.detailsPanel.Draw();
 
-            if (iconWrap != null) ImGui.Image(iconWrap.Handle, new Vector2(size, size));
-            else ImGui.Dummy(new Vector2(size, size));
-        }
-        catch (Exception) {
-            ImGui.Dummy(new Vector2(size, size));
-        }
+    public void Dispose() {
+        this.modStateProvider.ModStateChanged -= this.OnModStateChanged;
+        this.playerStateProvider.PlayerStateValid -= this.OnPlayerStateValid;
     }
-
-    public void DrawSidePanel() { }
-    public void Dispose() { }
 }
