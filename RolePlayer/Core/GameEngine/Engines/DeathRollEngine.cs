@@ -28,16 +28,12 @@ public class DeathRollEngine : IGameEngine {
 
     public void Stop() {
         this.IsRunning = false;
+        this.GameFinished?.Invoke();
     }
 
     public void ProcessMessage(string sender, string message, GameChatChannel channel) {
         if (!this.IsRunning) return;
 
         // Logique de parsing des dés à implémenter plus tard.
-    }
-
-    private void FinishGame() {
-        this.IsRunning = false;
-        this.GameFinished?.Invoke();
     }
 }
