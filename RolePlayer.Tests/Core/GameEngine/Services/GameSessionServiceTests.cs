@@ -5,6 +5,7 @@ using RolePlayer.Core.GameEngine.Contracts;
 using RolePlayer.Core.GameEngine.Models;
 using RolePlayer.Core.GameEngine.Services;
 using RolePlayer.Core.Logging.Contracts;
+using System.Collections.Generic;
 using Xunit;
 
 public class GameSessionServiceTests {
@@ -13,11 +14,12 @@ public class GameSessionServiceTests {
         var mockLogger = Substitute.For<ILoggerService>();
         var mockFactory = Substitute.For<IGameEngineFactory>();
         var mockEngine = Substitute.For<IGameEngine>();
-        var mockWatcher = Substitute.For<IGameEventWatcher>();
+        var mockWatchers = new List<IGameEventWatcher>();
+        var mockBroadcaster = Substitute.For<IChatBroadcaster>();
 
         mockFactory.CreateEngine(Arg.Any<string>()).Returns(mockEngine);
 
-        var service = new GameSessionService(mockLogger, mockFactory, new[] { mockWatcher });
+        var service = new GameSessionService(mockLogger, mockFactory, mockWatchers, mockBroadcaster);
 
         var config = new GameSessionConfig {
             Game = new GameDefinition { Name = "Test Game", EngineType = "TestEngine" }
@@ -41,8 +43,10 @@ public class GameSessionServiceTests {
     public void StartSession_WithNoGameDefinition_ReturnsFalseAndStaysInactive() {
         var mockLogger = Substitute.For<ILoggerService>();
         var mockFactory = Substitute.For<IGameEngineFactory>();
-        var mockWatcher = Substitute.For<IGameEventWatcher>();
-        var service = new GameSessionService(mockLogger, mockFactory, new[] { mockWatcher });
+        var mockWatchers = new List<IGameEventWatcher>();
+        var mockBroadcaster = Substitute.For<IChatBroadcaster>();
+
+        var service = new GameSessionService(mockLogger, mockFactory, mockWatchers, mockBroadcaster);
 
         var config = new GameSessionConfig {
             Game = null
@@ -59,8 +63,10 @@ public class GameSessionServiceTests {
     public void StartSession_WithNoListeningChannels_ReturnsFalseAndStaysInactive() {
         var mockLogger = Substitute.For<ILoggerService>();
         var mockFactory = Substitute.For<IGameEngineFactory>();
-        var mockWatcher = Substitute.For<IGameEventWatcher>();
-        var service = new GameSessionService(mockLogger, mockFactory, new[] { mockWatcher });
+        var mockWatchers = new List<IGameEventWatcher>();
+        var mockBroadcaster = Substitute.For<IChatBroadcaster>();
+
+        var service = new GameSessionService(mockLogger, mockFactory, mockWatchers, mockBroadcaster);
 
         var config = new GameSessionConfig {
             Game = new GameDefinition { Name = "Test Game", EngineType = "TestEngine" }
@@ -77,11 +83,12 @@ public class GameSessionServiceTests {
         var mockLogger = Substitute.For<ILoggerService>();
         var mockFactory = Substitute.For<IGameEngineFactory>();
         var mockEngine = Substitute.For<IGameEngine>();
+        var mockWatchers = new List<IGameEventWatcher>();
+        var mockBroadcaster = Substitute.For<IChatBroadcaster>();
 
         mockFactory.CreateEngine(Arg.Any<string>()).Returns(mockEngine);
 
-        var mockWatcher = Substitute.For<IGameEventWatcher>();
-        var service = new GameSessionService(mockLogger, mockFactory, new[] { mockWatcher });
+        var service = new GameSessionService(mockLogger, mockFactory, mockWatchers, mockBroadcaster);
 
         var config = new GameSessionConfig {
             Game = new GameDefinition { Name = "Test Game", EngineType = "TestEngine" }

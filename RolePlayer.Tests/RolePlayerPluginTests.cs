@@ -2,52 +2,56 @@
 
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
+using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
-using RolePlayer.Core.Configuration.Models;
-using System;
+using RolePlayer.API.GameEvents;
+using RolePlayer.Core.GameEngine;
+using RolePlayer.Core.Logging.Contracts;
+using RolePlayer.UI.GameDashboard;
+using RolePlayer.UI.Localization.Contracts;
 using System.IO;
 using Xunit;
 
 public class RolePlayerPluginTests {
-
     [Fact]
     public void Plugin_OnInitialization_BuildsDependencyInjectionWithoutErrors() {
+        var services = new ServiceCollection();
+
         var mockPluginInterface = Substitute.For<IDalamudPluginInterface>();
-        var mockChatGui = Substitute.For<IChatGui>();
-        var mockCommandManager = Substitute.For<ICommandManager>();
-        var mockClientState = Substitute.For<IClientState>();
-        var mockLogger = Substitute.For<IPluginLog>();
-        var mockDataManager = Substitute.For<IDataManager>();
-        var mockObjectTable = Substitute.For<IObjectTable>();
-        var mockInteropProvider = Substitute.For<IGameInteropProvider>();
-        var mockTextureProvider = Substitute.For<ITextureProvider>();
-        var mockFramework = Substitute.For<IFramework>();
-        var mockCondition = Substitute.For<ICondition>();
-        var mockKeyState = Substitute.For<IKeyState>();
+        var tempConfigPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        mockPluginInterface.ConfigDirectory.Returns(new DirectoryInfo(tempConfigPath));
 
-        // 1. Simule le répertoire pour le ThemeManagementService
-        mockPluginInterface.ConfigDirectory.Returns(new DirectoryInfo(Path.GetTempPath()));
+        services.AddSingleton(mockPluginInterface);
+        services.AddSingleton(Substitute.For<IChatGui>());
+        services.AddSingleton(Substitute.For<IFramework>());
+        services.AddSingleton(Substitute.For<IObjectTable>());
+        services.AddSingleton(Substitute.For<ISigScanner>());
+        services.AddSingleton(Substitute.For<IClientState>());
+        services.AddSingleton(Substitute.For<ICommandManager>());
+        services.AddSingleton(Substitute.For<IPluginLog>());
+        services.AddSingleton(Substitute.For<ITextureProvider>());
+        services.AddSingleton(Substitute.For<IGameGui>());
 
-        // 2. Simule la version du manifeste pour la MainWindow
-        mockPluginInterface.Manifest.AssemblyVersion.Returns(new Version("1.0.0.0"));
+        // Mock internal core services
+        services.AddSingleton(Substitute.For<ILoggerService>());
+        services.AddSingleton(Substitute.For<ILocalizationService>());
 
-        // 3. Simule la configuration de base pour le ConfigurationService
-        mockPluginInterface.GetPluginConfig().Returns(new PluginConfiguration());
+        var gameEngineFeature = new GameEngineFeature();
+        gameEngineFeature.RegisterServices(services);
 
-        var exception = Record.Exception(() => new RolePlayerPlugin(
-            mockPluginInterface,
-            mockChatGui,
-            mockCommandManager,
-            mockClientState,
-            mockLogger,
-            mockDataManager,
-            mockObjectTable,
-            mockInteropProvider,
-            mockTextureProvider,
-            mockFramework,
-            mockCondition,
-            mockKeyState));
+        var gameEventsFeature = new GameEventsFeature();
+        gameEventsFeature.RegisterServices(services);
 
-        Assert.Null(exception);
+        var gameDashboardFeature = new GameDashboardFeature();
+        gameDashboardFeature.RegisterServices(services);
+
+        // Act & Assert
+        // Setting ValidateOnBuild to true ensures that all dependencies can be resolved immediately.
+        // It will throw an InvalidOperationException if any required service is missing.
+        var serviceProvider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true });
+
+        Assert.NotNull(serviceProvider);
+
+        if (Directory.Exists(tempConfigPath)) Directory.Delete(tempConfigPath, true);
     }
 }

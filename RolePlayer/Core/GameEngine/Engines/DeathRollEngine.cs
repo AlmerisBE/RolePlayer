@@ -26,7 +26,9 @@ public class DeathRollEngine : IGameEngine {
         if (!int.TryParse(startRollStr, out this.currentMaxRoll)) this.currentMaxRoll = 999;
 
         this.IsRunning = true;
-        this.BroadcastRequested?.Invoke($"The Death Roll begins! First to roll 1 loses. Starting roll: 1-{this.currentMaxRoll}. Type /random {this.currentMaxRoll} to start!");
+
+        this.BroadcastRequested?.Invoke("Welcome to Death Roll! The first to roll a 1 loses.");
+        this.BroadcastRequested?.Invoke($"To start, one player must type: /random {this.currentMaxRoll}");
     }
 
     public void Stop() {
@@ -49,11 +51,11 @@ public class DeathRollEngine : IGameEngine {
         this.currentMaxRoll = diceRoll.Roll;
 
         if (this.currentMaxRoll == 1) {
-            this.BroadcastRequested?.Invoke($"{diceRoll.Sender} rolled a 1 and died! The game is over!");
+            this.BroadcastRequested?.Invoke($"Player {diceRoll.Sender} rolled a 1 and died! The game has ended.");
             this.Stop();
         }
         else {
-            this.BroadcastRequested?.Invoke($"{diceRoll.Sender} rolled {this.currentMaxRoll}. Next player, type /random {this.currentMaxRoll}");
+            this.BroadcastRequested?.Invoke($"Player {diceRoll.Sender} rolled {this.currentMaxRoll}. Next player, it's your turn to type: /random {this.currentMaxRoll}");
         }
     }
 }
