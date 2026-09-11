@@ -48,7 +48,7 @@ public class GameSessionService : IGameSessionService {
             return false;
         }
 
-        if (config == null || config.Game == null || string.IsNullOrWhiteSpace(config.Game.EngineType)) {
+        if (config == null || config.Game == null) {
             this.logger.Warning("Attempted to start a game session with a missing or invalid GameDefinition.");
             return false;
         }
@@ -58,9 +58,9 @@ public class GameSessionService : IGameSessionService {
             return false;
         }
 
-        this.activeEngine = this.engineFactory.CreateEngine(config.Game.EngineType);
+        this.activeEngine = this.engineFactory.CreateEngine("StateMachineEngine");
         if (this.activeEngine == null) {
-            this.logger.Error($"Failed to resolve game engine for type: {config.Game.EngineType}");
+            this.logger.Error("Failed to resolve universal StateMachineEngine.");
             return false;
         }
 
@@ -79,7 +79,7 @@ public class GameSessionService : IGameSessionService {
 
         this.activeEngine.Start();
 
-        this.logger.Info($"Started new game session: {config.Game.Name} using {config.Game.EngineType}.");
+        this.logger.Info($"Started new game session: {config.Game.Name}.");
         this.SessionStateChanged?.Invoke();
 
         return true;

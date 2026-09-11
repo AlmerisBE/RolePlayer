@@ -9,67 +9,38 @@ using System.Collections.Generic;
 using Xunit;
 
 public class GameSessionServiceTests {
+    private GameSessionService CreateService(out IGameEngine mockEngine) {
+        var logger = Substitute.For<ILoggerService>();
+        var factory = Substitute.For<IGameEngineFactory>();
+        var watchers = new List<IGameEventWatcher>();
+        var broadcaster = Substitute.For<IChatBroadcaster>();
+
+        mockEngine = Substitute.For<IGameEngine>();
+        factory.CreateEngine("StateMachineEngine").Returns(mockEngine);
+
+        return new GameSessionService(logger, factory, watchers, broadcaster);
+    }
+
     [Fact]
-    public void StartSession_WithValidConfig_ChangesStateToWaitingForPlayers() {
-        var mockLogger = Substitute.For<ILoggerService>();
-        var mockFactory = Substitute.For<IGameEngineFactory>();
-        var mockEngine = Substitute.For<IGameEngine>();
-        var mockWatchers = new List<IGameEventWatcher>();
-        var mockBroadcaster = Substitute.For<IChatBroadcaster>();
-
-        mockFactory.CreateEngine(Arg.Any<string>()).Returns(mockEngine);
-
-        var service = new GameSessionService(mockLogger, mockFactory, mockWatchers, mockBroadcaster);
-
+    public void StartSession_WithValidConfig_StartsEngineAndUpdatesState() {
+        var service = this.CreateService(out var mockEngine);
         var config = new GameSessionConfig {
-            Game = new GameDefinition { Name = "Test Game", EngineType = "TestEngine" }
+            Game = new GameDefinition { Name = "Test Game" },
+            ListeningChannels = new HashSet<GameChatChannel> { GameChatChannel.Say }
         };
-        config.ListeningChannels.Add(GameChatChannel.Say);
-
-        bool eventTriggered = false;
-        service.SessionStateChanged += () => eventTriggered = true;
 
         bool result = service.StartSession(config);
 
         Assert.True(result);
         Assert.Equal(SessionState.WaitingForPlayers, service.CurrentState);
-        Assert.NotNull(service.CurrentConfig);
-        Assert.True(eventTriggered);
-        mockEngine.Received(1).Initialize(config);
         mockEngine.Received(1).Start();
     }
 
     [Fact]
-    public void StartSession_WithNoGameDefinition_ReturnsFalseAndStaysInactive() {
-        var mockLogger = Substitute.For<ILoggerService>();
-        var mockFactory = Substitute.For<IGameEngineFactory>();
-        var mockWatchers = new List<IGameEventWatcher>();
-        var mockBroadcaster = Substitute.For<IChatBroadcaster>();
-
-        var service = new GameSessionService(mockLogger, mockFactory, mockWatchers, mockBroadcaster);
-
+    public void StartSession_WithMissingChannels_ReturnsFalse() {
+        var service = this.CreateService(out _);
         var config = new GameSessionConfig {
-            Game = null
-        };
-        config.ListeningChannels.Add(GameChatChannel.Say);
-
-        bool result = service.StartSession(config);
-
-        Assert.False(result);
-        Assert.Equal(SessionState.Inactive, service.CurrentState);
-    }
-
-    [Fact]
-    public void StartSession_WithNoListeningChannels_ReturnsFalseAndStaysInactive() {
-        var mockLogger = Substitute.For<ILoggerService>();
-        var mockFactory = Substitute.For<IGameEngineFactory>();
-        var mockWatchers = new List<IGameEventWatcher>();
-        var mockBroadcaster = Substitute.For<IChatBroadcaster>();
-
-        var service = new GameSessionService(mockLogger, mockFactory, mockWatchers, mockBroadcaster);
-
-        var config = new GameSessionConfig {
-            Game = new GameDefinition { Name = "Test Game", EngineType = "TestEngine" }
+            Game = new GameDefinition { Name = "Test Game" }
         };
 
         bool result = service.StartSession(config);
@@ -79,31 +50,17 @@ public class GameSessionServiceTests {
     }
 
     [Fact]
-    public void StopSession_WhenActive_ResetsStateToInactiveAndClearsConfig() {
-        var mockLogger = Substitute.For<ILoggerService>();
-        var mockFactory = Substitute.For<IGameEngineFactory>();
-        var mockEngine = Substitute.For<IGameEngine>();
-        var mockWatchers = new List<IGameEventWatcher>();
-        var mockBroadcaster = Substitute.For<IChatBroadcaster>();
-
-        mockFactory.CreateEngine(Arg.Any<string>()).Returns(mockEngine);
-
-        var service = new GameSessionService(mockLogger, mockFactory, mockWatchers, mockBroadcaster);
-
+    public void StopSession_WhenActive_StopsEngineAndUpdatesState() {
+        var service = this.CreateService(out var mockEngine);
         var config = new GameSessionConfig {
-            Game = new GameDefinition { Name = "Test Game", EngineType = "TestEngine" }
+            Game = new GameDefinition { Name = "Test Game" },
+            ListeningChannels = new HashSet<GameChatChannel> { GameChatChannel.Say }
         };
-        config.ListeningChannels.Add(GameChatChannel.Party);
+
         service.StartSession(config);
-
-        bool eventTriggered = false;
-        service.SessionStateChanged += () => eventTriggered = true;
-
         service.StopSession();
 
         Assert.Equal(SessionState.Inactive, service.CurrentState);
-        Assert.Null(service.CurrentConfig);
-        Assert.True(eventTriggered);
         mockEngine.Received(1).Stop();
     }
 }

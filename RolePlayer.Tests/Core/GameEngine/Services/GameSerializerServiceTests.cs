@@ -1,6 +1,7 @@
 ﻿namespace RolePlayer.Tests.Core.GameEngine.Services;
 
 using RolePlayer.Core.GameEngine.Models;
+using RolePlayer.Core.GameEngine.Services;
 using System.Collections.Generic;
 using Xunit;
 

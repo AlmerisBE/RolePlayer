@@ -35,7 +35,6 @@ public class GameLibraryService : IGameLibraryService {
                 Name = "Death Roll",
                 Author = "RolePlayer",
                 Description = "A classic game of successive random rolls until someone rolls a 1.",
-                EngineType = "DeathRollEngine",
                 Parameters = new Dictionary<string, string> {
                     { "StartingRoll", "999" },
                     { "DeathNumber", "1" }
@@ -50,7 +49,6 @@ public class GameLibraryService : IGameLibraryService {
                 Name = "Emote Riddles",
                 Author = "RolePlayer",
                 Description = "Answer the riddle by performing the correct emote.",
-                EngineType = "RiddleEngine",
                 Parameters = new Dictionary<string, string> {
                     { "Riddle_1_Text", "I show joy without speaking. What am I?" },
                     { "Riddle_1_AnswerType", "Emote" },

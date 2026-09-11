@@ -56,7 +56,7 @@ public class GamesListComponent {
 
         if (ImGui.BeginTable("GamesListTable", 3, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit)) {
             ImGui.TableSetupColumn(this.localization.Translate("config_common_name"), ImGuiTableColumnFlags.WidthStretch);
-            ImGui.TableSetupColumn("Type", ImGuiTableColumnFlags.WidthFixed, 120f);
+            ImGui.TableSetupColumn("Author", ImGuiTableColumnFlags.WidthFixed, 120f);
             ImGui.TableSetupColumn(this.localization.Translate("config_common_actions"), ImGuiTableColumnFlags.WidthFixed, 80f);
             ImGui.TableHeadersRow();
 
@@ -78,7 +78,7 @@ public class GamesListComponent {
 
                 ImGui.TableNextColumn();
                 ImGui.AlignTextToFramePadding();
-                ImGui.TextDisabled(game.EngineType);
+                ImGui.TextDisabled(string.IsNullOrWhiteSpace(game.Author) ? "Unknown" : game.Author);
 
                 ImGui.TableNextColumn();
                 float buttonHeight = ImGui.GetFrameHeight();
