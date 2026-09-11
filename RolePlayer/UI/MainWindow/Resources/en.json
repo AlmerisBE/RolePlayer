@@ -117,5 +117,8 @@
   "config_macro_toggle_lock": "Toggle Macro Lock",
   "browser_ctx_append_macro": "Append to Macro...",
   "browser_ctx_no_unlocked_macros": "No unlocked macros available",
-  "main_tab_games": "Games"
+  "main_tab_games": "Games",
+  "games_ctx_edit": "Edit Game",
+  "games_ctx_duplicate": "Duplicate Game",
+  "games_ctx_delete": "Delete Game"
 }

@@ -29,5 +29,20 @@
   "games_editor_export": "Exportieren (Zwischenablage Base64)",
   "games_editor_import": "Aus Zwischenablage importieren",
   "games_editor_import_success": "Spiel erfolgreich importiert!",
-  "games_editor_import_error": "Fehler beim Importieren des Spiels."
+  "games_editor_import_error": "Fehler beim Importieren des Spiels.",
+  "games_editor_stage_id": "Phasen-ID (Eindeutig)",
+  "games_editor_stage_name": "Phasenname",
+  "games_editor_stage_desc": "GM-Anweisungen",
+  "games_editor_modules": "Aktive Module (Auslöser)",
+  "games_editor_add_module": "Modul hinzufügen",
+  "games_editor_module_type": "Modultyp",
+  "games_editor_conditions": "Bedingungen (Ausdrücke)",
+  "games_editor_add_condition": "Bedingung hinzufügen",
+  "games_editor_actions": "Aktionen",
+  "games_editor_add_action": "Aktion hinzufügen",
+  "games_editor_action_type": "Aktionstyp",
+  "games_editor_transitions": "Phasenübergänge",
+  "games_editor_add_transition": "Übergang hinzufügen",
+  "games_editor_transition_target": "Ziel-Phasen-ID",
+  "games_editor_transition_trigger": "Auslösertyp"
 }

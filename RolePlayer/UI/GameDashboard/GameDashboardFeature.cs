@@ -11,6 +11,7 @@ using RolePlayer.UI.GameDashboard.Presenters;
 using RolePlayer.UI.GameDashboard.Providers;
 using RolePlayer.UI.GameDashboard.Windows;
 using RolePlayer.UI.Localization.Contracts;
+using RolePlayer.UI.MainWindow.Contracts;
 
 public class GameDashboardFeature : IFeatureModule {
     public void RegisterServices(IServiceCollection services) {
@@ -19,6 +20,9 @@ public class GameDashboardFeature : IFeatureModule {
         services.AddSingleton<IGameDashboardPresenter, GameDashboardPresenter>();
 
         services.AddSingleton<GameStageEditorComponent>();
+        services.AddSingleton<GameEditorWindow>();
+        services.AddSingleton<IGameEditorWindow>(provider => provider.GetRequiredService<GameEditorWindow>());
+        services.AddSingleton<Window>(provider => provider.GetRequiredService<GameEditorWindow>());
 
         services.AddSingleton<GameDashboardWindow>();
         services.AddSingleton<Window>(provider => provider.GetRequiredService<GameDashboardWindow>());

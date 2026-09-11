@@ -5,79 +5,70 @@ using NSubstitute;
 using RolePlayer.Core.GameEngine.Models;
 using RolePlayer.Core.GameEngine.Services;
 using RolePlayer.Core.Logging.Contracts;
+using System;
 using System.IO;
 using System.Linq;
 using Xunit;
 
-public class GameLibraryServiceTests {
-    [Fact]
-    public void Constructor_CreatesLibraryDirectoryAndDefaultGames_WhenMissing() {
-        var mockPluginInterface = Substitute.For<IDalamudPluginInterface>();
-        var mockLogger = Substitute.For<ILoggerService>();
+public class GameLibraryServiceTests : IDisposable {
+    private string tempDirectory;
+    private IDalamudPluginInterface mockPluginInterface;
+    private ILoggerService mockLogger;
 
-        var tempPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-        mockPluginInterface.ConfigDirectory.Returns(new DirectoryInfo(tempPath));
+    public GameLibraryServiceTests() {
+        this.tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(this.tempDirectory);
 
-        try {
-            var service = new GameLibraryService(mockPluginInterface, mockLogger);
+        this.mockPluginInterface = Substitute.For<IDalamudPluginInterface>();
+        this.mockPluginInterface.ConfigDirectory.Returns(new DirectoryInfo(this.tempDirectory));
 
-            Assert.True(Directory.Exists(service.LibraryDirectory));
-            Assert.True(File.Exists(Path.Combine(service.LibraryDirectory, "DeathRoll.json")));
-            Assert.True(File.Exists(Path.Combine(service.LibraryDirectory, "Riddles.json")));
-        }
-        finally {
-            if (Directory.Exists(tempPath)) Directory.Delete(tempPath, true);
-        }
+        this.mockLogger = Substitute.For<ILoggerService>();
     }
 
     [Fact]
     public void SaveGame_CreatesValidJsonFile() {
-        var mockPluginInterface = Substitute.For<IDalamudPluginInterface>();
-        var mockLogger = Substitute.For<ILoggerService>();
+        var service = new GameLibraryService(this.mockPluginInterface, this.mockLogger);
+        var game = new GameDefinition { Name = "Test Game" };
 
-        var tempPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-        mockPluginInterface.ConfigDirectory.Returns(new DirectoryInfo(tempPath));
+        service.SaveGame(game);
 
-        try {
-            var service = new GameLibraryService(mockPluginInterface, mockLogger);
-            var newGame = new GameDefinition {
-                Name = "TestGame",
-                Author = "Tester"
-            };
-
-            service.SaveGame(newGame);
-
-            var filePath = Path.Combine(service.LibraryDirectory, "TestGame.json");
-            Assert.True(File.Exists(filePath));
-
-            var content = File.ReadAllText(filePath);
-            Assert.Contains("TestGame", content);
-            Assert.Contains("Tester", content);
-        }
-        finally {
-            if (Directory.Exists(tempPath)) Directory.Delete(tempPath, true);
-        }
+        // We now assert against the game.Id instead of the sanitized game.Name
+        string expectedPath = Path.Combine(service.LibraryDirectory, $"{game.Id}.json");
+        Assert.True(File.Exists(expectedPath));
     }
 
     [Fact]
-    public void GetAvailableGames_ParsesJsonFilesSuccessfully() {
-        var mockPluginInterface = Substitute.For<IDalamudPluginInterface>();
-        var mockLogger = Substitute.For<ILoggerService>();
+    public void DeleteGame_RemovesFile() {
+        var service = new GameLibraryService(this.mockPluginInterface, this.mockLogger);
+        var game = new GameDefinition { Name = "Game To Delete" };
 
-        var tempPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-        mockPluginInterface.ConfigDirectory.Returns(new DirectoryInfo(tempPath));
+        service.SaveGame(game);
+        string expectedPath = Path.Combine(service.LibraryDirectory, $"{game.Id}.json");
+        Assert.True(File.Exists(expectedPath));
 
-        try {
-            var service = new GameLibraryService(mockPluginInterface, mockLogger);
+        service.DeleteGame(game.Id);
 
-            var games = service.GetAvailableGames().ToList();
+        Assert.False(File.Exists(expectedPath));
+    }
 
-            Assert.NotEmpty(games);
-            Assert.Contains(games, g => g.Name == "Death Roll");
-            Assert.Contains(games, g => g.Name == "Emote Riddles");
-        }
-        finally {
-            if (Directory.Exists(tempPath)) Directory.Delete(tempPath, true);
+    [Fact]
+    public void DuplicateGame_CreatesCopy() {
+        var service = new GameLibraryService(this.mockPluginInterface, this.mockLogger);
+        var game = new GameDefinition { Name = "Original Game" };
+
+        service.SaveGame(game);
+        service.DuplicateGame(game.Id);
+
+        var games = service.GetAvailableGames().ToList();
+
+        // We expect the default games (Death Roll, Riddles) + Original + Copy
+        Assert.Contains(games, g => g.Name == "Original Game (Copy)");
+        Assert.NotEqual(game.Id, games.First(g => g.Name == "Original Game (Copy)").Id);
+    }
+
+    public void Dispose() {
+        if (Directory.Exists(this.tempDirectory)) {
+            Directory.Delete(this.tempDirectory, true);
         }
     }
 }

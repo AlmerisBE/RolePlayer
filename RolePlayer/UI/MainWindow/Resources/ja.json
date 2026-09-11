@@ -117,5 +117,8 @@
   "config_macro_toggle_lock": "マクロのロックを切り替える",
   "browser_ctx_append_macro": "マクロに追加...",
   "browser_ctx_no_unlocked_macros": "利用可能なマクロがありません",
-  "main_tab_games": "ゲーム"
+  "main_tab_games": "ゲーム",
+  "games_ctx_edit": "ゲームを編集",
+  "games_ctx_duplicate": "ゲームを複製",
+  "games_ctx_delete": "ゲームを削除"
 }

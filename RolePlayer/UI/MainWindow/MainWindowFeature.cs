@@ -45,10 +45,9 @@ public class MainWindowFeature : IFeatureModule {
         services.AddSingleton<Window>(provider => provider.GetRequiredService<MainWindow>());
         services.AddSingleton<ICommand, OpenMainWindowCommand>();
 
-        // Injection d'état et composants pour les Jeux
+        // Composants pour les Jeux (Nettoyé des anciens éditeurs latéraux)
         services.AddSingleton<IGameSelectionState, GameSelectionState>();
         services.AddSingleton<GamesListComponent>();
-        services.AddSingleton<GameEditorPanelComponent>();
 
         services.AddSingleton<IEmoteBrowserTab, ConfigurationTab>();
         services.AddSingleton<IEmoteBrowserTab, AboutTab>();

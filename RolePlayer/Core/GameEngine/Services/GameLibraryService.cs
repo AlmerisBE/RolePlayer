@@ -14,7 +14,9 @@ using System.Text.Json;
 public class GameLibraryService : IGameLibraryService {
     private IDalamudPluginInterface pluginInterface;
     private ILoggerService logger;
+
     private List<GameDefinition> cachedGames = new();
+    private Dictionary<Guid, string> filePaths = new();
 
     public string LibraryDirectory => Path.Combine(this.pluginInterface.ConfigDirectory.FullName, "Games");
 
@@ -35,7 +37,7 @@ public class GameLibraryService : IGameLibraryService {
                 Name = "Death Roll",
                 Author = "RolePlayer",
                 Description = "A classic game of successive random rolls until someone rolls a 1.",
-                Parameters = new Dictionary<string, string> {
+                Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
                     { "StartingRoll", "999" },
                     { "DeathNumber", "1" }
                 }
@@ -49,7 +51,7 @@ public class GameLibraryService : IGameLibraryService {
                 Name = "Emote Riddles",
                 Author = "RolePlayer",
                 Description = "Answer the riddle by performing the correct emote.",
-                Parameters = new Dictionary<string, string> {
+                Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
                     { "Riddle_1_Text", "I show joy without speaking. What am I?" },
                     { "Riddle_1_AnswerType", "Emote" },
                     { "Riddle_1_AnswerValue", "/joy" }
@@ -72,6 +74,7 @@ public class GameLibraryService : IGameLibraryService {
 
     public void ReloadLibrary() {
         this.cachedGames.Clear();
+        this.filePaths.Clear();
 
         if (!Directory.Exists(this.LibraryDirectory)) return;
 
@@ -81,7 +84,10 @@ public class GameLibraryService : IGameLibraryService {
             try {
                 var json = File.ReadAllText(file);
                 var game = JsonSerializer.Deserialize<GameDefinition>(json);
-                if (game != null) this.cachedGames.Add(game);
+                if (game != null) {
+                    this.cachedGames.Add(game);
+                    this.filePaths[game.Id] = file;
+                }
             }
             catch (Exception ex) {
                 this.logger.Error(ex, $"Failed to parse game definition from {file}.");
@@ -96,18 +102,40 @@ public class GameLibraryService : IGameLibraryService {
     public void SaveGame(GameDefinition game) {
         if (string.IsNullOrWhiteSpace(game.Name)) return;
 
-        string sanitizedFileName = string.Join("_", game.Name.Split(Path.GetInvalidFileNameChars())) + ".json";
-        string filePath = Path.Combine(this.LibraryDirectory, sanitizedFileName);
+        if (!this.filePaths.TryGetValue(game.Id, out string? filePath)) {
+            // New game: use its Guid to guarantee a unique, collision-free filename
+            filePath = Path.Combine(this.LibraryDirectory, $"{game.Id}.json");
+            this.filePaths[game.Id] = filePath;
+        }
 
         this.WriteGameToFile(filePath, game);
         this.ReloadLibrary();
     }
 
-    public void DeleteGame(string fileName) {
-        string filePath = Path.Combine(this.LibraryDirectory, fileName);
-        if (File.Exists(filePath)) {
+    public void DeleteGame(Guid gameId) {
+        if (this.filePaths.TryGetValue(gameId, out string? filePath) && File.Exists(filePath)) {
             File.Delete(filePath);
             this.ReloadLibrary();
+        }
+    }
+
+    public void DuplicateGame(Guid gameId) {
+        var original = this.cachedGames.FirstOrDefault(g => g.Id == gameId);
+        if (original == null) return;
+
+        try {
+            // Deep clone via JSON to break references securely
+            var cloneJson = JsonSerializer.Serialize(original);
+            var clone = JsonSerializer.Deserialize<GameDefinition>(cloneJson);
+
+            if (clone != null) {
+                clone.Id = Guid.NewGuid();
+                clone.Name = $"{clone.Name} (Copy)";
+                this.SaveGame(clone);
+            }
+        }
+        catch (Exception ex) {
+            this.logger.Error(ex, "Failed to duplicate game definition.");
         }
     }
 

@@ -2,6 +2,7 @@
 
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
+using Dalamud.Interface.Components;
 using RolePlayer.Core.GameEngine.Models;
 using RolePlayer.UI.Localization.Contracts;
 using System.Linq;
@@ -22,12 +23,10 @@ public class GameStageEditorComponent {
         ImGui.TextDisabled(this.localization.Translate("games_editor_stages"));
         ImGui.SameLine(ImGui.GetContentRegionAvail().X - 120f);
 
-        ImGui.PushFont(UiBuilder.IconFont);
-        if (ImGui.Button($"{FontAwesomeIcon.Plus.ToIconString()} {this.localization.Translate("games_editor_add_stage")}", new Vector2(120f, 0))) {
+        if (ImGuiComponents.IconButtonWithText(FontAwesomeIcon.Plus, this.localization.Translate("games_editor_add_stage"))) {
             game.Stages.Add(new GameStage { Id = $"stage_{game.Stages.Count + 1}", Name = "New Stage" });
             changed = true;
         }
-        ImGui.PopFont();
 
         ImGui.Spacing();
 
@@ -57,7 +56,7 @@ public class GameStageEditorComponent {
 
                 ImGui.Spacing();
                 ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
-                if (ImGui.Button($"{FontAwesomeIcon.Trash.ToIconString()} Delete Stage")) stageToRemove = stage;
+                if (ImGuiComponents.IconButtonWithText(FontAwesomeIcon.Trash, "Delete Stage")) stageToRemove = stage;
                 ImGui.PopStyleColor();
 
                 ImGui.Unindent();
@@ -111,28 +110,34 @@ public class GameStageEditorComponent {
             var module = stage.ActiveModules[i];
             ImGui.PushID($"Module_{i}");
 
-            if (ImGui.BeginChild($"ModChild_{i}", new Vector2(-1, 0), true, ImGuiWindowFlags.AlwaysAutoResize)) {
-                ImGui.SetNextItemWidth(150f);
-                if (ImGui.BeginCombo("##ModuleType", module.ModuleType)) {
-                    foreach (var type in this.moduleTypes) {
-                        if (ImGui.Selectable(type, module.ModuleType == type)) {
-                            module.ModuleType = type;
-                            changed = true;
-                        }
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
+
+            ImGui.SetNextItemWidth(150f);
+            if (ImGui.BeginCombo("##ModuleType", module.ModuleType)) {
+                foreach (var type in this.moduleTypes) {
+                    if (ImGui.Selectable(type, module.ModuleType == type)) {
+                        module.ModuleType = type;
+                        changed = true;
                     }
-                    ImGui.EndCombo();
                 }
-
-                ImGui.SameLine(ImGui.GetContentRegionAvail().X - 30f);
-                ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
-                if (ImGui.Button(FontAwesomeIcon.Trash.ToIconString())) moduleToRemove = module;
-                ImGui.PopStyleColor();
-
-                this.DrawDictionaryEditor("Parameters", module.Parameters, ref changed);
-                this.DrawStringListEditor(this.localization.Translate("games_editor_conditions"), module.ConditionExpressions, ref changed);
-                this.DrawActionsEditor(module, ref changed);
+                ImGui.EndCombo();
             }
-            ImGui.EndChild();
+
+            ImGui.SameLine(ImGui.GetContentRegionAvail().X - 30f);
+            ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
+            ImGui.PushFont(UiBuilder.IconFont);
+            if (ImGui.Button(FontAwesomeIcon.Trash.ToIconString())) moduleToRemove = module;
+            ImGui.PopFont();
+            ImGui.PopStyleColor();
+
+            ImGui.Indent();
+            this.DrawDictionaryEditor("Parameters", module.Parameters, ref changed);
+            this.DrawStringListEditor(this.localization.Translate("games_editor_conditions"), module.ConditionExpressions, ref changed);
+            this.DrawActionsEditor(module, ref changed);
+            ImGui.Unindent();
+
             ImGui.PopID();
         }
 
@@ -172,7 +177,9 @@ public class GameStageEditorComponent {
 
             ImGui.SameLine();
             ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
+            ImGui.PushFont(UiBuilder.IconFont);
             if (ImGui.Button(FontAwesomeIcon.Trash.ToIconString())) actionToRemove = action;
+            ImGui.PopFont();
             ImGui.PopStyleColor();
 
             ImGui.PopID();
@@ -227,7 +234,9 @@ public class GameStageEditorComponent {
 
             ImGui.SameLine();
             ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
+            ImGui.PushFont(UiBuilder.IconFont);
             if (ImGui.Button(FontAwesomeIcon.Trash.ToIconString())) transitionToRemove = transition;
+            ImGui.PopFont();
             ImGui.PopStyleColor();
 
             ImGui.PopID();
@@ -257,7 +266,9 @@ public class GameStageEditorComponent {
             }
             ImGui.SameLine();
             ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
+            ImGui.PushFont(UiBuilder.IconFont);
             if (ImGui.Button($"-##del_{title}_{i}")) indexToRemove = i;
+            ImGui.PopFont();
             ImGui.PopStyleColor();
         }
 
@@ -304,7 +315,9 @@ public class GameStageEditorComponent {
 
             ImGui.SameLine();
             ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
+            ImGui.PushFont(UiBuilder.IconFont);
             if (ImGui.Button($"-##del_{title}_{i}")) keyToRemove = keys[i];
+            ImGui.PopFont();
             ImGui.PopStyleColor();
         }
 

@@ -16,19 +16,25 @@ public class GamesListComponent {
     private ILocalizationService localization;
     private IGameDashboardPresenter dashboardPresenter;
     private GameDashboardWindow dashboardWindow;
+    private IGameSerializerService serializerService;
+    private IGameEditorWindow editorWindow;
 
     public GamesListComponent(
         IGameLibraryService libraryService,
         IGameSelectionState selectionState,
         ILocalizationService localization,
         IGameDashboardPresenter dashboardPresenter,
-        GameDashboardWindow dashboardWindow) {
+        GameDashboardWindow dashboardWindow,
+        IGameSerializerService serializerService,
+        IGameEditorWindow editorWindow) {
 
         this.libraryService = libraryService;
         this.selectionState = selectionState;
         this.localization = localization;
         this.dashboardPresenter = dashboardPresenter;
         this.dashboardWindow = dashboardWindow;
+        this.serializerService = serializerService;
+        this.editorWindow = editorWindow;
     }
 
     public void Draw() {
@@ -75,6 +81,34 @@ public class GamesListComponent {
                     this.selectionState.SelectedGame = isSelected ? null : game;
                 }
                 ImGui.PopStyleVar();
+
+                // === MENU CONTEXTUEL ===
+                if (ImGui.BeginPopupContextItem($"GameContextMenu_{game.Id}")) {
+                    if (ImGui.MenuItem(this.localization.Translate("games_ctx_edit"))) {
+                        this.selectionState.IsCreatingNew = false;
+                        this.selectionState.SelectedGame = game;
+                    }
+
+                    if (ImGui.MenuItem(this.localization.Translate("games_ctx_duplicate"))) {
+                        this.libraryService.DuplicateGame(game.Id);
+                    }
+
+                    if (ImGui.MenuItem(this.localization.Translate("games_editor_export"))) {
+                        var base64 = this.serializerService.ToBase64Export(game);
+                        ImGui.SetClipboardText(base64);
+                    }
+
+                    ImGui.Separator();
+
+                    ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
+                    if (ImGui.MenuItem(this.localization.Translate("games_ctx_delete"))) {
+                        this.libraryService.DeleteGame(game.Id);
+                        if (this.selectionState.SelectedGame?.Id == game.Id) this.selectionState.SelectedGame = null;
+                    }
+                    ImGui.PopStyleColor();
+
+                    ImGui.EndPopup();
+                }
 
                 ImGui.TableNextColumn();
                 ImGui.AlignTextToFramePadding();

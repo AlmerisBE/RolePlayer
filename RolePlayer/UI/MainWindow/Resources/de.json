@@ -117,5 +117,8 @@
   "config_macro_toggle_lock": "Makrosperre umschalten",
   "browser_ctx_append_macro": "Zum Makro hinzufügen...",
   "browser_ctx_no_unlocked_macros": "Keine entsperrten Makros verfügbar",
-  "main_tab_games": "Spiele"
+  "main_tab_games": "Spiele",
+  "games_ctx_edit": "Spiel bearbeiten",
+  "games_ctx_duplicate": "Spiel duplizieren",
+  "games_ctx_delete": "Spiel löschen"
 }

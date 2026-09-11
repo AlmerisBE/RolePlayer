@@ -117,5 +117,8 @@
   "config_macro_toggle_lock": "Verrouiller / Déverrouiller la macro",
   "browser_ctx_append_macro": "Ajouter à la macro...",
   "browser_ctx_no_unlocked_macros": "Aucune macro disponible",
-  "main_tab_games": "Jeux"
+  "main_tab_games": "Jeux",
+  "games_ctx_edit": "Éditer le Jeu",
+  "games_ctx_duplicate": "Dupliquer le Jeu",
+  "games_ctx_delete": "Supprimer le Jeu"
 }
