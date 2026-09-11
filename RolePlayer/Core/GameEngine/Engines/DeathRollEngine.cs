@@ -13,7 +13,7 @@ public class DeathRollEngine : IGameEngine {
     private GameSessionConfig? config;
     private int currentMaxRoll;
     private int stageIndex;
-    private List<string> defaultStages = new() { "Registration", "Rolling", "Finished" };
+    private List<string> defaultStages = new() { "Preparation", "Registration", "InProgress", "Finished" };
 
     private HashSet<string> participants = new(StringComparer.OrdinalIgnoreCase);
     private readonly object stateLock = new();
@@ -35,7 +35,15 @@ public class DeathRollEngine : IGameEngine {
 
     public bool AllowChatRegistration {
         get => this.config?.Game?.AllowChatRegistration ?? false;
-        set { if (this.config?.Game != null) this.config.Game.AllowChatRegistration = value; }
+        set {
+            lock (this.stateLock) {
+                if (this.config?.Game == null || this.config.Game.AllowChatRegistration == value) return;
+                this.config.Game.AllowChatRegistration = value;
+            }
+
+            if (value) this.BroadcastRequested?.Invoke(this.GetMessage("Msg_RegistrationOpened", "Registration is now open! Type !join to participate."));
+            else this.BroadcastRequested?.Invoke(this.GetMessage("Msg_RegistrationClosed", "Registration is now closed."));
+        }
     }
 
     public event Action<string>? BroadcastRequested;
@@ -102,13 +110,16 @@ public class DeathRollEngine : IGameEngine {
     public void AdvanceStage() {
         lock (this.stateLock) {
             if (this.stageIndex == 0) {
+                this.stageIndex = 1; // Passage à Registration
+            }
+            else if (this.stageIndex == 1) {
                 if (this.participants.Count < 2) {
                     this.BroadcastRequested?.Invoke(this.GetMessage("Msg_StartWarning", "Need at least 2 players."));
                     return;
                 }
-                this.stageIndex = 1;
+                this.stageIndex = 2; // Passage à InProgress
             }
-            else if (this.stageIndex == 1) {
+            else if (this.stageIndex == 2) {
                 this.Stop();
                 return;
             }
@@ -117,6 +128,9 @@ public class DeathRollEngine : IGameEngine {
         this.StageChanged?.Invoke();
 
         if (this.stageIndex == 1) {
+            this.BroadcastRequested?.Invoke(this.GetMessage("Msg_Welcome", "Welcome to Death Roll! We are gathering players."));
+        }
+        else if (this.stageIndex == 2) {
             this.BroadcastRequested?.Invoke(this.GetMessage("Msg_Start", "The game begins! First to roll 1 loses."));
             this.BroadcastRequested?.Invoke(this.GetMessage("Msg_FirstToRoll", "Starting roll: 1-{0}. Someone type: /random {0}").Replace("{0}", this.currentMaxRoll.ToString()));
         }
@@ -135,14 +149,13 @@ public class DeathRollEngine : IGameEngine {
 
         if (!running) return;
 
-        if (stage == 0 && allowJoin && gameEvent is ChatGameEvent chatEvent) {
+        if (stage == 1 && allowJoin && gameEvent is ChatGameEvent chatEvent) {
             string msg = chatEvent.Message.Trim().ToLowerInvariant();
             if (msg == "!join") this.AddParticipant(chatEvent.Sender);
-            else if (msg == "!start") this.AdvanceStage();
             return;
         }
 
-        if (stage == 1 && gameEvent is DiceRollGameEvent diceRoll) {
+        if (stage == 2 && gameEvent is DiceRollGameEvent diceRoll) {
             lock (this.stateLock) {
                 if (!this.participants.Contains(diceRoll.Sender)) return;
                 if (diceRoll.OutOf != this.currentMaxRoll) return;

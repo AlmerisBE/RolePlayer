@@ -22,4 +22,6 @@ public interface IGameDashboardPresenter : IDisposable {
 
     void AdvanceStage();
     void AddTarget();
+
+    void SaveGameConfig();
 }

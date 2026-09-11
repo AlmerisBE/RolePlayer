@@ -68,6 +68,10 @@ public class GameDashboardPresenter : IGameDashboardPresenter {
         if (!string.IsNullOrWhiteSpace(targetName)) this.sessionService.AddParticipant(targetName);
     }
 
+    public void SaveGameConfig() {
+        if (this.SelectedGame != null) this.libraryService.SaveGame(this.SelectedGame);
+    }
+
     public void Dispose() {
         this.sessionService.StopSession();
     }

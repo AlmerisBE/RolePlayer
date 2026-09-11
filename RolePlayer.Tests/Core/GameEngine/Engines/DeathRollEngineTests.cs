@@ -41,17 +41,34 @@ public class DeathRollEngineTests {
     }
 
     [Fact]
-    public void AdvanceStage_TransitionsFromRegistrationToRolling() {
+    public void AdvanceStage_TransitionsThroughStandardPhases() {
         var engine = this.CreateEngine();
         engine.Start();
-        engine.AddParticipant("Player 1");
-        engine.AddParticipant("Player 2");
 
-        Assert.Equal("Registration", engine.CurrentStageName);
-
+        Assert.Equal("Preparation", engine.CurrentStageName);
         engine.AdvanceStage();
 
-        Assert.Equal("Rolling", engine.CurrentStageName);
+        Assert.Equal("Registration", engine.CurrentStageName);
+        engine.AdvanceStage();
+
+        Assert.Equal("InProgress", engine.CurrentStageName);
+    }
+
+    [Fact]
+    public void AllowChatRegistration_Setter_BroadcastsStatusMessage() {
+        var engine = this.CreateEngine(allowJoin: false);
+        engine.Start();
+
+        var broadcasts = new List<string>();
+        engine.BroadcastRequested += msg => broadcasts.Add(msg);
+
+        engine.AllowChatRegistration = true;
+        Assert.Contains(broadcasts, b => b.Contains("open"));
+
+        broadcasts.Clear();
+
+        engine.AllowChatRegistration = false;
+        Assert.Contains(broadcasts, b => b.Contains("closed"));
     }
 
     [Fact]

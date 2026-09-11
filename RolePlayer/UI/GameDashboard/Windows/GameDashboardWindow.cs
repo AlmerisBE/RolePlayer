@@ -7,11 +7,15 @@ using RolePlayer.Core.GameEngine.Models;
 using RolePlayer.UI.GameDashboard.Contracts;
 using RolePlayer.UI.Localization.Contracts;
 using System;
+using System.Linq;
 using System.Numerics;
 
 public class GameDashboardWindow : Window {
     private IGameDashboardPresenter presenter;
     private ILocalizationService localization;
+
+    // Clés de messages par défaut pour initialiser l'éditeur si vide
+    private readonly string[] defaultMessageKeys = { "Msg_RegistrationOpened", "Msg_RegistrationClosed", "Msg_Join", "Msg_Welcome", "Msg_StartWarning", "Msg_Start", "Msg_FirstToRoll", "Msg_Loss", "Msg_RollNext" };
 
     public GameDashboardWindow(IGameDashboardPresenter presenter, ILocalizationService localization)
         : base("Game Master Dashboard###RolePlayer_GameHost", ImGuiWindowFlags.NoScrollbar) {
@@ -20,7 +24,7 @@ public class GameDashboardWindow : Window {
         this.localization = localization;
 
         this.SizeConstraints = new WindowSizeConstraints {
-            MinimumSize = new Vector2(500, 400),
+            MinimumSize = new Vector2(700, 500),
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
         };
     }
@@ -29,18 +33,19 @@ public class GameDashboardWindow : Window {
         var isRunning = this.presenter.CurrentState != SessionState.Inactive;
 
         if (ImGui.BeginTable("GameHostLayout", 2, ImGuiTableFlags.BordersInnerV | ImGuiTableFlags.Resizable)) {
-            ImGui.TableSetupColumn("Configuration", ImGuiTableColumnFlags.WidthStretch, 0.4f);
-            ImGui.TableSetupColumn("Session", ImGuiTableColumnFlags.WidthStretch, 0.6f);
+            ImGui.TableSetupColumn("Configuration", ImGuiTableColumnFlags.WidthStretch, 0.45f);
+            ImGui.TableSetupColumn("Session", ImGuiTableColumnFlags.WidthStretch, 0.55f);
             ImGui.TableNextRow();
 
-            // Colonne de gauche : Configuration
+            // ==========================================
+            // COLONNE GAUCHE : Gestion et Contrôles
+            // ==========================================
             ImGui.TableNextColumn();
 
             ImGui.TextDisabled(this.localization.Translate("host_game_selection"));
             ImGui.Spacing();
 
             ImGui.BeginDisabled(isRunning);
-
             var selectedGameName = this.presenter.SelectedGame?.Name ?? this.localization.Translate("host_select_game");
             ImGui.SetNextItemWidth(-1f);
             if (ImGui.BeginCombo("##GameSelection", selectedGameName)) {
@@ -61,90 +66,13 @@ public class GameDashboardWindow : Window {
                 bool isSelected = this.presenter.SelectedChannels.Contains(channel);
                 if (ImGui.Checkbox(channel.ToString(), ref isSelected)) this.presenter.ToggleChannel(channel);
             }
-
             ImGui.EndDisabled();
-
-            // Colonne de droite : Statut de la Session
-            ImGui.TableNextColumn();
-
-            ImGui.TextDisabled(this.localization.Translate("host_session_status"));
-            ImGui.Spacing();
-
-            if (isRunning) {
-                ImGui.TextColored(new Vector4(0.2f, 0.8f, 0.2f, 1.0f), this.presenter.CurrentStageName);
-
-                ImGui.Spacing();
-                bool allowJoin = this.presenter.AllowChatRegistration;
-                if (ImGui.Checkbox("Autoriser !join", ref allowJoin)) {
-                    this.presenter.AllowChatRegistration = allowJoin;
-                }
-
-                ImGui.Spacing();
-                ImGui.Separator();
-                ImGui.Spacing();
-
-                ImGui.TextDisabled(this.localization.Translate("host_participants"));
-                ImGui.Spacing();
-
-                var players = this.presenter.Participants;
-                if (players.Count == 0) {
-                    ImGui.TextDisabled(this.localization.Translate("host_no_participants"));
-                }
-                else {
-                    if (ImGui.BeginChild("ParticipantsList", new Vector2(0, 100), true)) {
-                        foreach (var player in players) ImGui.BulletText(player);
-                    }
-                    ImGui.EndChild();
-                }
-
-                ImGui.Spacing();
-
-                string targetName = this.presenter.CurrentTargetName;
-                if (string.IsNullOrEmpty(targetName)) ImGui.BeginDisabled();
-                if (ImGui.Button($"Ajouter Cible : {targetName ?? "Aucune"}", new Vector2(-1, 0))) {
-                    this.presenter.AddTarget();
-                }
-                if (string.IsNullOrEmpty(targetName)) ImGui.EndDisabled();
-
-                ImGui.Spacing();
-                ImGui.Separator();
-                ImGui.Spacing();
-
-                ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.2f, 0.4f, 0.8f, 1.0f));
-                if (ImGui.Button("Passer à l'étape suivante", new Vector2(-1, 30))) this.presenter.AdvanceStage();
-                ImGui.PopStyleColor();
-            }
-            else {
-                string stateString = this.localization.Translate($"host_state_{this.presenter.CurrentState.ToString().ToLowerInvariant()}");
-                ImGui.TextColored(new Vector4(0.8f, 0.8f, 0.8f, 1.0f), stateString);
-            }
 
             ImGui.Spacing();
             ImGui.Separator();
             ImGui.Spacing();
 
-            if (isRunning) {
-                ImGui.TextDisabled(this.localization.Translate("host_participants"));
-                ImGui.Spacing();
-
-                var players = this.presenter.Participants;
-                if (players.Count == 0) {
-                    ImGui.TextDisabled(this.localization.Translate("host_no_participants"));
-                }
-                else {
-                    if (ImGui.BeginChild("ParticipantsList", new Vector2(0, 100), true)) {
-                        foreach (var player in players) {
-                            ImGui.BulletText(player);
-                        }
-                    }
-                    ImGui.EndChild();
-                }
-
-                ImGui.Spacing();
-                ImGui.Separator();
-                ImGui.Spacing();
-            }
-
+            // Boutons de gestion de session (Déplacés à gauche)
             if (!isRunning) {
                 ImGui.BeginDisabled(this.presenter.SelectedGame == null || this.presenter.SelectedChannels.Count == 0);
                 ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.2f, 0.6f, 0.2f, 1.0f));
@@ -159,15 +87,94 @@ public class GameDashboardWindow : Window {
                 ImGui.EndDisabled();
             }
             else {
-                ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
+                if (this.presenter.CurrentStageName != "Finished") {
+                    ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.2f, 0.4f, 0.8f, 1.0f));
+                    if (ImGui.Button("Passer à l'étape suivante", new Vector2(-1, 35))) this.presenter.AdvanceStage();
+                    ImGui.PopStyleColor();
+                    ImGui.Spacing();
+                }
 
+                ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
                 ImGui.PushFont(UiBuilder.IconFont);
                 string stopIcon = FontAwesomeIcon.Stop.ToIconString();
                 ImGui.PopFont();
 
                 if (ImGui.Button($"{stopIcon} {this.localization.Translate("host_stop_session")}", new Vector2(-1, 40))) this.presenter.StopSession();
-
                 ImGui.PopStyleColor();
+            }
+
+            // ==========================================
+            // COLONNE DROITE : Statut et Informations
+            // ==========================================
+            ImGui.TableNextColumn();
+
+            ImGui.TextDisabled(this.localization.Translate("host_session_status"));
+            ImGui.Spacing();
+
+            if (isRunning) {
+                ImGui.TextColored(new Vector4(0.2f, 0.8f, 0.2f, 1.0f), this.presenter.CurrentStageName);
+
+                ImGui.Spacing();
+                ImGui.Separator();
+                ImGui.Spacing();
+
+                // Éditeur de messages (Uniquement en phase Preparation)
+                if (this.presenter.CurrentStageName == "Preparation" && this.presenter.SelectedGame != null) {
+                    ImGui.TextDisabled("Messages du jeu (Édition)");
+                    if (ImGui.BeginChild("MessageEditorArea", new Vector2(0, 0), true)) {
+                        bool messagesChanged = false;
+
+                        // S'assurer que les clés par défaut existent
+                        foreach (var key in this.defaultMessageKeys) {
+                            if (!this.presenter.SelectedGame.Messages.ContainsKey(key)) this.presenter.SelectedGame.Messages[key] = string.Empty;
+                        }
+
+                        foreach (var key in this.presenter.SelectedGame.Messages.Keys.ToList()) {
+                            ImGui.TextDisabled(key);
+                            string val = this.presenter.SelectedGame.Messages[key];
+                            ImGui.SetNextItemWidth(-1f);
+                            if (ImGui.InputText($"##msg_{key}", ref val, 256)) {
+                                this.presenter.SelectedGame.Messages[key] = val;
+                                messagesChanged = true;
+                            }
+                            ImGui.Spacing();
+                        }
+
+                        if (messagesChanged) this.presenter.SaveGameConfig();
+                    }
+                    ImGui.EndChild();
+                }
+                // Vue Participants (Uniquement pour Registration et InProgress)
+                else if (this.presenter.CurrentStageName != "Preparation" && this.presenter.CurrentStageName != "Finished") {
+
+                    if (this.presenter.CurrentStageName == "Registration") {
+                        bool allowJoin = this.presenter.AllowChatRegistration;
+                        if (ImGui.Checkbox("Autoriser inscriptions (!join)", ref allowJoin)) this.presenter.AllowChatRegistration = allowJoin;
+                        ImGui.Spacing();
+                    }
+
+                    ImGui.TextDisabled(this.localization.Translate("host_participants"));
+                    var players = this.presenter.Participants;
+
+                    if (players.Count == 0) ImGui.TextDisabled(this.localization.Translate("host_no_participants"));
+                    else {
+                        if (ImGui.BeginChild("ParticipantsList", new Vector2(0, 150), true)) {
+                            foreach (var player in players) ImGui.BulletText(player);
+                        }
+                        ImGui.EndChild();
+                    }
+
+                    ImGui.Spacing();
+
+                    string targetName = this.presenter.CurrentTargetName;
+                    if (string.IsNullOrEmpty(targetName)) ImGui.BeginDisabled();
+                    if (ImGui.Button($"Ajouter Cible : {targetName ?? "Aucune"}", new Vector2(-1, 30))) this.presenter.AddTarget();
+                    if (string.IsNullOrEmpty(targetName)) ImGui.EndDisabled();
+                }
+            }
+            else {
+                string stateString = this.localization.Translate($"host_state_{this.presenter.CurrentState.ToString().ToLowerInvariant()}");
+                ImGui.TextColored(new Vector4(0.8f, 0.8f, 0.8f, 1.0f), stateString);
             }
 
             ImGui.EndTable();
