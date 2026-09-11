@@ -2,6 +2,7 @@
 
 using Dalamud.Game.Chat;
 using Dalamud.Game.Text;
+using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Plugin.Services;
 using RolePlayer.Core.GameEngine.Contracts;
 using RolePlayer.Core.GameEngine.Models;
@@ -40,19 +41,26 @@ public class ChatWatcher : IGameEventWatcher {
         this.participants.Clear();
     }
 
-    private void OnChatMessage(IChatMessage message) {
-        if (message.Sender == null || message.Message == null) return;
+    private string CleanPlayerName(string name) {
+        if (string.IsNullOrEmpty(name)) return string.Empty;
+        var parts = name.Split(new[] { '\uE05D', '@' }, 2);
+        return parts[0].Trim();
+    }
 
-        string senderName = message.Sender.TextValue;
+    private void OnChatMessage(IChatMessage message) {
+        if (message.Message == null) return;
+
+        if ((int)message.LogKind == 73) {
+            this.HandleDiceRoll(message);
+            return;
+        }
+
+        string senderName = this.CleanPlayerName(message.Sender?.TextValue ?? string.Empty);
+        if (string.IsNullOrEmpty(senderName)) return;
 
         if (this.participants.Count > 0 && !this.participants.Contains(senderName)) return;
 
         string messageText = message.Message.TextValue;
-
-        if ((int)message.LogKind == 73) {
-            this.HandleDiceRoll(senderName, messageText);
-            return;
-        }
 
         var channel = this.MapChannel(message.LogKind);
         if (channel.HasValue) {
@@ -64,15 +72,40 @@ public class ChatWatcher : IGameEventWatcher {
         }
     }
 
-    private void HandleDiceRoll(string sender, string messageText) {
+    private void HandleDiceRoll(IChatMessage message) {
+        string messageText = message.Message.TextValue;
         var match = Regex.Match(messageText, @"(?:\D|^)(\d+)[^\d]+(\d+)(?:\D|$)");
+
         if (match.Success && match.Groups.Count >= 3) {
             if (int.TryParse(match.Groups[1].Value, out int roll) && int.TryParse(match.Groups[2].Value, out int outOf)) {
-                this.EventFired?.Invoke(new DiceRollGameEvent {
-                    Sender = sender,
-                    Roll = roll,
-                    OutOf = outOf
-                });
+
+                string sender = string.Empty;
+
+                // 1. Priorité au payload natif de Dalamud/FFXIV
+                foreach (var payload in message.Message.Payloads) {
+                    if (payload is PlayerPayload pp) {
+                        sender = this.CleanPlayerName(pp.PlayerName);
+                        break;
+                    }
+                }
+
+                // 2. Repli : si pas de payload, on cherche un participant connu dans le texte
+                if (string.IsNullOrEmpty(sender)) {
+                    foreach (var p in this.participants) {
+                        if (messageText.Contains(p, StringComparison.OrdinalIgnoreCase)) {
+                            sender = p;
+                            break;
+                        }
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(sender)) {
+                    this.EventFired?.Invoke(new DiceRollGameEvent {
+                        Sender = sender,
+                        Roll = roll,
+                        OutOf = outOf
+                    });
+                }
             }
         }
     }

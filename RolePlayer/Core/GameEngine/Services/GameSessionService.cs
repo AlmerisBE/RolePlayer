@@ -73,6 +73,7 @@ public class GameSessionService : IGameSessionService {
         this.activeEngine.Initialize(config);
 
         foreach (var watcher in this.eventWatchers) {
+            watcher.ClearParticipants();
             watcher.EventFired += this.OnGameEventFired;
             watcher.Start();
         }
@@ -90,6 +91,7 @@ public class GameSessionService : IGameSessionService {
 
         foreach (var watcher in this.eventWatchers) {
             watcher.EventFired -= this.OnGameEventFired;
+            watcher.ClearParticipants();
             watcher.Stop();
         }
 
@@ -126,6 +128,10 @@ public class GameSessionService : IGameSessionService {
     }
 
     private void OnParticipantsChanged() {
+        foreach (var watcher in this.eventWatchers) {
+            watcher.SetParticipants(this.Participants);
+        }
+
         this.SessionStateChanged?.Invoke();
     }
 
