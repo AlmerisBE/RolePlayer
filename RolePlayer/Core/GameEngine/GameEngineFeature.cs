@@ -13,6 +13,7 @@ public class GameEngineFeature : IFeatureModule {
         services.AddSingleton<IGameEngine, DeathRollEngine>();
 
         services.AddSingleton<IGameEngineFactory, GameEngineFactory>();
+        services.AddSingleton<IChatBroadcaster, ChatBroadcaster>();
         services.AddSingleton<IGameSessionService, GameSessionService>();
     }
 }

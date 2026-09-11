@@ -5,6 +5,7 @@ using Dalamud.Plugin.Services;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using RolePlayer.API.GameEvents;
+using RolePlayer.API.Interop.Contracts;
 using RolePlayer.Core.GameEngine;
 using RolePlayer.Core.Logging.Contracts;
 using RolePlayer.UI.GameDashboard;
@@ -31,6 +32,7 @@ public class RolePlayerPluginTests {
         services.AddSingleton(Substitute.For<IPluginLog>());
         services.AddSingleton(Substitute.For<ITextureProvider>());
         services.AddSingleton(Substitute.For<IGameGui>());
+        services.AddSingleton(Substitute.For<INativeExecutionService>());
 
         // Mock internal core services
         services.AddSingleton(Substitute.For<ILoggerService>());
