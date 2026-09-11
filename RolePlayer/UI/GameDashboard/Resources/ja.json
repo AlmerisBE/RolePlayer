@@ -13,5 +13,21 @@
   "host_start_session": "セッション開始",
   "host_stop_session": "セッション停止",
   "host_participants": "参加者",
-  "host_no_participants": "参加者なし"
+  "host_no_participants": "参加者なし",
+  "games_editor_general": "一般設定",
+  "games_editor_name": "ゲーム名",
+  "games_editor_author": "作者",
+  "games_editor_desc": "説明",
+  "games_editor_allow_join": "デフォルトで !join を許可",
+  "games_editor_variables": "初期変数",
+  "games_editor_add_var": "変数を追加",
+  "games_editor_var_key": "キー",
+  "games_editor_var_value": "値",
+  "games_editor_stages": "ステージ",
+  "games_editor_add_stage": "ステージを追加",
+  "games_editor_save": "ゲーム設定を保存",
+  "games_editor_export": "クリップボードへエクスポート (Base64)",
+  "games_editor_import": "クリップボードからインポート",
+  "games_editor_import_success": "ゲームのインポートに成功しました！",
+  "games_editor_import_error": "ゲームのインポートに失敗しました。"
 }

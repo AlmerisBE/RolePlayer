@@ -13,5 +13,21 @@
   "host_start_session": "Sitzung starten",
   "host_stop_session": "Sitzung beenden",
   "host_participants": "Teilnehmer",
-  "host_no_participants": "Keine Teilnehmer"
+  "host_no_participants": "Keine Teilnehmer",
+  "games_editor_general": "Allgemeine Einstellungen",
+  "games_editor_name": "Spielname",
+  "games_editor_author": "Autor",
+  "games_editor_desc": "Beschreibung",
+  "games_editor_allow_join": "Standardmäßig !join erlauben",
+  "games_editor_variables": "Anfangsvariablen",
+  "games_editor_add_var": "Variable hinzufügen",
+  "games_editor_var_key": "Schlüssel",
+  "games_editor_var_value": "Wert",
+  "games_editor_stages": "Phasen",
+  "games_editor_add_stage": "Phase hinzufügen",
+  "games_editor_save": "Spielkonfiguration speichern",
+  "games_editor_export": "Exportieren (Zwischenablage Base64)",
+  "games_editor_import": "Aus Zwischenablage importieren",
+  "games_editor_import_success": "Spiel erfolgreich importiert!",
+  "games_editor_import_error": "Fehler beim Importieren des Spiels."
 }

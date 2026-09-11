@@ -13,5 +13,21 @@
   "host_start_session": "Start Session",
   "host_stop_session": "Stop Session",
   "host_participants": "Participants",
-  "host_no_participants": "No participants"
+  "host_no_participants": "No participants",
+  "games_editor_general": "General Settings",
+  "games_editor_name": "Game Name",
+  "games_editor_author": "Author",
+  "games_editor_desc": "Description",
+  "games_editor_allow_join": "Allow !join by default",
+  "games_editor_variables": "Initial Variables",
+  "games_editor_add_var": "Add Variable",
+  "games_editor_var_key": "Variable Key",
+  "games_editor_var_value": "Value",
+  "games_editor_stages": "Stages",
+  "games_editor_add_stage": "Add Stage",
+  "games_editor_save": "Save Game Configuration",
+  "games_editor_export": "Export to Clipboard (Base64)",
+  "games_editor_import": "Import from Clipboard",
+  "games_editor_import_success": "Game imported successfully!",
+  "games_editor_import_error": "Failed to import game from clipboard."
 }

@@ -13,5 +13,21 @@
   "host_start_session": "Démarrer la Session",
   "host_stop_session": "Arrêter la Session",
   "host_participants": "Participants",
-  "host_no_participants": "Aucun participant"
+  "host_no_participants": "Aucun participant",
+  "games_editor_general": "Paramètres Généraux",
+  "games_editor_name": "Nom du jeu",
+  "games_editor_author": "Auteur",
+  "games_editor_desc": "Description",
+  "games_editor_allow_join": "Autoriser !join par défaut",
+  "games_editor_variables": "Variables Initiales",
+  "games_editor_add_var": "Ajouter Variable",
+  "games_editor_var_key": "Clé",
+  "games_editor_var_value": "Valeur",
+  "games_editor_stages": "Étapes (Stages)",
+  "games_editor_add_stage": "Ajouter Étape",
+  "games_editor_save": "Sauvegarder le Jeu",
+  "games_editor_export": "Exporter (Presse-papiers Base64)",
+  "games_editor_import": "Importer depuis Presse-papiers",
+  "games_editor_import_success": "Jeu importé avec succès !",
+  "games_editor_import_error": "Échec de l'importation du jeu."
 }
