@@ -77,16 +77,33 @@ public class GameLibraryService : IGameLibraryService {
                             new GameActionConfig {
                                 ActionType = "BroadcastMessage",
                                 Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-                                    { "Message", "Game is starting! Good luck, everyone!" }
+                                    { "Message", "The game begins! First player to roll 1 loses. Starting roll: /random {Var.current_max_roll}!" }
                                 }
                             }
                         },
                         ActiveModules = new List<GameModuleConfig> {
+                            // NOUVEAU : Module de gestion des erreurs (Feedback)
                             new GameModuleConfig {
                                 ModuleType = "DiceListener",
                                 ConditionExpressions = new List<string> {
-                                    "Event.OutOf == Var.current_max_roll",
                                     "Participants CONTAINS Event.Sender",
+                                    "Event.OutOf != Var.current_max_roll"
+                                },
+                                OnTriggerActions = new List<GameActionConfig> {
+                                    new GameActionConfig {
+                                        ActionType = "BroadcastMessage",
+                                        Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+                                            { "Message", "⚠️ {Event.Sender}, invalide ! Tu dois lancer sur {Var.current_max_roll} ! (Tape: /random {Var.current_max_roll})" }
+                                        }
+                                    }
+                                }
+                            },
+                            // Module de jet valide (Mise à jour)
+                            new GameModuleConfig {
+                                ModuleType = "DiceListener",
+                                ConditionExpressions = new List<string> {
+                                    "Participants CONTAINS Event.Sender",
+                                    "Event.OutOf == Var.current_max_roll",
                                     "Event.Roll != 1"
                                 },
                                 OnTriggerActions = new List<GameActionConfig> {
@@ -100,30 +117,24 @@ public class GameLibraryService : IGameLibraryService {
                                     new GameActionConfig {
                                         ActionType = "BroadcastMessage",
                                         Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-                                            { "Message", "{Event.Sender} rolled {Event.Roll}. Next roll: /random {Event.Roll}!" }
+                                            { "Message", "🎲 {Event.Sender} a obtenu {Event.Roll}. Au suivant : /random {Var.current_max_roll}" }
                                         }
                                     }
                                 }
                             },
+                            // Module de défaite (Jet == 1)
                             new GameModuleConfig {
                                 ModuleType = "DiceListener",
                                 ConditionExpressions = new List<string> {
-                                    "Event.OutOf == Var.current_max_roll",
                                     "Participants CONTAINS Event.Sender",
+                                    "Event.OutOf == Var.current_max_roll",
                                     "Event.Roll == 1"
                                 },
                                 OnTriggerActions = new List<GameActionConfig> {
                                     new GameActionConfig {
-                                        ActionType = "SetVariable",
-                                        Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-                                            { "TargetVar", "current_max_roll" },
-                                            { "Value", "1" }
-                                        }
-                                    },
-                                    new GameActionConfig {
                                         ActionType = "BroadcastMessage",
                                         Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-                                            { "Message", "{Event.Sender} rolled a 1 and died! Game Over." }
+                                            { "Message", "💀 {Event.Sender} a fait un 1 et meurt ! Fin de la partie." }
                                         }
                                     },
                                     new GameActionConfig {

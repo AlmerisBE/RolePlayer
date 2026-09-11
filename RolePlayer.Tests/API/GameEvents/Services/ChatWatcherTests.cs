@@ -15,7 +15,8 @@ public class ChatWatcherTests {
     [Fact]
     public void EventFired_WhenChatReceived_AndSenderIsParticipant_FiresChatEvent() {
         var mockChatGui = Substitute.For<IChatGui>();
-        using var watcher = new ChatWatcher(mockChatGui);
+        var mockObjectTable = Substitute.For<IObjectTable>();
+        using var watcher = new ChatWatcher(mockChatGui, mockObjectTable);
 
         watcher.SetParticipants(new List<string> { "John Doe" });
         watcher.Start();
@@ -41,7 +42,8 @@ public class ChatWatcherTests {
     [Fact]
     public void EventFired_WhenDiceRolled_ParsesValuesCorrectly() {
         var mockChatGui = Substitute.For<IChatGui>();
-        using var watcher = new ChatWatcher(mockChatGui);
+        var mockObjectTable = Substitute.For<IObjectTable>();
+        using var watcher = new ChatWatcher(mockChatGui, mockObjectTable);
         watcher.Start();
 
         GameEvent? capturedEvent = null;
@@ -64,7 +66,8 @@ public class ChatWatcherTests {
     [Fact]
     public void EventFired_WhenSenderIsNotParticipant_DoesNotFire() {
         var mockChatGui = Substitute.For<IChatGui>();
-        using var watcher = new ChatWatcher(mockChatGui);
+        var mockObjectTable = Substitute.For<IObjectTable>();
+        using var watcher = new ChatWatcher(mockChatGui, mockObjectTable);
 
         watcher.SetParticipants(new List<string> { "John Doe" });
         watcher.Start();

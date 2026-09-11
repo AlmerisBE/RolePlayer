@@ -106,11 +106,13 @@ public class ChatWatcher : IGameEventWatcher {
                 }
 
                 // 4. Repli ultime : gérer les textes système traduits ("Vous", "You", "Du") 
-                // qui désignent invariablement le joueur local connecté.
                 if (string.IsNullOrEmpty(sender)) {
-                    if (messageText.StartsWith("You ", StringComparison.OrdinalIgnoreCase) ||
-                        messageText.StartsWith("Vous ", StringComparison.OrdinalIgnoreCase) ||
-                        messageText.StartsWith("Du ", StringComparison.OrdinalIgnoreCase)) {
+                    var textLower = messageText.ToLowerInvariant();
+                    if (textLower.Contains("you roll") ||
+                        textLower.Contains("vous jetez") ||
+                        textLower.Contains("vous obtenez") ||
+                        textLower.Contains("du würfelst") ||
+                        textLower.Contains("を出した")) {
 
                         var localPlayer = this.objectTable.LocalPlayer;
                         if (localPlayer != null) {
