@@ -1,0 +1,17 @@
+{
+  "games_create_new": "Créer un Jeu",
+  "games_host_session": "Héberger la Session",
+  "games_placeholder_editor": "L'éditeur de règles JSON sera disponible ici...",
+  "host_game_selection": "Sélection du Jeu",
+  "host_select_game": "Sélectionner un jeu...",
+  "host_listening_channels": "Canaux d'Écoute",
+  "host_session_status": "Statut de la Session",
+  "host_state_inactive": "Inactif",
+  "host_state_waitingforplayers": "En attente de joueurs",
+  "host_state_inprogress": "En cours",
+  "host_state_finished": "Terminé",
+  "host_start_session": "Démarrer la Session",
+  "host_stop_session": "Arrêter la Session",
+  "host_participants": "Participants",
+  "host_no_participants": "Aucun participant"
+}

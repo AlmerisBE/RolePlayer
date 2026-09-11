@@ -1,0 +1,17 @@
+{
+  "games_create_new": "Create New Game",
+  "games_host_session": "Host Session",
+  "games_placeholder_editor": "Game rule JSON editor will be available here...",
+  "host_game_selection": "Game Selection",
+  "host_select_game": "Select a game...",
+  "host_listening_channels": "Listening Channels",
+  "host_session_status": "Session Status",
+  "host_state_inactive": "Inactive",
+  "host_state_waitingforplayers": "Waiting for Players",
+  "host_state_inprogress": "In Progress",
+  "host_state_finished": "Finished",
+  "host_start_session": "Start Session",
+  "host_stop_session": "Stop Session",
+  "host_participants": "Participants",
+  "host_no_participants": "No participants"
+}

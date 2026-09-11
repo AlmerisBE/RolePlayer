@@ -117,18 +117,5 @@
   "config_macro_toggle_lock": "Makrosperre umschalten",
   "browser_ctx_append_macro": "Zum Makro hinzufügen...",
   "browser_ctx_no_unlocked_macros": "Keine entsperrten Makros verfügbar",
-  "main_tab_games": "Spiele",
-  "games_create_new": "Neues Spiel erstellen",
-  "games_host_session": "Sitzung hosten",
-  "games_placeholder_editor": "Der JSON-Regel-Editor wird hier verfügbar sein...",
-  "host_game_selection": "Spielauswahl",
-  "host_select_game": "Wähle ein Spiel...",
-  "host_listening_channels": "Zuhörkanäle",
-  "host_session_status": "Sitzungsstatus",
-  "host_state_inactive": "Inaktiv",
-  "host_state_waitingforplayers": "Warten auf Spieler",
-  "host_state_inprogress": "Im Gange",
-  "host_state_finished": "Beendet",
-  "host_start_session": "Sitzung starten",
-  "host_stop_session": "Sitzung beenden"
+  "main_tab_games": "Spiele"
 }

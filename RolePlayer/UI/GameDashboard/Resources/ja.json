@@ -1,0 +1,17 @@
+{
+  "games_create_new": "新しいゲームを作成",
+  "games_host_session": "セッションをホスト",
+  "games_placeholder_editor": "JSONルールエディターはここに表示されます...",
+  "host_game_selection": "ゲーム選択",
+  "host_select_game": "ゲームを選択...",
+  "host_listening_channels": "リッスンチャンネル",
+  "host_session_status": "セッションステータス",
+  "host_state_inactive": "非アクティブ",
+  "host_state_waitingforplayers": "プレイヤー待機中",
+  "host_state_inprogress": "進行中",
+  "host_state_finished": "終了",
+  "host_start_session": "セッション開始",
+  "host_stop_session": "セッション停止",
+  "host_participants": "参加者",
+  "host_no_participants": "参加者なし"
+}
