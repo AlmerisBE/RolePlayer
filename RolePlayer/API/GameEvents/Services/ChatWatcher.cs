@@ -8,6 +8,7 @@ using RolePlayer.Core.GameEngine.Contracts;
 using RolePlayer.Core.GameEngine.Models;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 public class ChatWatcher : IGameEventWatcher {
@@ -52,18 +53,30 @@ public class ChatWatcher : IGameEventWatcher {
 
     private void OnChatMessage(IChatMessage message) {
         if (message.Message == null) return;
+        string messageText = message.Message.TextValue;
 
-        if ((int)message.LogKind == 73) {
-            this.HandleDiceRoll(message);
+        // 1. Détection hybride (Canal officiel OU Mots-clés infaillibles de jets de dés)
+        bool isDiceRoll = false;
+        try {
+            isDiceRoll = (int)message.LogKind == 73;
+        }
+        catch { }
+
+        var textLower = messageText.ToLowerInvariant();
+        if (!isDiceRoll && (textLower.Contains("you roll a") || textLower.Contains("vous jetez") || textLower.Contains("du würfelst") || textLower.Contains("ダイスを振り"))) {
+            isDiceRoll = true;
+        }
+
+        if (isDiceRoll) {
+            this.HandleDiceRoll(message, messageText);
             return;
         }
 
+        // 2. Traitement du chat standard
         string senderName = this.CleanPlayerName(message.Sender?.TextValue ?? string.Empty);
         if (string.IsNullOrEmpty(senderName)) return;
 
         if (this.RestrictToParticipants && this.participants.Count > 0 && !this.participants.Contains(senderName)) return;
-
-        string messageText = message.Message.TextValue;
 
         var channel = this.MapChannel(message.LogKind);
         if (channel.HasValue) {
@@ -75,59 +88,60 @@ public class ChatWatcher : IGameEventWatcher {
         }
     }
 
-    private void HandleDiceRoll(IChatMessage message) {
-        string messageText = message.Message.TextValue;
-        var match = Regex.Match(messageText, @"(?:\D|^)(\d+)[^\d]+(\d+)(?:\D|$)");
+    private void HandleDiceRoll(IChatMessage message, string messageText) {
+        // Extraction brutale de tous les nombres du message pour ignorer le formatage/icônes
+        var numbers = Regex.Matches(messageText, @"\d+").Cast<Match>().Select(m => int.Parse(m.Value)).ToList();
 
-        if (match.Success && match.Groups.Count >= 3) {
-            if (int.TryParse(match.Groups[1].Value, out int roll) && int.TryParse(match.Groups[2].Value, out int outOf)) {
+        if (numbers.Count >= 2) {
+            // Dans 99% des cas (FR/EN/DE), le jet et le max sont les deux derniers nombres
+            int roll = numbers[numbers.Count - 2];
+            int outOf = numbers[numbers.Count - 1];
 
-                // 1. Tenter d'utiliser directement l'expéditeur natif du message
-                string sender = this.CleanPlayerName(message.Sender?.TextValue ?? string.Empty);
+            // Inversion spécifique pour la localisation Japonaise
+            if (messageText.Contains("から") || messageText.Contains("出")) {
+                outOf = numbers[numbers.Count - 2];
+                roll = numbers[numbers.Count - 1];
+            }
 
-                // 2. Repli 1 : chercher le nom exact via le Payload natif de FFXIV
-                if (string.IsNullOrEmpty(sender)) {
-                    foreach (var payload in message.Message.Payloads) {
-                        if (payload is PlayerPayload pp) {
-                            sender = this.CleanPlayerName(pp.PlayerName);
-                            break;
-                        }
+            string sender = this.CleanPlayerName(message.Sender?.TextValue ?? string.Empty);
+
+            // Repli 1 : Payload Natif
+            if (string.IsNullOrEmpty(sender)) {
+                foreach (var payload in message.Message.Payloads) {
+                    if (payload is PlayerPayload pp) {
+                        sender = this.CleanPlayerName(pp.PlayerName);
+                        break;
                     }
                 }
+            }
 
-                // 3. Repli 2 : chercher un participant existant dans le texte
-                if (string.IsNullOrEmpty(sender)) {
-                    foreach (var p in this.participants) {
-                        if (messageText.Contains(p, StringComparison.OrdinalIgnoreCase)) {
-                            sender = p;
-                            break;
-                        }
+            // Repli 2 : Participant connu explicitement cité (Joueurs distants)
+            if (string.IsNullOrEmpty(sender)) {
+                foreach (var p in this.participants) {
+                    if (messageText.Contains(p, StringComparison.OrdinalIgnoreCase)) {
+                        sender = p;
+                        break;
                     }
                 }
+            }
 
-                // 4. Repli ultime : gérer les textes système traduits ("Vous", "You", "Du") 
-                if (string.IsNullOrEmpty(sender)) {
-                    var textLower = messageText.ToLowerInvariant();
-                    if (textLower.Contains("you roll") ||
-                        textLower.Contains("vous jetez") ||
-                        textLower.Contains("vous obtenez") ||
-                        textLower.Contains("du würfelst") ||
-                        textLower.Contains("を出した")) {
-
-                        var localPlayer = this.objectTable.LocalPlayer;
-                        if (localPlayer != null) {
-                            sender = this.CleanPlayerName(localPlayer.Name.TextValue);
-                        }
+            // Repli 3 : Pronoms système (Joueur local)
+            if (string.IsNullOrEmpty(sender)) {
+                var textLower = messageText.ToLowerInvariant();
+                if (textLower.Contains("you roll") || textLower.Contains("vous jetez") || textLower.Contains("vous obtenez") || textLower.Contains("du würfelst") || textLower.Contains("を出した")) {
+                    var localPlayer = this.objectTable.LocalPlayer;
+                    if (localPlayer != null) {
+                        sender = this.CleanPlayerName(localPlayer.Name.TextValue);
                     }
                 }
+            }
 
-                if (!string.IsNullOrEmpty(sender)) {
-                    this.EventFired?.Invoke(new DiceRollGameEvent {
-                        Sender = sender,
-                        Roll = roll,
-                        OutOf = outOf
-                    });
-                }
+            if (!string.IsNullOrEmpty(sender)) {
+                this.EventFired?.Invoke(new DiceRollGameEvent {
+                    Sender = sender,
+                    Roll = roll,
+                    OutOf = outOf
+                });
             }
         }
     }
