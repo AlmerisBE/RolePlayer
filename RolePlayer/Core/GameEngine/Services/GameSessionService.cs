@@ -38,7 +38,12 @@ public class GameSessionService : IGameSessionService {
     public bool AllowChatRegistration {
         get => this.activeEngine?.AllowChatRegistration ?? false;
         set {
-            if (this.activeEngine != null) this.activeEngine.AllowChatRegistration = value;
+            if (this.activeEngine != null) {
+                this.activeEngine.AllowChatRegistration = value;
+                foreach (var watcher in this.eventWatchers) {
+                    watcher.RestrictToParticipants = !value;
+                }
+            }
         }
     }
 
@@ -79,6 +84,11 @@ public class GameSessionService : IGameSessionService {
         }
 
         this.activeEngine.Start();
+
+        // Le moteur est démarré, il a lu sa définition JSON. On synchronise l'état initial.
+        foreach (var watcher in this.eventWatchers) {
+            watcher.RestrictToParticipants = !this.activeEngine.AllowChatRegistration;
+        }
 
         this.logger.Info($"Started new game session: {config.Game.Name}.");
         this.SessionStateChanged?.Invoke();

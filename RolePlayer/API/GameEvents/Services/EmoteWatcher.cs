@@ -17,6 +17,7 @@ public class EmoteWatcher : IGameEventWatcher {
     private bool isWatching;
 
     public event Action<GameEvent>? EventFired;
+    public bool RestrictToParticipants { get; set; } = false;
 
     public EmoteWatcher(IObjectTable objectTable, IFramework framework) {
         this.objectTable = objectTable;
@@ -50,7 +51,7 @@ public class EmoteWatcher : IGameEventWatcher {
             if (obj is not ICharacter chara) continue;
 
             string name = chara.Name.TextValue;
-            if (this.participants.Count > 0 && !this.participants.Contains(name)) continue;
+            if (this.RestrictToParticipants && this.participants.Count > 0 && !this.participants.Contains(name)) continue;
 
             var ptr = (Character*)chara.Address;
             if (ptr == null) continue;

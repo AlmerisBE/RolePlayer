@@ -16,6 +16,7 @@ public class ChatWatcher : IGameEventWatcher {
     private bool isWatching;
 
     public event Action<GameEvent>? EventFired;
+    public bool RestrictToParticipants { get; set; } = false;
 
     public ChatWatcher(IChatGui chatGui) {
         this.chatGui = chatGui;
@@ -58,7 +59,7 @@ public class ChatWatcher : IGameEventWatcher {
         string senderName = this.CleanPlayerName(message.Sender?.TextValue ?? string.Empty);
         if (string.IsNullOrEmpty(senderName)) return;
 
-        if (this.participants.Count > 0 && !this.participants.Contains(senderName)) return;
+        if (this.RestrictToParticipants && this.participants.Count > 0 && !this.participants.Contains(senderName)) return;
 
         string messageText = message.Message.TextValue;
 
