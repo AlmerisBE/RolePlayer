@@ -5,7 +5,6 @@ using Dalamud.Plugin.Services;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using RolePlayer.API.GameEvents;
-using RolePlayer.API.Interop.Contracts;
 using RolePlayer.Core.GameEngine;
 using RolePlayer.Core.Logging.Contracts;
 using RolePlayer.UI.GameDashboard;
@@ -27,16 +26,17 @@ public class RolePlayerPluginTests {
         services.AddSingleton(Substitute.For<IFramework>());
         services.AddSingleton(Substitute.For<IObjectTable>());
         services.AddSingleton(Substitute.For<ISigScanner>());
+        services.AddSingleton(Substitute.For<ITargetManager>());
         services.AddSingleton(Substitute.For<IClientState>());
         services.AddSingleton(Substitute.For<ICommandManager>());
         services.AddSingleton(Substitute.For<IPluginLog>());
         services.AddSingleton(Substitute.For<ITextureProvider>());
         services.AddSingleton(Substitute.For<IGameGui>());
-        services.AddSingleton(Substitute.For<INativeExecutionService>());
 
         // Mock internal core services
         services.AddSingleton(Substitute.For<ILoggerService>());
         services.AddSingleton(Substitute.For<ILocalizationService>());
+        services.AddSingleton(Substitute.For<RolePlayer.API.Interop.Contracts.INativeExecutionService>());
 
         var gameEngineFeature = new GameEngineFeature();
         gameEngineFeature.RegisterServices(services);
@@ -48,8 +48,6 @@ public class RolePlayerPluginTests {
         gameDashboardFeature.RegisterServices(services);
 
         // Act & Assert
-        // Setting ValidateOnBuild to true ensures that all dependencies can be resolved immediately.
-        // It will throw an InvalidOperationException if any required service is missing.
         var serviceProvider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true });
 
         Assert.NotNull(serviceProvider);

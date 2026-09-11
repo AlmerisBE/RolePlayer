@@ -13,4 +13,9 @@ public interface IGameSessionService {
 
     bool StartSession(GameSessionConfig config);
     void StopSession();
+
+    string CurrentStageName { get; }
+    bool AllowChatRegistration { get; set; }
+    void AddParticipant(string name);
+    void AdvanceStage();
 }

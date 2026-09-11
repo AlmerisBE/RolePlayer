@@ -33,6 +33,15 @@ public class GameSessionService : IGameSessionService {
 
     public IReadOnlyList<string> Participants => this.activeEngine?.Participants ?? new List<string>();
 
+    public string CurrentStageName => this.activeEngine?.CurrentStageName ?? string.Empty;
+
+    public bool AllowChatRegistration {
+        get => this.activeEngine?.AllowChatRegistration ?? false;
+        set {
+            if (this.activeEngine != null) this.activeEngine.AllowChatRegistration = value;
+        }
+    }
+
     public bool StartSession(GameSessionConfig config) {
         if (this.CurrentState != SessionState.Inactive) {
             this.logger.Warning("Attempted to start a game session while another is already active.");
@@ -118,5 +127,13 @@ public class GameSessionService : IGameSessionService {
 
     private void OnParticipantsChanged() {
         this.SessionStateChanged?.Invoke();
+    }
+
+    public void AddParticipant(string name) {
+        if (this.activeEngine != null) this.activeEngine.AddParticipant(name);
+    }
+
+    public void AdvanceStage() {
+        if (this.activeEngine != null) this.activeEngine.AdvanceStage();
     }
 }

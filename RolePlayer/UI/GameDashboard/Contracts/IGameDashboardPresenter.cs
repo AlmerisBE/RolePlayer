@@ -11,8 +11,15 @@ public interface IGameDashboardPresenter : IDisposable {
     SessionState CurrentState { get; }
     IReadOnlyList<string> Participants { get; }
 
+    string CurrentStageName { get; }
+    bool AllowChatRegistration { get; set; }
+    string CurrentTargetName { get; }
+
     void SelectGame(GameDefinition? game);
     void ToggleChannel(GameChatChannel channel);
     void StartSession();
     void StopSession();
+
+    void AdvanceStage();
+    void AddTarget();
 }

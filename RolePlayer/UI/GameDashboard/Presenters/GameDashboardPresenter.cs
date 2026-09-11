@@ -1,5 +1,6 @@
 ﻿namespace RolePlayer.UI.GameDashboard.Presenters;
 
+using Dalamud.Plugin.Services;
 using RolePlayer.Core.GameEngine.Contracts;
 using RolePlayer.Core.GameEngine.Models;
 using RolePlayer.UI.GameDashboard.Contracts;
@@ -9,16 +10,27 @@ using System.Linq;
 public class GameDashboardPresenter : IGameDashboardPresenter {
     private IGameLibraryService libraryService;
     private IGameSessionService sessionService;
+    private ITargetManager targetManager;
 
     public IReadOnlyList<GameDefinition> AvailableGames => this.libraryService.GetAvailableGames().ToList();
-    public IReadOnlyList<string> Participants => this.sessionService.Participants;
     public GameDefinition? SelectedGame { get; private set; }
     public HashSet<GameChatChannel> SelectedChannels { get; private set; } = new();
     public SessionState CurrentState => this.sessionService.CurrentState;
+    public IReadOnlyList<string> Participants => this.sessionService.Participants;
 
-    public GameDashboardPresenter(IGameLibraryService libraryService, IGameSessionService sessionService) {
+    public string CurrentStageName => this.sessionService.CurrentStageName;
+
+    public bool AllowChatRegistration {
+        get => this.sessionService.AllowChatRegistration;
+        set => this.sessionService.AllowChatRegistration = value;
+    }
+
+    public string CurrentTargetName => this.targetManager.Target?.Name.TextValue ?? string.Empty;
+
+    public GameDashboardPresenter(IGameLibraryService libraryService, IGameSessionService sessionService, ITargetManager targetManager) {
         this.libraryService = libraryService;
         this.sessionService = sessionService;
+        this.targetManager = targetManager;
     }
 
     public void SelectGame(GameDefinition? game) {
@@ -45,6 +57,15 @@ public class GameDashboardPresenter : IGameDashboardPresenter {
 
     public void StopSession() {
         this.sessionService.StopSession();
+    }
+
+    public void AdvanceStage() {
+        this.sessionService.AdvanceStage();
+    }
+
+    public void AddTarget() {
+        var targetName = this.CurrentTargetName;
+        if (!string.IsNullOrWhiteSpace(targetName)) this.sessionService.AddParticipant(targetName);
     }
 
     public void Dispose() {

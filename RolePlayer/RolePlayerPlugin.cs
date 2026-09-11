@@ -30,7 +30,8 @@ public sealed class RolePlayerPlugin : IDalamudPlugin {
         IFramework framework,
         ICondition condition,
         IKeyState keyState,
-        ISigScanner sigScanner) {
+        ISigScanner sigScanner,
+        ITargetManager targetManager) {
 
         this.pluginInterface = pluginInterface;
         this.windowSystem = new WindowSystem("RolePlayer");
@@ -50,10 +51,11 @@ public sealed class RolePlayerPlugin : IDalamudPlugin {
         services.AddSingleton(condition);
         services.AddSingleton(keyState);
         services.AddSingleton(sigScanner);
+        services.AddSingleton(targetManager);
 
         services.AddPluginFeatures();
 
-        this.serviceProvider = services.BuildServiceProvider();
+        this.serviceProvider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true });
 
         // Explicit initialization of background services
         this.serviceProvider.GetRequiredService<CommandDispatcher>();

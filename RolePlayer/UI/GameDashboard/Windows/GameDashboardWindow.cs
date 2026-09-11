@@ -70,10 +70,54 @@ public class GameDashboardWindow : Window {
             ImGui.TextDisabled(this.localization.Translate("host_session_status"));
             ImGui.Spacing();
 
-            string stateString = this.localization.Translate($"host_state_{this.presenter.CurrentState.ToString().ToLowerInvariant()}");
+            if (isRunning) {
+                ImGui.TextColored(new Vector4(0.2f, 0.8f, 0.2f, 1.0f), this.presenter.CurrentStageName);
 
-            if (isRunning) ImGui.TextColored(new Vector4(0.2f, 0.8f, 0.2f, 1.0f), stateString);
-            else ImGui.TextColored(new Vector4(0.8f, 0.8f, 0.8f, 1.0f), stateString);
+                ImGui.Spacing();
+                bool allowJoin = this.presenter.AllowChatRegistration;
+                if (ImGui.Checkbox("Autoriser !join", ref allowJoin)) {
+                    this.presenter.AllowChatRegistration = allowJoin;
+                }
+
+                ImGui.Spacing();
+                ImGui.Separator();
+                ImGui.Spacing();
+
+                ImGui.TextDisabled(this.localization.Translate("host_participants"));
+                ImGui.Spacing();
+
+                var players = this.presenter.Participants;
+                if (players.Count == 0) {
+                    ImGui.TextDisabled(this.localization.Translate("host_no_participants"));
+                }
+                else {
+                    if (ImGui.BeginChild("ParticipantsList", new Vector2(0, 100), true)) {
+                        foreach (var player in players) ImGui.BulletText(player);
+                    }
+                    ImGui.EndChild();
+                }
+
+                ImGui.Spacing();
+
+                string targetName = this.presenter.CurrentTargetName;
+                if (string.IsNullOrEmpty(targetName)) ImGui.BeginDisabled();
+                if (ImGui.Button($"Ajouter Cible : {targetName ?? "Aucune"}", new Vector2(-1, 0))) {
+                    this.presenter.AddTarget();
+                }
+                if (string.IsNullOrEmpty(targetName)) ImGui.EndDisabled();
+
+                ImGui.Spacing();
+                ImGui.Separator();
+                ImGui.Spacing();
+
+                ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.2f, 0.4f, 0.8f, 1.0f));
+                if (ImGui.Button("Passer à l'étape suivante", new Vector2(-1, 30))) this.presenter.AdvanceStage();
+                ImGui.PopStyleColor();
+            }
+            else {
+                string stateString = this.localization.Translate($"host_state_{this.presenter.CurrentState.ToString().ToLowerInvariant()}");
+                ImGui.TextColored(new Vector4(0.8f, 0.8f, 0.8f, 1.0f), stateString);
+            }
 
             ImGui.Spacing();
             ImGui.Separator();

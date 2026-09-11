@@ -1,49 +1,63 @@
 ﻿namespace RolePlayer.Tests.UI.GameDashboard.Presenters;
 
+using Dalamud.Game.ClientState.Objects.Types;
+using Dalamud.Game.Text.SeStringHandling;
+using Dalamud.Game.Text.SeStringHandling.Payloads;
+using Dalamud.Plugin.Services;
 using NSubstitute;
 using RolePlayer.Core.GameEngine.Contracts;
 using RolePlayer.Core.GameEngine.Models;
 using RolePlayer.UI.GameDashboard.Presenters;
-using System.Collections.Generic;
-using System.Linq;
 using Xunit;
 
 public class GameHostPresenterTests {
     [Fact]
-    public void StartSession_PassesCorrectConfigurationToSessionService() {
-        var mockLibraryService = Substitute.For<IGameLibraryService>();
-        var mockSessionService = Substitute.For<IGameSessionService>();
+    public void SelectGame_WhenInactive_UpdatesSelectedGame() {
+        var mockLibrary = Substitute.For<IGameLibraryService>();
+        var mockSession = Substitute.For<IGameSessionService>();
+        var mockTargetManager = Substitute.For<ITargetManager>();
 
-        var testGame = new GameDefinition { Name = "Test Game" };
-        mockLibraryService.GetAvailableGames().Returns(new List<GameDefinition> { testGame });
+        mockSession.CurrentState.Returns(SessionState.Inactive);
 
-        using var presenter = new GameDashboardPresenter(mockLibraryService, mockSessionService);
+        using var presenter = new GameDashboardPresenter(mockLibrary, mockSession, mockTargetManager);
 
-        presenter.SelectGame(testGame);
-        presenter.ToggleChannel(GameChatChannel.Say);
-        presenter.ToggleChannel(GameChatChannel.Party);
+        var game = new GameDefinition { Name = "Death Roll" };
+        presenter.SelectGame(game);
 
-        presenter.StartSession();
-
-        mockSessionService.Received(1).StartSession(Arg.Is<GameSessionConfig>(config =>
-            config.Game == testGame &&
-            config.ListeningChannels.Count == 2 &&
-            config.ListeningChannels.Contains(GameChatChannel.Say) &&
-            config.ListeningChannels.Contains(GameChatChannel.Party)
-        ));
+        Assert.Equal(game, presenter.SelectedGame);
     }
 
     [Fact]
-    public void ToggleChannel_AddsChannelIfMissingAndRemovesIfPresent() {
-        var mockLibraryService = Substitute.For<IGameLibraryService>();
-        var mockSessionService = Substitute.For<IGameSessionService>();
+    public void ToggleChannel_WhenInactive_AddsOrRemovesChannel() {
+        var mockLibrary = Substitute.For<IGameLibraryService>();
+        var mockSession = Substitute.For<IGameSessionService>();
+        var mockTargetManager = Substitute.For<ITargetManager>();
 
-        using var presenter = new GameDashboardPresenter(mockLibraryService, mockSessionService);
+        mockSession.CurrentState.Returns(SessionState.Inactive);
+
+        using var presenter = new GameDashboardPresenter(mockLibrary, mockSession, mockTargetManager);
 
         presenter.ToggleChannel(GameChatChannel.Say);
         Assert.Contains(GameChatChannel.Say, presenter.SelectedChannels);
 
         presenter.ToggleChannel(GameChatChannel.Say);
         Assert.DoesNotContain(GameChatChannel.Say, presenter.SelectedChannels);
+    }
+
+    [Fact]
+    public void AddTarget_WithValidTarget_CallsSessionServiceAddParticipant() {
+        var mockLibrary = Substitute.For<IGameLibraryService>();
+        var mockSession = Substitute.For<IGameSessionService>();
+        var mockTargetManager = Substitute.For<ITargetManager>();
+
+        var mockGameObject = Substitute.For<IGameObject>();
+        mockGameObject.Name.Returns(new SeString(new TextPayload("Jane Doe")));
+        mockTargetManager.Target.Returns(mockGameObject);
+
+        using var presenter = new GameDashboardPresenter(mockLibrary, mockSession, mockTargetManager);
+
+        presenter.AddTarget();
+
+        mockSession.Received(1).AddParticipant("Jane Doe");
     }
 }

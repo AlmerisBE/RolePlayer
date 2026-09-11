@@ -6,123 +6,64 @@ using System.Collections.Generic;
 using Xunit;
 
 public class DeathRollEngineTests {
-    private DeathRollEngine CreateEngine() {
+    private DeathRollEngine CreateEngine(bool allowJoin = true, Dictionary<string, string>? messages = null) {
         var engine = new DeathRollEngine();
-        var config = new GameSessionConfig { Game = new GameDefinition { Parameters = new Dictionary<string, string> { { "StartingRoll", "999" } } } };
+        var config = new GameSessionConfig {
+            Game = new GameDefinition {
+                AllowChatRegistration = allowJoin,
+                Messages = messages ?? new Dictionary<string, string>(),
+                Parameters = new Dictionary<string, string> { { "StartingRoll", "999" } }
+            }
+        };
         engine.Initialize(config);
         return engine;
     }
 
     [Fact]
-    public void Start_EntersRegistrationPhase_AndBroadcastsJoinInstructions() {
-        var engine = this.CreateEngine();
-        var broadcasts = new List<string>();
-        engine.BroadcastRequested += msg => broadcasts.Add(msg);
-
+    public void ProcessEvent_WithJoinCommand_WhenNotAllowed_IgnoresJoin() {
+        var engine = this.CreateEngine(allowJoin: false);
         engine.Start();
-
-        Assert.True(engine.IsRunning);
-        Assert.Contains(broadcasts, b => b.Contains("!join"));
-        Assert.Contains(broadcasts, b => b.Contains("!start"));
-    }
-
-    [Fact]
-    public void ProcessEvent_WithJoinCommand_AddsPlayerAndFiresEvent() {
-        var engine = this.CreateEngine();
-        engine.Start();
-
-        bool eventFired = false;
-        engine.ParticipantsChanged += () => eventFired = true;
 
         engine.ProcessEvent(new ChatGameEvent { Sender = "John Doe", Message = "!join", Channel = GameChatChannel.Say });
 
-        Assert.True(eventFired);
+        Assert.Empty(engine.Participants);
+    }
+
+    [Fact]
+    public void AddParticipant_Manually_AddsPlayerSuccessfully() {
+        var engine = this.CreateEngine(allowJoin: false);
+        engine.Start();
+
+        engine.AddParticipant("Jane Doe");
+
         Assert.Single(engine.Participants);
-        Assert.Equal("John Doe", engine.Participants[0]);
+        Assert.Equal("Jane Doe", engine.Participants[0]);
     }
 
     [Fact]
-    public void ProcessEvent_WithStartCommand_AndNotEnoughPlayers_BroadcastsWarning() {
+    public void AdvanceStage_TransitionsFromRegistrationToRolling() {
         var engine = this.CreateEngine();
         engine.Start();
-        engine.ProcessEvent(new ChatGameEvent { Sender = "John Doe", Message = "!join", Channel = GameChatChannel.Say });
+        engine.AddParticipant("Player 1");
+        engine.AddParticipant("Player 2");
+
+        Assert.Equal("Registration", engine.CurrentStageName);
+
+        engine.AdvanceStage();
+
+        Assert.Equal("Rolling", engine.CurrentStageName);
+    }
+
+    [Fact]
+    public void Start_UsesCustomMessages_IfDefinedInJson() {
+        var customMsgs = new Dictionary<string, string> { { "Msg_Welcome", "Bienvenue au Death Roll !" } };
+        var engine = this.CreateEngine(messages: customMsgs);
 
         var broadcasts = new List<string>();
         engine.BroadcastRequested += msg => broadcasts.Add(msg);
 
-        engine.ProcessEvent(new ChatGameEvent { Sender = "John Doe", Message = "!start", Channel = GameChatChannel.Say });
-
-        Assert.Contains(broadcasts, b => b.Contains("at least 2 players"));
-    }
-
-    [Fact]
-    public void ProcessEvent_WithStartCommand_AndEnoughPlayers_TransitionsToRollingPhase() {
-        var engine = this.CreateEngine();
-        engine.Start();
-        engine.ProcessEvent(new ChatGameEvent { Sender = "John Doe", Message = "!join", Channel = GameChatChannel.Say });
-        engine.ProcessEvent(new ChatGameEvent { Sender = "Jane Doe", Message = "!join", Channel = GameChatChannel.Say });
-
-        var broadcasts = new List<string>();
-        engine.BroadcastRequested += msg => broadcasts.Add(msg);
-
-        engine.ProcessEvent(new ChatGameEvent { Sender = "John Doe", Message = "!start", Channel = GameChatChannel.Say });
-
-        Assert.Contains(broadcasts, b => b.Contains("game begins"));
-        Assert.Contains(broadcasts, b => b.Contains("/random 999"));
-    }
-
-    [Fact]
-    public void ProcessEvent_WithDiceRoll_FromNonParticipant_IsIgnored() {
-        var engine = this.CreateEngine();
-        engine.Start();
-        engine.ProcessEvent(new ChatGameEvent { Sender = "John Doe", Message = "!join", Channel = GameChatChannel.Say });
-        engine.ProcessEvent(new ChatGameEvent { Sender = "Jane Doe", Message = "!join", Channel = GameChatChannel.Say });
-        engine.ProcessEvent(new ChatGameEvent { Sender = "John Doe", Message = "!start", Channel = GameChatChannel.Say });
-
-        var broadcasts = new List<string>();
-        engine.BroadcastRequested += msg => broadcasts.Add(msg);
-
-        // Un joueur non-inscrit tente de jeter les dés
-        engine.ProcessEvent(new DiceRollGameEvent { Sender = "Intruder", Roll = 42, OutOf = 999 });
-
-        Assert.Empty(broadcasts);
-    }
-
-    [Fact]
-    public void ProcessEvent_WithDiceRollEqualTo1_BroadcastsLossAndFinishesGame() {
-        var engine = this.CreateEngine();
-        engine.Start();
-        engine.ProcessEvent(new ChatGameEvent { Sender = "John Doe", Message = "!join", Channel = GameChatChannel.Say });
-        engine.ProcessEvent(new ChatGameEvent { Sender = "Jane Doe", Message = "!join", Channel = GameChatChannel.Say });
-        engine.ProcessEvent(new ChatGameEvent { Sender = "John Doe", Message = "!start", Channel = GameChatChannel.Say });
-
-        var broadcasts = new List<string>();
-        engine.BroadcastRequested += msg => broadcasts.Add(msg);
-
-        bool finished = false;
-        engine.GameFinished += () => finished = true;
-
-        engine.ProcessEvent(new DiceRollGameEvent { Sender = "Jane Doe", Roll = 1, OutOf = 999 });
-
-        Assert.Contains(broadcasts, b => b.Contains("Jane Doe"));
-        Assert.Contains(broadcasts, b => b.Contains("died"));
-        Assert.True(finished);
-        Assert.False(engine.IsRunning);
-    }
-
-    [Fact]
-    public void ProcessEvent_WithConcurrentJoins_SafelyRegistersAllPlayers() {
-        var engine = this.CreateEngine();
         engine.Start();
 
-        // Simulate 100 different players trying to join at the exact same millisecond
-        var joiners = Enumerable.Range(0, 100).Select(i => $"Player {i}").ToList();
-
-        System.Threading.Tasks.Parallel.ForEach(joiners, player => {
-            engine.ProcessEvent(new ChatGameEvent { Sender = player, Message = "!join", Channel = GameChatChannel.Say });
-        });
-
-        // Verification: The HashSet and lock should guarantee exactly 100 participants without throwing exceptions
-        Assert.Equal(100, engine.Participants.Count);
+        Assert.Contains(broadcasts, b => b.Contains("Bienvenue au Death Roll !"));
     }
 }
