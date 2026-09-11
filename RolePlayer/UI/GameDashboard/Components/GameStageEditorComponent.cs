@@ -46,6 +46,13 @@ public class GameStageEditorComponent {
                 ImGui.Separator();
                 ImGui.Spacing();
 
+                // On ajoute l'éditeur pour les actions d'entrée
+                this.DrawActionsListEditor("On Enter Actions (Auto)", stage.OnEnterActions, ref changed);
+
+                ImGui.Spacing();
+                ImGui.Separator();
+                ImGui.Spacing();
+
                 this.DrawModulesEditor(stage, ref changed);
 
                 ImGui.Spacing();
@@ -135,7 +142,9 @@ public class GameStageEditorComponent {
             ImGui.Indent();
             this.DrawDictionaryEditor("Parameters", module.Parameters, ref changed);
             this.DrawStringListEditor(this.localization.Translate("games_editor_conditions"), module.ConditionExpressions, ref changed);
-            this.DrawActionsEditor(module, ref changed);
+
+            this.DrawActionsListEditor(this.localization.Translate("games_editor_actions"), module.OnTriggerActions, ref changed);
+
             ImGui.Unindent();
 
             ImGui.PopID();
@@ -143,6 +152,50 @@ public class GameStageEditorComponent {
 
         if (moduleToRemove != null) {
             stage.ActiveModules.Remove(moduleToRemove);
+            changed = true;
+        }
+    }
+
+    private void DrawActionsListEditor(string label, System.Collections.Generic.IList<GameActionConfig> actions, ref bool changed) {
+        ImGui.TextDisabled(label);
+        ImGui.SameLine(ImGui.GetContentRegionAvail().X - 100f);
+        if (ImGui.Button($"{this.localization.Translate("games_editor_add_action")}##{label}", new Vector2(100f, 0))) {
+            actions.Add(new GameActionConfig { ActionType = "BroadcastMessage" });
+            changed = true;
+        }
+
+        GameActionConfig? actionToRemove = null;
+
+        for (int i = 0; i < actions.Count; i++) {
+            var action = actions[i];
+            ImGui.PushID($"Action_{label}_{i}");
+
+            ImGui.SetNextItemWidth(150f);
+            if (ImGui.BeginCombo("##ActionType", action.ActionType)) {
+                foreach (var type in this.actionTypes) {
+                    if (ImGui.Selectable(type, action.ActionType == type)) {
+                        action.ActionType = type;
+                        changed = true;
+                    }
+                }
+                ImGui.EndCombo();
+            }
+
+            ImGui.SameLine();
+            this.DrawDictionaryEditor($"Params##Act_{i}", action.Parameters, ref changed, true);
+
+            ImGui.SameLine();
+            ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
+            ImGui.PushFont(UiBuilder.IconFont);
+            if (ImGui.Button(FontAwesomeIcon.Trash.ToIconString())) actionToRemove = action;
+            ImGui.PopFont();
+            ImGui.PopStyleColor();
+
+            ImGui.PopID();
+        }
+
+        if (actionToRemove != null) {
+            actions.Remove(actionToRemove);
             changed = true;
         }
     }

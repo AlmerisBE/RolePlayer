@@ -46,6 +46,14 @@ public class GameLibraryService : IGameLibraryService {
                         Id = "registration",
                         Name = "Registration",
                         GmDescription = "Wait for players to !join. Once ready, manually transition to 'In Progress'.",
+                        OnEnterActions = new List<GameActionConfig> {
+                            new GameActionConfig {
+                                ActionType = "BroadcastMessage",
+                                Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+                                    { "Message", "Registration is open! Type !join to participate." }
+                                }
+                            }
+                        },
                         ActiveModules = new List<GameModuleConfig> {
                             new GameModuleConfig {
                                 ModuleType = "ChatListener",
@@ -65,6 +73,14 @@ public class GameLibraryService : IGameLibraryService {
                         Id = "playing",
                         Name = "In Progress",
                         GmDescription = "Game is running. The engine tracks the max roll automatically. First player to roll 1 loses.",
+                        OnEnterActions = new List<GameActionConfig> {
+                            new GameActionConfig {
+                                ActionType = "BroadcastMessage",
+                                Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+                                    { "Message", "Game is starting! Good luck, everyone!" }
+                                }
+                            }
+                        },
                         ActiveModules = new List<GameModuleConfig> {
                             new GameModuleConfig {
                                 ModuleType = "DiceListener",

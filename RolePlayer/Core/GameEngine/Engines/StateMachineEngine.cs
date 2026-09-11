@@ -102,6 +102,8 @@ public class StateMachineEngine : IGameEngine {
         this.currentStage = stage;
         this.StageChanged?.Invoke();
 
+        this.actionExecutionService.ExecuteAll(this.currentStage.OnEnterActions, this.context);
+
         this.EvaluateTransitions("Auto");
     }
 

@@ -31,13 +31,6 @@ public class ChatBroadcaster : IChatBroadcaster, IDisposable {
 
     public void Broadcast(string message, GameChatChannel channel) {
         if (string.IsNullOrWhiteSpace(message)) return;
-
-        // Force an initial delay if the queue was empty to avoid spamming the server
-        // right after the user sent the triggering command (e.g. "!join").
-        if (this.messageQueue.IsEmpty) {
-            this.lastBroadcastTime = DateTime.Now;
-        }
-
         this.messageQueue.Enqueue((message, channel));
     }
 
