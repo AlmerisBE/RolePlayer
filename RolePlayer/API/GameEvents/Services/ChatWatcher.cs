@@ -12,14 +12,16 @@ using System.Text.RegularExpressions;
 
 public class ChatWatcher : IGameEventWatcher {
     private IChatGui chatGui;
+    private IObjectTable objectTable;
     private HashSet<string> participants = new(StringComparer.OrdinalIgnoreCase);
     private bool isWatching;
 
     public event Action<GameEvent>? EventFired;
     public bool RestrictToParticipants { get; set; } = false;
 
-    public ChatWatcher(IChatGui chatGui) {
+    public ChatWatcher(IChatGui chatGui, IObjectTable objectTable) {
         this.chatGui = chatGui;
+        this.objectTable = objectTable;
     }
 
     public void Start() {
@@ -80,22 +82,39 @@ public class ChatWatcher : IGameEventWatcher {
         if (match.Success && match.Groups.Count >= 3) {
             if (int.TryParse(match.Groups[1].Value, out int roll) && int.TryParse(match.Groups[2].Value, out int outOf)) {
 
-                string sender = string.Empty;
+                // 1. Tenter d'utiliser directement l'expéditeur natif du message
+                string sender = this.CleanPlayerName(message.Sender?.TextValue ?? string.Empty);
 
-                // 1. Priorité au payload natif de Dalamud/FFXIV
-                foreach (var payload in message.Message.Payloads) {
-                    if (payload is PlayerPayload pp) {
-                        sender = this.CleanPlayerName(pp.PlayerName);
-                        break;
+                // 2. Repli 1 : chercher le nom exact via le Payload natif de FFXIV
+                if (string.IsNullOrEmpty(sender)) {
+                    foreach (var payload in message.Message.Payloads) {
+                        if (payload is PlayerPayload pp) {
+                            sender = this.CleanPlayerName(pp.PlayerName);
+                            break;
+                        }
                     }
                 }
 
-                // 2. Repli : si pas de payload, on cherche un participant connu dans le texte
+                // 3. Repli 2 : chercher un participant existant dans le texte
                 if (string.IsNullOrEmpty(sender)) {
                     foreach (var p in this.participants) {
                         if (messageText.Contains(p, StringComparison.OrdinalIgnoreCase)) {
                             sender = p;
                             break;
+                        }
+                    }
+                }
+
+                // 4. Repli ultime : gérer les textes système traduits ("Vous", "You", "Du") 
+                // qui désignent invariablement le joueur local connecté.
+                if (string.IsNullOrEmpty(sender)) {
+                    if (messageText.StartsWith("You ", StringComparison.OrdinalIgnoreCase) ||
+                        messageText.StartsWith("Vous ", StringComparison.OrdinalIgnoreCase) ||
+                        messageText.StartsWith("Du ", StringComparison.OrdinalIgnoreCase)) {
+
+                        var localPlayer = this.objectTable.LocalPlayer;
+                        if (localPlayer != null) {
+                            sender = this.CleanPlayerName(localPlayer.Name.TextValue);
                         }
                     }
                 }
