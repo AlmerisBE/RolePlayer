@@ -109,4 +109,20 @@ public class DeathRollEngineTests {
         Assert.True(finished);
         Assert.False(engine.IsRunning);
     }
+
+    [Fact]
+    public void ProcessEvent_WithConcurrentJoins_SafelyRegistersAllPlayers() {
+        var engine = this.CreateEngine();
+        engine.Start();
+
+        // Simulate 100 different players trying to join at the exact same millisecond
+        var joiners = Enumerable.Range(0, 100).Select(i => $"Player {i}").ToList();
+
+        System.Threading.Tasks.Parallel.ForEach(joiners, player => {
+            engine.ProcessEvent(new ChatGameEvent { Sender = player, Message = "!join", Channel = GameChatChannel.Say });
+        });
+
+        // Verification: The HashSet and lock should guarantee exactly 100 participants without throwing exceptions
+        Assert.Equal(100, engine.Participants.Count);
+    }
 }
