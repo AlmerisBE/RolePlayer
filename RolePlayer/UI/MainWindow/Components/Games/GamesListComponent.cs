@@ -12,7 +12,6 @@ using System.Numerics;
 
 public class GamesListComponent {
     private IGameLibraryService libraryService;
-    private IGameSelectionState selectionState;
     private ILocalizationService localization;
     private IGameDashboardPresenter dashboardPresenter;
     private GameDashboardWindow dashboardWindow;
@@ -21,7 +20,6 @@ public class GamesListComponent {
 
     public GamesListComponent(
         IGameLibraryService libraryService,
-        IGameSelectionState selectionState,
         ILocalizationService localization,
         IGameDashboardPresenter dashboardPresenter,
         GameDashboardWindow dashboardWindow,
@@ -29,7 +27,6 @@ public class GamesListComponent {
         IGameEditorWindow editorWindow) {
 
         this.libraryService = libraryService;
-        this.selectionState = selectionState;
         this.localization = localization;
         this.dashboardPresenter = dashboardPresenter;
         this.dashboardWindow = dashboardWindow;
@@ -48,9 +45,9 @@ public class GamesListComponent {
         string plusIcon = FontAwesomeIcon.Plus.ToIconString();
         ImGui.PopFont();
 
+        // CORRECTION : Appel direct à l'ouverture de l'éditeur pour un nouveau jeu
         if (ImGui.Button($"{plusIcon} {this.localization.Translate("games_create_new")}", new Vector2(btnWidth, 0))) {
-            this.selectionState.SelectedGame = null;
-            this.selectionState.IsCreatingNew = true;
+            this.editorWindow.OpenForEditing(null);
         }
 
         ImGui.Spacing();
@@ -70,23 +67,14 @@ public class GamesListComponent {
                 float rowHeight = 32f;
                 ImGui.TableNextRow(ImGuiTableRowFlags.None, rowHeight);
 
-                bool isSelected = this.selectionState.SelectedGame?.Id == game.Id;
-
                 ImGui.TableNextColumn();
-                ImGui.PushStyleVar(ImGuiStyleVar.SelectableTextAlign, new Vector2(0.0f, 0.5f));
-                float selectableHeight = rowHeight - (ImGui.GetStyle().CellPadding.Y * 2);
+                ImGui.AlignTextToFramePadding();
+                ImGui.Text(game.Name);
 
-                if (ImGui.Selectable($"{game.Name}##sel_{game.Id}", isSelected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowItemOverlap, new Vector2(0, selectableHeight))) {
-                    this.selectionState.IsCreatingNew = false;
-                    this.selectionState.SelectedGame = isSelected ? null : game;
-                }
-                ImGui.PopStyleVar();
-
-                // === MENU CONTEXTUEL ===
                 if (ImGui.BeginPopupContextItem($"GameContextMenu_{game.Id}")) {
+
                     if (ImGui.MenuItem(this.localization.Translate("games_ctx_edit"))) {
-                        this.selectionState.IsCreatingNew = false;
-                        this.selectionState.SelectedGame = game;
+                        this.editorWindow.OpenForEditing(game);
                     }
 
                     if (ImGui.MenuItem(this.localization.Translate("games_ctx_duplicate"))) {
@@ -103,7 +91,6 @@ public class GamesListComponent {
                     ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
                     if (ImGui.MenuItem(this.localization.Translate("games_ctx_delete"))) {
                         this.libraryService.DeleteGame(game.Id);
-                        if (this.selectionState.SelectedGame?.Id == game.Id) this.selectionState.SelectedGame = null;
                     }
                     ImGui.PopStyleColor();
 
