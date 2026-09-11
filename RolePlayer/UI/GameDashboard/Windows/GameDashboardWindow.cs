@@ -151,27 +151,44 @@ public class GameDashboardWindow : Window {
                     ImGui.TextDisabled(this.localization.Translate("host_participants"));
                     var players = this.presenter.Participants;
 
-                    // Implémentation du tableau numéroté
                     if (players.Count == 0) {
                         ImGui.TextDisabled(this.localization.Translate("host_no_participants"));
                     }
                     else {
-                        if (ImGui.BeginTable("ParticipantsTable", 2, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.ScrollY, new Vector2(0, 150))) {
+                        string? participantToRemove = null;
+
+                        if (ImGui.BeginTable("ParticipantsTable", 3, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.ScrollY, new Vector2(0, 150))) {
                             ImGui.TableSetupScrollFreeze(0, 1);
                             ImGui.TableSetupColumn("#", ImGuiTableColumnFlags.WidthFixed, 30f);
                             ImGui.TableSetupColumn(this.localization.Translate("config_common_name"), ImGuiTableColumnFlags.WidthStretch);
+                            ImGui.TableSetupColumn(this.localization.Translate("config_common_actions"), ImGuiTableColumnFlags.WidthFixed, 30f);
                             ImGui.TableHeadersRow();
 
                             for (int i = 0; i < players.Count; i++) {
                                 ImGui.TableNextRow();
 
                                 ImGui.TableNextColumn();
+                                ImGui.AlignTextToFramePadding();
                                 ImGui.Text((i + 1).ToString());
 
                                 ImGui.TableNextColumn();
+                                ImGui.AlignTextToFramePadding();
                                 ImGui.Text(players[i]);
+
+                                ImGui.TableNextColumn();
+                                ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
+                                ImGui.PushFont(UiBuilder.IconFont);
+                                if (ImGui.Button($"{FontAwesomeIcon.Trash.ToIconString()}##RemPart_{i}")) {
+                                    participantToRemove = players[i];
+                                }
+                                ImGui.PopFont();
+                                ImGui.PopStyleColor();
                             }
                             ImGui.EndTable();
+                        }
+
+                        if (participantToRemove != null) {
+                            this.presenter.RemoveParticipant(participantToRemove);
                         }
                     }
 

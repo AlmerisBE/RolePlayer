@@ -139,6 +139,10 @@ public class GameSessionService : IGameSessionService {
         if (this.activeEngine != null) this.activeEngine.AddParticipant(name);
     }
 
+    public void RemoveParticipant(string name) {
+        if (this.activeEngine != null) this.activeEngine.RemoveParticipant(name);
+    }
+
     public void AdvanceStage() {
         if (this.activeEngine != null) this.activeEngine.AdvanceStage();
     }

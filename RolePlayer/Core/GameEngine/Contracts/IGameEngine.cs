@@ -22,5 +22,6 @@ public interface IGameEngine {
     void ProcessEvent(GameEvent gameEvent);
 
     void AddParticipant(string name);
+    void RemoveParticipant(string name);
     void AdvanceStage();
 }

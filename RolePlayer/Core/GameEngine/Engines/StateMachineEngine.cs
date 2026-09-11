@@ -70,6 +70,14 @@ public class StateMachineEngine : IGameEngine {
         }
     }
 
+    public void RemoveParticipant(string name) {
+        if (string.IsNullOrWhiteSpace(name)) return;
+
+        if (this.context.Participants.Remove(name)) {
+            this.ParticipantsChanged?.Invoke();
+        }
+    }
+
     public void AdvanceStage() {
         this.EvaluateTransitions("Manual");
     }
