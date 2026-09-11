@@ -15,17 +15,20 @@ public class GameEditorPanelComponent {
     private ILocalizationService localization;
     private IGameLibraryService libraryService;
     private IGameSerializerService serializerService;
+    private GameStageEditorComponent stageEditor;
 
     public GameEditorPanelComponent(
         IGameSelectionState selectionState,
         ILocalizationService localization,
         IGameLibraryService libraryService,
-        IGameSerializerService serializerService) {
+        IGameSerializerService serializerService,
+        GameStageEditorComponent stageEditor) {
 
         this.selectionState = selectionState;
         this.localization = localization;
         this.libraryService = libraryService;
         this.serializerService = serializerService;
+        this.stageEditor = stageEditor;
     }
 
     public void Draw() {
@@ -74,7 +77,7 @@ public class GameEditorPanelComponent {
         ImGui.Spacing();
 
         if (ImGui.BeginChild("GameEditorScrollArea")) {
-            ImGui.TextDisabled(this.localization.Translate("games_editor_general"));
+            this.stageEditor.Draw(game, ref changed);
             ImGui.Spacing();
 
             string name = game.Name;

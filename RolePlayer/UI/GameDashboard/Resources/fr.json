@@ -29,5 +29,20 @@
   "games_editor_export": "Exporter (Presse-papiers Base64)",
   "games_editor_import": "Importer depuis Presse-papiers",
   "games_editor_import_success": "Jeu importé avec succès !",
-  "games_editor_import_error": "Échec de l'importation du jeu."
+  "games_editor_import_error": "Échec de l'importation du jeu.",
+  "games_editor_stage_id": "ID de l'étape (Unique)",
+  "games_editor_stage_name": "Nom de l'étape",
+  "games_editor_stage_desc": "Instructions pour le MJ",
+  "games_editor_modules": "Modules Actifs (Déclencheurs)",
+  "games_editor_add_module": "Ajouter un module",
+  "games_editor_module_type": "Type de module",
+  "games_editor_conditions": "Conditions (Expressions)",
+  "games_editor_add_condition": "Ajouter une condition",
+  "games_editor_actions": "Actions",
+  "games_editor_add_action": "Ajouter une action",
+  "games_editor_action_type": "Type d'action",
+  "games_editor_transitions": "Transitions d'étape",
+  "games_editor_add_transition": "Ajouter une transition",
+  "games_editor_transition_target": "ID de l'étape cible",
+  "games_editor_transition_trigger": "Type de déclencheur"
 }

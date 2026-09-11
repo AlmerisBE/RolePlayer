@@ -29,5 +29,20 @@
   "games_editor_export": "Export to Clipboard (Base64)",
   "games_editor_import": "Import from Clipboard",
   "games_editor_import_success": "Game imported successfully!",
-  "games_editor_import_error": "Failed to import game from clipboard."
+  "games_editor_import_error": "Failed to import game from clipboard.",
+  "games_editor_stage_id": "Stage ID (Unique)",
+  "games_editor_stage_name": "Stage Name",
+  "games_editor_stage_desc": "GM Instructions",
+  "games_editor_modules": "Active Modules (Triggers)",
+  "games_editor_add_module": "Add Module",
+  "games_editor_module_type": "Module Type",
+  "games_editor_conditions": "Conditions (Expressions)",
+  "games_editor_add_condition": "Add Condition",
+  "games_editor_actions": "Actions",
+  "games_editor_add_action": "Add Action",
+  "games_editor_action_type": "Action Type",
+  "games_editor_transitions": "Stage Transitions",
+  "games_editor_add_transition": "Add Transition",
+  "games_editor_transition_target": "Target Stage ID",
+  "games_editor_transition_trigger": "Trigger Type"
 }
