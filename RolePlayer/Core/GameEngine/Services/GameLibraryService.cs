@@ -33,31 +33,106 @@ public class GameLibraryService : IGameLibraryService {
 
         var deathRollPath = Path.Combine(this.LibraryDirectory, "DeathRoll.json");
         if (!File.Exists(deathRollPath)) {
-            var game = new GameDefinition {
+            var deathRollGame = new GameDefinition {
                 Name = "Death Roll",
-                Author = "RolePlayer",
+                Author = "Almeris",
                 Description = "A classic game of successive random rolls until someone rolls a 1.",
-                Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-                    { "StartingRoll", "999" },
-                    { "DeathNumber", "1" }
+                AllowChatRegistration = false,
+                InitialVariables = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase) {
+                    { "current_max_roll", 999 }
+                },
+                Stages = new List<GameStage> {
+                    new GameStage {
+                        Id = "registration",
+                        Name = "Registration",
+                        GmDescription = "Wait for players to !join. Once ready, manually transition to 'In Progress'.",
+                        ActiveModules = new List<GameModuleConfig> {
+                            new GameModuleConfig {
+                                ModuleType = "ChatListener",
+                                Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+                                    { "Command", "!join" }
+                                },
+                                OnTriggerActions = new List<GameActionConfig> {
+                                    new GameActionConfig { ActionType = "RegisterPlayer" }
+                                }
+                            }
+                        },
+                        Transitions = new List<GameTransition> {
+                            new GameTransition { TargetStageId = "playing", TriggerType = "Manual" }
+                        }
+                    },
+                    new GameStage {
+                        Id = "playing",
+                        Name = "In Progress",
+                        GmDescription = "Game is running. The engine tracks the max roll automatically. First player to roll 1 loses.",
+                        ActiveModules = new List<GameModuleConfig> {
+                            new GameModuleConfig {
+                                ModuleType = "DiceListener",
+                                ConditionExpressions = new List<string> {
+                                    "Event.OutOf == Var.current_max_roll",
+                                    "Participants CONTAINS Event.Sender",
+                                    "Event.Roll != 1"
+                                },
+                                OnTriggerActions = new List<GameActionConfig> {
+                                    new GameActionConfig {
+                                        ActionType = "SetVariable",
+                                        Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+                                            { "TargetVar", "current_max_roll" },
+                                            { "Value", "{Event.Roll}" }
+                                        }
+                                    },
+                                    new GameActionConfig {
+                                        ActionType = "BroadcastMessage",
+                                        Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+                                            { "Message", "{Event.Sender} rolled {Event.Roll}. Next roll: /random {Event.Roll}!" }
+                                        }
+                                    }
+                                }
+                            },
+                            new GameModuleConfig {
+                                ModuleType = "DiceListener",
+                                ConditionExpressions = new List<string> {
+                                    "Event.OutOf == Var.current_max_roll",
+                                    "Participants CONTAINS Event.Sender",
+                                    "Event.Roll == 1"
+                                },
+                                OnTriggerActions = new List<GameActionConfig> {
+                                    new GameActionConfig {
+                                        ActionType = "SetVariable",
+                                        Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+                                            { "TargetVar", "current_max_roll" },
+                                            { "Value", "1" }
+                                        }
+                                    },
+                                    new GameActionConfig {
+                                        ActionType = "BroadcastMessage",
+                                        Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+                                            { "Message", "{Event.Sender} rolled a 1 and died! Game Over." }
+                                        }
+                                    },
+                                    new GameActionConfig {
+                                        ActionType = "StopGame"
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             };
-            this.WriteGameToFile(deathRollPath, game);
+            this.WriteGameToFile(deathRollPath, deathRollGame);
         }
 
         var riddlesPath = Path.Combine(this.LibraryDirectory, "Riddles.json");
         if (!File.Exists(riddlesPath)) {
-            var game = new GameDefinition {
+            var riddlesGame = new GameDefinition {
                 Name = "Emote Riddles",
-                Author = "RolePlayer",
+                Author = "Almeris",
                 Description = "Answer the riddle by performing the correct emote.",
-                Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-                    { "Riddle_1_Text", "I show joy without speaking. What am I?" },
-                    { "Riddle_1_AnswerType", "Emote" },
-                    { "Riddle_1_AnswerValue", "/joy" }
+                Stages = new List<GameStage> {
+                    new GameStage { Id = "setup", Name = "Setup" }
                 }
             };
-            this.WriteGameToFile(riddlesPath, game);
+            this.WriteGameToFile(riddlesPath, riddlesGame);
         }
     }
 
@@ -103,7 +178,6 @@ public class GameLibraryService : IGameLibraryService {
         if (string.IsNullOrWhiteSpace(game.Name)) return;
 
         if (!this.filePaths.TryGetValue(game.Id, out string? filePath)) {
-            // New game: use its Guid to guarantee a unique, collision-free filename
             filePath = Path.Combine(this.LibraryDirectory, $"{game.Id}.json");
             this.filePaths[game.Id] = filePath;
         }
@@ -124,7 +198,6 @@ public class GameLibraryService : IGameLibraryService {
         if (original == null) return;
 
         try {
-            // Deep clone via JSON to break references securely
             var cloneJson = JsonSerializer.Serialize(original);
             var clone = JsonSerializer.Deserialize<GameDefinition>(cloneJson);
 
