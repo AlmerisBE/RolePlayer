@@ -27,15 +27,18 @@ public class DeathRollEngineTests {
     }
 
     [Fact]
-    public void ProcessEvent_WithJoinCommand_AddsPlayerAndBroadcasts() {
+    public void ProcessEvent_WithJoinCommand_AddsPlayerAndFiresEvent() {
         var engine = this.CreateEngine();
         engine.Start();
-        var broadcasts = new List<string>();
-        engine.BroadcastRequested += msg => broadcasts.Add(msg);
+
+        bool eventFired = false;
+        engine.ParticipantsChanged += () => eventFired = true;
 
         engine.ProcessEvent(new ChatGameEvent { Sender = "John Doe", Message = "!join", Channel = GameChatChannel.Say });
 
-        Assert.Contains(broadcasts, b => b.Contains("John Doe joined"));
+        Assert.True(eventFired);
+        Assert.Single(engine.Participants);
+        Assert.Equal("John Doe", engine.Participants[0]);
     }
 
     [Fact]

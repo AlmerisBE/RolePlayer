@@ -31,6 +31,8 @@ public class GameSessionService : IGameSessionService {
         this.chatBroadcaster = chatBroadcaster;
     }
 
+    public IReadOnlyList<string> Participants => this.activeEngine?.Participants ?? new List<string>();
+
     public bool StartSession(GameSessionConfig config) {
         if (this.CurrentState != SessionState.Inactive) {
             this.logger.Warning("Attempted to start a game session while another is already active.");
@@ -58,6 +60,7 @@ public class GameSessionService : IGameSessionService {
 
         this.activeEngine.GameFinished += this.OnGameFinished;
         this.activeEngine.BroadcastRequested += this.OnBroadcastRequested;
+        this.activeEngine.ParticipantsChanged += this.OnParticipantsChanged;
         this.activeEngine.Initialize(config);
 
         foreach (var watcher in this.eventWatchers) {
@@ -84,6 +87,7 @@ public class GameSessionService : IGameSessionService {
         if (this.activeEngine != null) {
             this.activeEngine.GameFinished -= this.OnGameFinished;
             this.activeEngine.BroadcastRequested -= this.OnBroadcastRequested;
+            this.activeEngine.ParticipantsChanged -= this.OnParticipantsChanged;
             this.activeEngine.Stop();
             this.activeEngine = null;
         }
@@ -109,6 +113,10 @@ public class GameSessionService : IGameSessionService {
     private void OnGameFinished() {
         this.StopSession();
         this.CurrentState = SessionState.Finished;
+        this.SessionStateChanged?.Invoke();
+    }
+
+    private void OnParticipantsChanged() {
         this.SessionStateChanged?.Invoke();
     }
 }

@@ -11,6 +11,7 @@ public class GameDashboardPresenter : IGameDashboardPresenter {
     private IGameSessionService sessionService;
 
     public IReadOnlyList<GameDefinition> AvailableGames => this.libraryService.GetAvailableGames().ToList();
+    public IReadOnlyList<string> Participants => this.sessionService.Participants;
     public GameDefinition? SelectedGame { get; private set; }
     public HashSet<GameChatChannel> SelectedChannels { get; private set; } = new();
     public SessionState CurrentState => this.sessionService.CurrentState;

@@ -15,8 +15,11 @@ public class DeathRollEngine : IGameEngine {
     private List<string> participants = new();
     private bool isRegistrationPhase;
 
+    public IReadOnlyList<string> Participants => this.participants;
+
     public event Action<string>? BroadcastRequested;
     public event Action? GameFinished;
+    public event Action? ParticipantsChanged;
 
     public void Initialize(GameSessionConfig config) {
         this.config = config;
@@ -32,6 +35,7 @@ public class DeathRollEngine : IGameEngine {
         this.isRegistrationPhase = true;
         this.participants.Clear();
 
+        this.ParticipantsChanged?.Invoke();
         this.BroadcastRequested?.Invoke("Welcome to Death Roll! Type !join to participate.");
         this.BroadcastRequested?.Invoke("When all players are ready, type !start to begin.");
     }
@@ -61,6 +65,7 @@ public class DeathRollEngine : IGameEngine {
         if (msg == "!join") {
             if (!this.participants.Contains(chat.Sender)) {
                 this.participants.Add(chat.Sender);
+                this.ParticipantsChanged?.Invoke();
                 this.BroadcastRequested?.Invoke($"{chat.Sender} joined the Death Roll! ({this.participants.Count} players ready)");
             }
         }

@@ -9,6 +9,7 @@ public interface IGameDashboardPresenter : IDisposable {
     GameDefinition? SelectedGame { get; }
     HashSet<GameChatChannel> SelectedChannels { get; }
     SessionState CurrentState { get; }
+    IReadOnlyList<string> Participants { get; }
 
     void SelectGame(GameDefinition? game);
     void ToggleChannel(GameChatChannel channel);

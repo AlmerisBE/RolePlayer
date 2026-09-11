@@ -79,6 +79,28 @@ public class GameDashboardWindow : Window {
             ImGui.Separator();
             ImGui.Spacing();
 
+            if (isRunning) {
+                ImGui.TextDisabled(this.localization.Translate("host_participants"));
+                ImGui.Spacing();
+
+                var players = this.presenter.Participants;
+                if (players.Count == 0) {
+                    ImGui.TextDisabled(this.localization.Translate("host_no_participants"));
+                }
+                else {
+                    if (ImGui.BeginChild("ParticipantsList", new Vector2(0, 100), true)) {
+                        foreach (var player in players) {
+                            ImGui.BulletText(player);
+                        }
+                    }
+                    ImGui.EndChild();
+                }
+
+                ImGui.Spacing();
+                ImGui.Separator();
+                ImGui.Spacing();
+            }
+
             if (!isRunning) {
                 ImGui.BeginDisabled(this.presenter.SelectedGame == null || this.presenter.SelectedChannels.Count == 0);
                 ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.2f, 0.6f, 0.2f, 1.0f));
