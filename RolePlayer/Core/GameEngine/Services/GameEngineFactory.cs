@@ -1,20 +1,26 @@
 ﻿namespace RolePlayer.Core.GameEngine.Services;
 
+using Microsoft.Extensions.DependencyInjection;
 using RolePlayer.Core.GameEngine.Contracts;
+using RolePlayer.Core.GameEngine.Engines;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 
 public class GameEngineFactory : IGameEngineFactory {
-    private IEnumerable<IGameEngine> availableEngines;
+    private IServiceProvider serviceProvider;
 
-    public GameEngineFactory(IEnumerable<IGameEngine> availableEngines) {
-        this.availableEngines = availableEngines;
+    public GameEngineFactory(IServiceProvider serviceProvider) {
+        this.serviceProvider = serviceProvider;
     }
 
     public IGameEngine? CreateEngine(string engineType) {
         if (string.IsNullOrWhiteSpace(engineType)) return null;
 
-        return this.availableEngines.FirstOrDefault(e => e.EngineType.Equals(engineType, StringComparison.OrdinalIgnoreCase));
+        // Actuellement, le StateMachineEngine est notre moteur universel
+        if (engineType.Equals("StateMachineEngine", StringComparison.OrdinalIgnoreCase) ||
+            engineType.Equals("DeathRollEngine", StringComparison.OrdinalIgnoreCase)) {
+            return this.serviceProvider.GetRequiredService<StateMachineEngine>();
+        }
+
+        return null;
     }
 }

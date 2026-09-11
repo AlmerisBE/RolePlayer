@@ -7,12 +7,14 @@ public class GameDefinition {
     public Guid Id { get; set; } = Guid.NewGuid();
     public string Name { get; set; } = string.Empty;
     public string Author { get; set; } = string.Empty;
-    public string Version { get; set; } = "1.0.0";
     public string Description { get; set; } = string.Empty;
-    public string EngineType { get; set; } = "Generic";
 
+    // Propriétés héritées pour le Dashboard
     public bool AllowChatRegistration { get; set; } = false;
-    public List<string> Stages { get; set; } = new();
-    public Dictionary<string, string> Parameters { get; set; } = new();
-    public Dictionary<string, string> Messages { get; set; } = new();
+    public Dictionary<string, string> Messages { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    public Dictionary<string, string> Parameters { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
+    // Propriétés de l'architecture EAC (Event-Action-Condition)
+    public Dictionary<string, object> InitialVariables { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    public List<GameStage> Stages { get; set; } = new();
 }
