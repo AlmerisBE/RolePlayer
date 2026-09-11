@@ -14,7 +14,6 @@ public class GameDashboardWindow : Window {
     private IGameDashboardPresenter presenter;
     private ILocalizationService localization;
 
-    // Clés de messages par défaut pour initialiser l'éditeur si vide
     private readonly string[] defaultMessageKeys = { "Msg_RegistrationOpened", "Msg_RegistrationClosed", "Msg_Join", "Msg_Welcome", "Msg_StartWarning", "Msg_Start", "Msg_FirstToRoll", "Msg_Loss", "Msg_RollNext" };
 
     public GameDashboardWindow(IGameDashboardPresenter presenter, ILocalizationService localization)
@@ -72,7 +71,6 @@ public class GameDashboardWindow : Window {
             ImGui.Separator();
             ImGui.Spacing();
 
-            // Boutons de gestion de session (Déplacés à gauche)
             if (!isRunning) {
                 ImGui.BeginDisabled(this.presenter.SelectedGame == null || this.presenter.SelectedChannels.Count == 0);
                 ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.2f, 0.6f, 0.2f, 1.0f));
@@ -118,13 +116,11 @@ public class GameDashboardWindow : Window {
                 ImGui.Separator();
                 ImGui.Spacing();
 
-                // Éditeur de messages (Uniquement en phase Preparation)
                 if (this.presenter.CurrentStageName == "Preparation" && this.presenter.SelectedGame != null) {
                     ImGui.TextDisabled("Messages du jeu (Édition)");
                     if (ImGui.BeginChild("MessageEditorArea", new Vector2(0, 0), true)) {
                         bool messagesChanged = false;
 
-                        // S'assurer que les clés par défaut existent
                         foreach (var key in this.defaultMessageKeys) {
                             if (!this.presenter.SelectedGame.Messages.ContainsKey(key)) this.presenter.SelectedGame.Messages[key] = string.Empty;
                         }
@@ -144,7 +140,6 @@ public class GameDashboardWindow : Window {
                     }
                     ImGui.EndChild();
                 }
-                // Vue Participants (Uniquement pour Registration et InProgress)
                 else if (this.presenter.CurrentStageName != "Preparation" && this.presenter.CurrentStageName != "Finished") {
 
                     if (this.presenter.CurrentStageName == "Registration") {
@@ -156,12 +151,28 @@ public class GameDashboardWindow : Window {
                     ImGui.TextDisabled(this.localization.Translate("host_participants"));
                     var players = this.presenter.Participants;
 
-                    if (players.Count == 0) ImGui.TextDisabled(this.localization.Translate("host_no_participants"));
+                    // Implémentation du tableau numéroté
+                    if (players.Count == 0) {
+                        ImGui.TextDisabled(this.localization.Translate("host_no_participants"));
+                    }
                     else {
-                        if (ImGui.BeginChild("ParticipantsList", new Vector2(0, 150), true)) {
-                            foreach (var player in players) ImGui.BulletText(player);
+                        if (ImGui.BeginTable("ParticipantsTable", 2, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.ScrollY, new Vector2(0, 150))) {
+                            ImGui.TableSetupScrollFreeze(0, 1);
+                            ImGui.TableSetupColumn("#", ImGuiTableColumnFlags.WidthFixed, 30f);
+                            ImGui.TableSetupColumn(this.localization.Translate("config_common_name"), ImGuiTableColumnFlags.WidthStretch);
+                            ImGui.TableHeadersRow();
+
+                            for (int i = 0; i < players.Count; i++) {
+                                ImGui.TableNextRow();
+
+                                ImGui.TableNextColumn();
+                                ImGui.Text((i + 1).ToString());
+
+                                ImGui.TableNextColumn();
+                                ImGui.Text(players[i]);
+                            }
+                            ImGui.EndTable();
                         }
-                        ImGui.EndChild();
                     }
 
                     ImGui.Spacing();
