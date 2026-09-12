@@ -186,9 +186,84 @@ public class GameLibraryService : IGameLibraryService {
             var riddlesGame = new GameDefinition {
                 Name = "Emote Riddles",
                 Author = "Almeris",
-                Description = "Answer the riddle by performing the correct emote.",
+                Description = "Answer the riddle by performing the correct emote. The GM sets the expected emote ID.",
+                AllowChatRegistration = false,
+                Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+                    { "TrackScores", "true" }
+                },
+                InitialVariables = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase) {
+                    { "expected_emote_id", 0 }
+                },
                 Stages = new List<GameStage> {
-                    new GameStage { Id = "setup", Name = "Setup" }
+                    new GameStage {
+                        Id = "registration",
+                        Name = "Registration",
+                        GmDescription = "Wait for players to !join. Once ready, manually transition to 'In Progress'.",
+                        OnEnterActions = new List<GameActionConfig> {
+                            new GameActionConfig {
+                                ActionType = "BroadcastMessage",
+                                Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+                                    { "Message", "Registration for Emote Riddles is open! Type !join to participate." }
+                                }
+                            }
+                        },
+                        ActiveModules = new List<GameModuleConfig> {
+                            new GameModuleConfig {
+                                ModuleType = "ChatListener",
+                                Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+                                    { "Command", "!join" }
+                                },
+                                OnTriggerActions = new List<GameActionConfig> {
+                                    new GameActionConfig { ActionType = "RegisterPlayer" }
+                                }
+                            }
+                        },
+                        Transitions = new List<GameTransition> {
+                            new GameTransition {
+                                TargetStageId = "playing",
+                                TriggerType = "Manual",
+                                ConditionExpression = "Participants.Count >= 1"
+                            }
+                        }
+                    },
+                    new GameStage {
+                        Id = "playing",
+                        Name = "In Progress",
+                        GmDescription = "Set 'expected_emote_id' in variables, then ask your riddle in chat. First player to use the matching emote wins the round.",
+                        OnEnterActions = new List<GameActionConfig> {
+                            new GameActionConfig {
+                                ActionType = "BroadcastMessage",
+                                Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+                                    { "Message", "[Start] The riddle game begins! Listen carefully to the GM and perform the correct emote to answer." }
+                                }
+                            }
+                        },
+                        ActiveModules = new List<GameModuleConfig> {
+                            new GameModuleConfig {
+                                ModuleType = "EmoteListener",
+                                ConditionExpressions = new List<string> {
+                                    "Participants CONTAINS Event.Sender",
+                                    "Var.expected_emote_id != 0",
+                                    "Event.EmoteId == Var.expected_emote_id"
+                                },
+                                OnTriggerActions = new List<GameActionConfig> {
+                                    new GameActionConfig {
+                                        ActionType = "BroadcastMessage",
+                                        Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+                                            { "Message", "[Winner] {Event.Sender} found the correct emote! Well done!" }
+                                        }
+                                    },
+                                    new GameActionConfig {
+                                        ActionType = "SetVariable",
+                                        Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+                                            { "TargetVar", "expected_emote_id" },
+                                            { "Value", "0" }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             };
             this.WriteGameToFile(riddlesPath, riddlesGame);
