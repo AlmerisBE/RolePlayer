@@ -10,6 +10,7 @@ public interface IGameDashboardPresenter : IDisposable {
     HashSet<GameChatChannel> SelectedChannels { get; }
     SessionState CurrentState { get; }
     IReadOnlyList<string> Participants { get; }
+    IReadOnlyDictionary<string, object> SessionVariables { get; }
 
     string CurrentStageName { get; }
     bool AllowChatRegistration { get; set; }

@@ -32,6 +32,7 @@ public class GameSessionService : IGameSessionService {
     }
 
     public IReadOnlyList<string> Participants => this.activeEngine?.Participants ?? new List<string>();
+    public IReadOnlyDictionary<string, object> SessionVariables => this.activeEngine?.Variables ?? new Dictionary<string, object>();
 
     public string CurrentStageName => this.activeEngine?.CurrentStageName ?? string.Empty;
 

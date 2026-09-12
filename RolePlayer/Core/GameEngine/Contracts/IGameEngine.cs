@@ -8,6 +8,7 @@ public interface IGameEngine {
     string EngineType { get; }
     bool IsRunning { get; }
     IReadOnlyList<string> Participants { get; }
+    IReadOnlyDictionary<string, object> Variables { get; }
     string CurrentStageName { get; }
     bool AllowChatRegistration { get; set; }
 

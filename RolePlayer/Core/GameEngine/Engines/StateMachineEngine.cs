@@ -18,6 +18,7 @@ public class StateMachineEngine : IGameEngine {
     public bool IsRunning { get; private set; }
 
     public IReadOnlyList<string> Participants => this.context.Participants.ToList();
+    public IReadOnlyDictionary<string, object> Variables => this.context.Variables;
     public string CurrentStageName => this.currentStage?.Name ?? "Unknown";
 
     public bool AllowChatRegistration { get; set; } = false;

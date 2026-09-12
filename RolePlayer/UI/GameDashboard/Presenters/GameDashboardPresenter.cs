@@ -17,6 +17,7 @@ public class GameDashboardPresenter : IGameDashboardPresenter {
     public HashSet<GameChatChannel> SelectedChannels { get; private set; } = new();
     public SessionState CurrentState => this.sessionService.CurrentState;
     public IReadOnlyList<string> Participants => this.sessionService.Participants;
+    public IReadOnlyDictionary<string, object> SessionVariables => this.sessionService.SessionVariables;
 
     public string CurrentStageName => this.sessionService.CurrentStageName;
 

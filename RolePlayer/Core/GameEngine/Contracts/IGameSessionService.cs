@@ -10,6 +10,7 @@ public interface IGameSessionService {
     SessionState CurrentState { get; }
     GameSessionConfig? CurrentConfig { get; }
     IReadOnlyList<string> Participants { get; }
+    IReadOnlyDictionary<string, object> SessionVariables { get; }
 
     bool StartSession(GameSessionConfig config);
     void StopSession();

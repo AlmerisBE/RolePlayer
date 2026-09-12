@@ -157,23 +157,57 @@ public class GameDashboardWindow : Window {
                     else {
                         string? participantToRemove = null;
 
-                        if (ImGui.BeginTable("ParticipantsTable", 3, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.ScrollY, new Vector2(0, 150))) {
+                        // Vérification dynamique du paramètre de jeu pour activer l'affichage des scores
+                        bool hasScores = this.presenter.SelectedGame?.Parameters.ContainsKey("TrackScores") == true &&
+                                         this.presenter.SelectedGame.Parameters["TrackScores"].Equals("true", StringComparison.OrdinalIgnoreCase);
+
+                        int columnCount = hasScores ? 4 : 3;
+
+                        if (ImGui.BeginTable("ParticipantsTable", columnCount, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.ScrollY, new Vector2(0, 150))) {
                             ImGui.TableSetupScrollFreeze(0, 1);
                             ImGui.TableSetupColumn("#", ImGuiTableColumnFlags.WidthFixed, 30f);
                             ImGui.TableSetupColumn(this.localization.Translate("config_common_name"), ImGuiTableColumnFlags.WidthStretch);
+                            if (hasScores) ImGui.TableSetupColumn("Score", ImGuiTableColumnFlags.WidthFixed, 60f);
                             ImGui.TableSetupColumn(this.localization.Translate("config_common_actions"), ImGuiTableColumnFlags.WidthFixed, 30f);
                             ImGui.TableHeadersRow();
+
+                            // Récupération du joueur actif depuis le moteur EAC
+                            string currentPlayer = this.presenter.SessionVariables.TryGetValue("current_player", out var cp) ? cp?.ToString() ?? string.Empty : string.Empty;
 
                             for (int i = 0; i < players.Count; i++) {
                                 ImGui.TableNextRow();
 
-                                ImGui.TableNextColumn();
-                                ImGui.AlignTextToFramePadding();
-                                ImGui.Text((i + 1).ToString());
+                                bool isCurrentTurn = string.Equals(players[i], currentPlayer, StringComparison.OrdinalIgnoreCase);
 
                                 ImGui.TableNextColumn();
                                 ImGui.AlignTextToFramePadding();
+                                if (isCurrentTurn) {
+                                    // Affichage d'un indicateur vert pour le joueur en cours
+                                    ImGui.PushFont(UiBuilder.IconFont);
+                                    ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.2f, 0.8f, 0.2f, 1.0f));
+                                    ImGui.Text(FontAwesomeIcon.Play.ToIconString());
+                                    ImGui.PopStyleColor();
+                                    ImGui.PopFont();
+                                }
+                                else {
+                                    ImGui.Text((i + 1).ToString());
+                                }
+
+                                ImGui.TableNextColumn();
+                                ImGui.AlignTextToFramePadding();
+                                if (isCurrentTurn) ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.2f, 0.8f, 0.2f, 1.0f));
                                 ImGui.Text(players[i]);
+                                if (isCurrentTurn) ImGui.PopStyleColor();
+
+                                if (hasScores) {
+                                    ImGui.TableNextColumn();
+                                    ImGui.AlignTextToFramePadding();
+
+                                    // Lecture conventionnelle des scores dans les variables
+                                    string scoreKey = $"score_{players[i]}";
+                                    int score = this.presenter.SessionVariables.TryGetValue(scoreKey, out var s) && s is int sInt ? sInt : 0;
+                                    ImGui.Text(score.ToString());
+                                }
 
                                 ImGui.TableNextColumn();
                                 ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
