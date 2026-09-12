@@ -353,6 +353,12 @@ public class GameLibraryService : IGameLibraryService {
                         Id = "registration",
                         Name = "Registration",
                         GmDescription = "Wait for players to !join.",
+                        OnEnterActions = new List<GameActionConfig> {
+                            new GameActionConfig {
+                                ActionType = "BroadcastMessage",
+                                Parameters = new Dictionary<string, string> { { "Message", "Registration for Truth or Dare is open! Type !join to participate." } }
+                            }
+                        },
                         ActiveModules = new List<GameModuleConfig> {
                             new GameModuleConfig {
                                 ModuleType = "ChatListener", Parameters = new Dictionary<string, string> { { "Command", "!join" } },
@@ -419,6 +425,12 @@ public class GameLibraryService : IGameLibraryService {
                 Stages = new List<GameStage> {
                     new GameStage {
                         Id = "registration", Name = "Registration", GmDescription = "Wait for players.",
+                        OnEnterActions = new List<GameActionConfig> {
+                            new GameActionConfig {
+                                ActionType = "BroadcastMessage",
+                                Parameters = new Dictionary<string, string> { { "Message", "Registration for Dice Blackjack is open! Type !join to participate." } }
+                            }
+                        },
                         ActiveModules = new List<GameModuleConfig> {
                             new GameModuleConfig { ModuleType = "ChatListener", Parameters = new Dictionary<string, string> { { "Command", "!join" } }, OnTriggerActions = new List<GameActionConfig> { new GameActionConfig { ActionType = "RegisterPlayer" } } }
                         },
