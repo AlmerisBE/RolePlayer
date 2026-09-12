@@ -4,6 +4,7 @@ using RolePlayer.Core.GameEngine.Contracts;
 using RolePlayer.Core.GameEngine.Models;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 public class GameActionExecutionService : IGameActionExecutionService {
     public event Action<string>? BroadcastRequested;
@@ -30,6 +31,9 @@ public class GameActionExecutionService : IGameActionExecutionService {
             case "SETVARIABLE":
                 this.ExecuteSetVariable(action, context);
                 break;
+            case "ADVANCETURN":
+                this.ExecuteAdvanceTurn(action, context);
+                break;
             case "BROADCASTMESSAGE":
                 this.ExecuteBroadcastMessage(action, context);
                 break;
@@ -44,7 +48,22 @@ public class GameActionExecutionService : IGameActionExecutionService {
 
     private void ExecuteRegisterPlayer(GameSessionContext context) {
         if (context.CurrentEvent == null || string.IsNullOrWhiteSpace(context.CurrentEvent.Sender)) return;
-        context.Participants.Add(context.CurrentEvent.Sender);
+
+        string sender = context.CurrentEvent.Sender;
+        if (!context.Participants.Contains(sender, StringComparer.OrdinalIgnoreCase)) {
+            context.Participants.Add(sender);
+        }
+    }
+
+    private void ExecuteAdvanceTurn(GameActionConfig action, GameSessionContext context) {
+        if (!action.Parameters.TryGetValue("TargetVar", out var targetVar) || string.IsNullOrWhiteSpace(targetVar)) return;
+        if (context.Participants.Count == 0) return;
+
+        string currentPlayer = context.Variables.TryGetValue(targetVar, out var val) ? val?.ToString() ?? string.Empty : string.Empty;
+        int currentIndex = context.Participants.FindIndex(p => p.Equals(currentPlayer, StringComparison.OrdinalIgnoreCase));
+
+        int nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % context.Participants.Count;
+        context.Variables[targetVar] = context.Participants[nextIndex];
     }
 
     private void ExecuteSetVariable(GameActionConfig action, GameSessionContext context) {

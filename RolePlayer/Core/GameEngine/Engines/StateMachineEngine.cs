@@ -65,7 +65,8 @@ public class StateMachineEngine : IGameEngine {
     public void AddParticipant(string name) {
         if (string.IsNullOrWhiteSpace(name)) return;
 
-        if (this.context.Participants.Add(name)) {
+        if (!this.context.Participants.Contains(name, StringComparer.OrdinalIgnoreCase)) {
+            this.context.Participants.Add(name);
             this.ParticipantsChanged?.Invoke();
         }
     }
@@ -73,7 +74,9 @@ public class StateMachineEngine : IGameEngine {
     public void RemoveParticipant(string name) {
         if (string.IsNullOrWhiteSpace(name)) return;
 
-        if (this.context.Participants.Remove(name)) {
+        var index = this.context.Participants.FindIndex(p => p.Equals(name, StringComparison.OrdinalIgnoreCase));
+        if (index >= 0) {
+            this.context.Participants.RemoveAt(index);
             this.ParticipantsChanged?.Invoke();
         }
     }

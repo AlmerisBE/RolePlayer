@@ -71,12 +71,12 @@ public class ConditionEvaluatorService : IConditionEvaluatorService {
     }
 
     private bool Compare(object? left, string op, object? right) {
-        if (op == "CONTAINS" && left is HashSet<string> hashSet && right is string strRight) {
-            return hashSet.Contains(strRight);
+        if (op == "CONTAINS" && left is IEnumerable<string> list && right is string strRight) {
+            return list.Contains(strRight, StringComparer.OrdinalIgnoreCase);
         }
 
-        if (op == "NOT_CONTAINS" && left is HashSet<string> hashSetNot && right is string strRightNot) {
-            return !hashSetNot.Contains(strRightNot);
+        if (op == "NOT_CONTAINS" && left is IEnumerable<string> listNot && right is string strRightNot) {
+            return !listNot.Contains(strRightNot, StringComparer.OrdinalIgnoreCase);
         }
 
         if (left == null || right == null) return left == right && (op == "==" || op == "=");

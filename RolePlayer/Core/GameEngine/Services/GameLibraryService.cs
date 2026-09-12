@@ -36,10 +36,11 @@ public class GameLibraryService : IGameLibraryService {
             var deathRollGame = new GameDefinition {
                 Name = "Death Roll",
                 Author = "Almeris",
-                Description = "A classic game of successive random rolls until someone rolls a 1.",
+                Description = "A classic turn-based game of successive random rolls until someone rolls a 1.",
                 AllowChatRegistration = false,
                 InitialVariables = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase) {
-                    { "current_max_roll", 999 }
+                    { "current_max_roll", 999 },
+                    { "current_player", "" }
                 },
                 Stages = new List<GameStage> {
                     new GameStage {
@@ -76,12 +77,18 @@ public class GameLibraryService : IGameLibraryService {
                     new GameStage {
                         Id = "playing",
                         Name = "In Progress",
-                        GmDescription = "Game is running. The engine tracks the max roll automatically. First player to roll 1 loses.",
+                        GmDescription = "Game is running. Engine tracks max roll and turns. First to roll 1 loses.",
                         OnEnterActions = new List<GameActionConfig> {
+                            new GameActionConfig {
+                                ActionType = "AdvanceTurn",
+                                Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+                                    { "TargetVar", "current_player" }
+                                }
+                            },
                             new GameActionConfig {
                                 ActionType = "BroadcastMessage",
                                 Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-                                    { "Message", "The game begins! First player to roll 1 loses. Starting roll: /random {Var.current_max_roll}!" }
+                                    { "Message", "[Start] Game begins! First to roll 1 loses. {Var.current_player}, you're up! (/random {Var.current_max_roll})" }
                                 }
                             }
                         },
@@ -90,13 +97,13 @@ public class GameLibraryService : IGameLibraryService {
                                 ModuleType = "DiceListener",
                                 ConditionExpressions = new List<string> {
                                     "Participants CONTAINS Event.Sender",
-                                    "Event.OutOf != Var.current_max_roll"
+                                    "Event.Sender != Var.current_player"
                                 },
                                 OnTriggerActions = new List<GameActionConfig> {
                                     new GameActionConfig {
                                         ActionType = "BroadcastMessage",
                                         Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-                                            { "Message", "[!] Invalid roll, {Event.Sender}! You must roll out of {Var.current_max_roll}! (Type: /random {Var.current_max_roll})" }
+                                            { "Message", "[!] Not your turn, {Event.Sender}! Waiting for {Var.current_player}." }
                                         }
                                     }
                                 }
@@ -105,6 +112,23 @@ public class GameLibraryService : IGameLibraryService {
                                 ModuleType = "DiceListener",
                                 ConditionExpressions = new List<string> {
                                     "Participants CONTAINS Event.Sender",
+                                    "Event.Sender == Var.current_player",
+                                    "Event.OutOf != Var.current_max_roll"
+                                },
+                                OnTriggerActions = new List<GameActionConfig> {
+                                    new GameActionConfig {
+                                        ActionType = "BroadcastMessage",
+                                        Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+                                            { "Message", "[!] Invalid roll, {Event.Sender}! Must roll out of {Var.current_max_roll}! (/random {Var.current_max_roll})" }
+                                        }
+                                    }
+                                }
+                            },
+                            new GameModuleConfig {
+                                ModuleType = "DiceListener",
+                                ConditionExpressions = new List<string> {
+                                    "Participants CONTAINS Event.Sender",
+                                    "Event.Sender == Var.current_player",
                                     "Event.OutOf == Var.current_max_roll",
                                     "Event.Roll != 1"
                                 },
@@ -117,9 +141,15 @@ public class GameLibraryService : IGameLibraryService {
                                         }
                                     },
                                     new GameActionConfig {
+                                        ActionType = "AdvanceTurn",
+                                        Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+                                            { "TargetVar", "current_player" }
+                                        }
+                                    },
+                                    new GameActionConfig {
                                         ActionType = "BroadcastMessage",
                                         Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-                                            { "Message", "[Roll] {Event.Sender} rolled a {Event.Roll}. Next up: /random {Var.current_max_roll}" }
+                                            { "Message", "[Roll] {Event.Sender} rolled {Event.Roll}. Next up: {Var.current_player} (/random {Var.current_max_roll})" }
                                         }
                                     }
                                 }
@@ -128,6 +158,7 @@ public class GameLibraryService : IGameLibraryService {
                                 ModuleType = "DiceListener",
                                 ConditionExpressions = new List<string> {
                                     "Participants CONTAINS Event.Sender",
+                                    "Event.Sender == Var.current_player",
                                     "Event.OutOf == Var.current_max_roll",
                                     "Event.Roll == 1"
                                 },
@@ -135,7 +166,7 @@ public class GameLibraryService : IGameLibraryService {
                                     new GameActionConfig {
                                         ActionType = "BroadcastMessage",
                                         Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-                                            { "Message", "[Game Over] {Event.Sender} rolled a 1 and died! Game Over." }
+                                            { "Message", "[Game Over] {Event.Sender} rolled a 1 and died!" }
                                         }
                                     },
                                     new GameActionConfig {
