@@ -20,6 +20,11 @@ public class GameDashboardFeature : IFeatureModule {
         services.AddSingleton<IGameDashboardPresenter, GameDashboardPresenter>();
 
         services.AddSingleton<GameStageEditorComponent>();
+        services.AddSingleton<DashboardControlComponent>();
+        services.AddSingleton<DashboardVariablesComponent>();
+        services.AddSingleton<DashboardParticipantsComponent>();
+        services.AddSingleton<DashboardMessagesComponent>();
+
         services.AddSingleton<GameEditorWindow>();
         services.AddSingleton<IGameEditorWindow>(provider => provider.GetRequiredService<GameEditorWindow>());
         services.AddSingleton<Window>(provider => provider.GetRequiredService<GameEditorWindow>());
