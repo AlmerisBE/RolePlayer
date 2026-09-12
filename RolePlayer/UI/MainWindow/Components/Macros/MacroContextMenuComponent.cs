@@ -4,7 +4,6 @@ using Dalamud.Bindings.ImGui;
 using RolePlayer.Core.Configuration.Contracts;
 using RolePlayer.Core.Macros.Models;
 using RolePlayer.UI.EmoteBrowser.Contracts;
-using RolePlayer.UI.Hotbar.Components;
 using RolePlayer.UI.Hotbar.Contracts;
 using RolePlayer.UI.Hotbar.Models;
 using RolePlayer.UI.Localization.Contracts;
@@ -17,7 +16,6 @@ public class MacroContextMenuComponent {
     private IContextManagementService contextService;
     private IGroupManagementService groupService;
     private ITagManagementService tagService;
-    private HotbarManagerComponent hotbarManager;
 
     public MacroContextMenuComponent(
         IMacroExecutionService macroExecutionService,
@@ -25,8 +23,7 @@ public class MacroContextMenuComponent {
         IConfigurationService configurationService,
         IContextManagementService contextService,
         IGroupManagementService groupService,
-        ITagManagementService tagService,
-        HotbarManagerComponent hotbarManager) {
+        ITagManagementService tagService) {
 
         this.macroExecutionService = macroExecutionService;
         this.localization = localization;
@@ -34,7 +31,6 @@ public class MacroContextMenuComponent {
         this.contextService = contextService;
         this.groupService = groupService;
         this.tagService = tagService;
-        this.hotbarManager = hotbarManager;
     }
 
     public void Draw(RoleplayMacro macro) {
@@ -63,7 +59,7 @@ public class MacroContextMenuComponent {
 
                 if (hotbarChanged) {
                     this.configurationService.Save();
-                    this.hotbarManager.RefreshWindows();
+                    this.contextService.NotifyHotbarsChanged();
                 }
                 ImGui.EndMenu();
             }

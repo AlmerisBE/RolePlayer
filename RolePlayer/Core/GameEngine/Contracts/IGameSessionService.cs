@@ -20,4 +20,5 @@ public interface IGameSessionService {
     void AddParticipant(string name);
     void RemoveParticipant(string name);
     void AdvanceStage();
+    void SetSessionVariable(string key, object value);
 }

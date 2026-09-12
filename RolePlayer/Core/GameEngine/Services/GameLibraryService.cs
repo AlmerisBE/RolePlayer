@@ -186,19 +186,28 @@ public class GameLibraryService : IGameLibraryService {
             var riddlesGame = new GameDefinition {
                 Name = "Emote Riddles",
                 Author = "Almeris",
-                Description = "Answer the riddle by performing the correct emote. The GM sets the expected emote ID.",
+                Description = "Answer the riddle by performing the correct emote before time runs out!",
                 AllowChatRegistration = false,
                 Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
                     { "TrackScores", "true" }
                 },
+                // Les variables initiales utilisées en arrière plan
                 InitialVariables = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase) {
-                    { "expected_emote_id", 0 }
+                    { "expected_emote_id", 0 },
+                    { "riddle_text", "Je suis la joie incarnée !" },
+                    { "round_duration", 30 }
+                },
+                // NOUVEAU : Ce qui sera exposé à l'interface du MJ
+                ExposedVariables = new List<GameVariableDefinition> {
+                    new GameVariableDefinition { Key = "expected_emote_id", Label = "Émote Attendue (Réponse)", Type = "Emote" },
+                    new GameVariableDefinition { Key = "riddle_text", Label = "Texte de l'Énigme", Type = "String" },
+                    new GameVariableDefinition { Key = "round_duration", Label = "Durée du round (Secondes)", Type = "Number" }
                 },
                 Stages = new List<GameStage> {
                     new GameStage {
                         Id = "registration",
-                        Name = "Registration",
-                        GmDescription = "Wait for players to !join. Once ready, manually transition to 'In Progress'.",
+                        Name = "Registration & Preparation",
+                        GmDescription = "Wait for players to !join. Configure your riddle in the UI above, then manually transition.",
                         OnEnterActions = new List<GameActionConfig> {
                             new GameActionConfig {
                                 ActionType = "BroadcastMessage",
@@ -210,31 +219,23 @@ public class GameLibraryService : IGameLibraryService {
                         ActiveModules = new List<GameModuleConfig> {
                             new GameModuleConfig {
                                 ModuleType = "ChatListener",
-                                Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-                                    { "Command", "!join" }
-                                },
-                                OnTriggerActions = new List<GameActionConfig> {
-                                    new GameActionConfig { ActionType = "RegisterPlayer" }
-                                }
+                                Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { { "Command", "!join" } },
+                                OnTriggerActions = new List<GameActionConfig> { new GameActionConfig { ActionType = "RegisterPlayer" } }
                             }
                         },
                         Transitions = new List<GameTransition> {
-                            new GameTransition {
-                                TargetStageId = "playing",
-                                TriggerType = "Manual",
-                                ConditionExpression = "Participants.Count >= 1"
-                            }
+                            new GameTransition { TargetStageId = "playing", TriggerType = "Manual", ConditionExpression = "Participants.Count >= 1" }
                         }
                     },
                     new GameStage {
                         Id = "playing",
-                        Name = "In Progress",
-                        GmDescription = "Set 'expected_emote_id' in variables, then ask your riddle in chat. First player to use the matching emote wins the round.",
+                        Name = "Action Phase",
+                        GmDescription = "The riddle is broadcasted. Engine listens for the correct emote and tracks time.",
                         OnEnterActions = new List<GameActionConfig> {
                             new GameActionConfig {
                                 ActionType = "BroadcastMessage",
                                 Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-                                    { "Message", "[Start] The riddle game begins! Listen carefully to the GM and perform the correct emote to answer." }
+                                    { "Message", "The riddle begins in 3...\\n<wait.1>\\n2...\\n<wait.1>\\n1...\\n<wait.1>\\n[Riddle] {Var.riddle_text}" }
                                 }
                             }
                         },
@@ -256,12 +257,41 @@ public class GameLibraryService : IGameLibraryService {
                                     new GameActionConfig {
                                         ActionType = "SetVariable",
                                         Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-                                            { "TargetVar", "expected_emote_id" },
-                                            { "Value", "0" }
+                                            // TODO : Implémenter l'incrémentation (Score++) via EAC Math dans une future update.
+                                            { "TargetVar", "score_{Event.Sender}" },
+                                            { "Value", "1" }
                                         }
-                                    }
+                                    },
+                                    new GameActionConfig { ActionType = "AdvanceStage" }
+                                }
+                            },
+                            new GameModuleConfig {
+                                ModuleType = "TimerListener",
+                                Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+                                    { "DurationSeconds", "{Var.round_duration}" }
+                                },
+                                OnTriggerActions = new List<GameActionConfig> {
+                                    new GameActionConfig {
+                                        ActionType = "BroadcastMessage",
+                                        Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+                                            { "Message", "[Time's Up] No one found the answer in time!" }
+                                        }
+                                    },
+                                    new GameActionConfig { ActionType = "AdvanceStage" }
                                 }
                             }
+                        },
+                        Transitions = new List<GameTransition> {
+                            new GameTransition { TargetStageId = "round_end", TriggerType = "Manual" },
+                            new GameTransition { TargetStageId = "round_end", TriggerType = "Auto" }
+                        }
+                    },
+                    new GameStage {
+                        Id = "round_end",
+                        Name = "Round Ended",
+                        GmDescription = "Prepare the next riddle and return to Action Phase, or Stop the Session.",
+                        Transitions = new List<GameTransition> {
+                            new GameTransition { TargetStageId = "playing", TriggerType = "Manual" }
                         }
                     }
                 }

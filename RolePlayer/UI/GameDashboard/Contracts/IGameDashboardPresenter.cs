@@ -1,11 +1,13 @@
 ﻿namespace RolePlayer.UI.GameDashboard.Contracts;
 
+using RolePlayer.Core.Emotes.Models;
 using RolePlayer.Core.GameEngine.Models;
 using System;
 using System.Collections.Generic;
 
 public interface IGameDashboardPresenter : IDisposable {
     IReadOnlyList<GameDefinition> AvailableGames { get; }
+    IReadOnlyList<EnrichedEmote> EmotesCache { get; }
     GameDefinition? SelectedGame { get; }
     HashSet<GameChatChannel> SelectedChannels { get; }
     SessionState CurrentState { get; }
@@ -24,6 +26,7 @@ public interface IGameDashboardPresenter : IDisposable {
     void AdvanceStage();
     void AddTarget();
     void RemoveParticipant(string name);
+    void SetSessionVariable(string key, object value);
 
     void SaveGameConfig();
 }

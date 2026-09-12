@@ -1,8 +1,8 @@
 ﻿namespace RolePlayer.UI.Hotbar.Services;
 
 using RolePlayer.Core.Configuration.Contracts;
+using RolePlayer.Core.Emotes.Models;
 using RolePlayer.UI.EmoteBrowser.Contracts;
-using RolePlayer.UI.EmoteBrowser.Models;
 using RolePlayer.UI.Hotbar.Contracts;
 using RolePlayer.UI.Hotbar.Models;
 using System.Collections.Generic;
@@ -26,7 +26,7 @@ public class HotbarResolverService : IHotbarResolverService {
         this.contextManagementService = contextManagementService;
     }
 
-    public List<ResolvedHotbarItem> ResolveItemsForHotbar(HotbarConfig config, IEnumerable<EmoteDisplayData> allCachedEmotes) {
+    public List<ResolvedHotbarItem> ResolveItemsForHotbar(HotbarConfig config, IEnumerable<EnrichedEmote> allCachedEmotes) {
         var results = new List<ResolvedHotbarItem>();
         var validEmotes = allCachedEmotes.Where(e => e.IsUnlocked && e.IconId > 0).ToList();
         var allMacros = this.macroManagementService.GetMacros().ToList();

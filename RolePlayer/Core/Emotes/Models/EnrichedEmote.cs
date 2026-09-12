@@ -1,8 +1,8 @@
-﻿namespace RolePlayer.UI.EmoteBrowser.Models;
+﻿namespace RolePlayer.Core.Emotes.Models;
 
 using System.Collections.Generic;
 
-public class EmoteDisplayData {
+public class EnrichedEmote {
     public uint Id { get; init; }
     public string Name { get; init; } = string.Empty;
     public uint IconId { get; init; }

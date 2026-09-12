@@ -1,5 +1,6 @@
 ﻿namespace RolePlayer.Tests.Core.GameEngine.Engines;
 
+using Dalamud.Plugin.Services;
 using NSubstitute;
 using RolePlayer.Core.GameEngine.Contracts;
 using RolePlayer.Core.GameEngine.Engines;
@@ -13,8 +14,9 @@ public class StateMachineEngineTests {
         evaluator.EvaluateAll(Arg.Any<IEnumerable<string>>(), Arg.Any<GameSessionContext>()).Returns(true);
 
         var actionService = Substitute.For<IGameActionExecutionService>();
+        var framework = Substitute.For<IFramework>();
 
-        var engine = new StateMachineEngine(evaluator, actionService);
+        var engine = new StateMachineEngine(evaluator, actionService, framework);
 
         var config = new GameSessionConfig {
             Game = new GameDefinition {

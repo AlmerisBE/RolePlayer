@@ -17,7 +17,7 @@ public class EmoteWatcher : IGameEventWatcher {
     private bool isWatching;
 
     public event Action<GameEvent>? EventFired;
-    public bool RestrictToParticipants { get; set; } = false;
+    public bool RestrictToParticipants { get; set; } = true;
 
     public EmoteWatcher(IObjectTable objectTable, IFramework framework) {
         this.objectTable = objectTable;

@@ -6,9 +6,9 @@ using Dalamud.Interface.Textures;
 using Dalamud.Interface.Textures.Internal;
 using Dalamud.Plugin.Services;
 using RolePlayer.Core.Configuration.Contracts;
+using RolePlayer.Core.Emotes.Contracts;
 using RolePlayer.Core.Macros.Models;
 using RolePlayer.UI.EmoteBrowser.Contracts;
-using RolePlayer.UI.Hotbar.Components;
 using RolePlayer.UI.Hotbar.Contracts;
 using RolePlayer.UI.Hotbar.Models;
 using RolePlayer.UI.Localization.Contracts;
@@ -24,7 +24,7 @@ public class MacroEditorPanelComponent {
     private IMacroExecutionService macroExecutionService;
     private ILocalizationService localization;
     private ITextureProvider textureProvider;
-    private HotbarManagerComponent hotbarManager;
+    private IEmoteCache emoteCache;
     private IAutoTranslateService autoTranslateService;
     private IGroupManagementService groupService;
     private ITagManagementService tagService;
@@ -40,7 +40,7 @@ public class MacroEditorPanelComponent {
         IMacroExecutionService macroExecutionService,
         ILocalizationService localization,
         ITextureProvider textureProvider,
-        HotbarManagerComponent hotbarManager,
+        IEmoteCache emoteCache,
         IAutoTranslateService autoTranslateService,
         IGroupManagementService groupService,
         ITagManagementService tagService,
@@ -52,7 +52,7 @@ public class MacroEditorPanelComponent {
         this.macroExecutionService = macroExecutionService;
         this.localization = localization;
         this.textureProvider = textureProvider;
-        this.hotbarManager = hotbarManager;
+        this.emoteCache = emoteCache;
         this.autoTranslateService = autoTranslateService;
         this.groupService = groupService;
         this.tagService = tagService;
@@ -360,7 +360,7 @@ public class MacroEditorPanelComponent {
 
         if (hotbarChanged) {
             this.configurationService.Save();
-            this.hotbarManager.RefreshWindows();
+            this.contextService.NotifyHotbarsChanged();
         }
     }
 
@@ -378,7 +378,7 @@ public class MacroEditorPanelComponent {
                 }
 
                 if (ImGui.BeginTabItem(this.localization.Translate("config_macro_icon_tab_emotes"))) {
-                    var emoteIcons = this.hotbarManager.GetEmoteCache().Select(e => e.IconId).Distinct().ToList();
+                    var emoteIcons = this.emoteCache.GetCachedEmotes().Select(e => e.IconId).Distinct().ToList();
                     this.DrawIconGrid("EmoteIconsGrid", 0, 0, emoteIcons, macro, ref changed);
                     ImGui.EndTabItem();
                 }

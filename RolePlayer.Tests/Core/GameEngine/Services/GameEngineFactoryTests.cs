@@ -1,5 +1,6 @@
 ﻿namespace RolePlayer.Tests.Core.GameEngine.Services;
 
+using Dalamud.Plugin.Services;
 using NSubstitute;
 using RolePlayer.Core.GameEngine.Contracts;
 using RolePlayer.Core.GameEngine.Engines;
@@ -14,7 +15,8 @@ public class GameEngineFactoryTests {
 
         var evaluator = Substitute.For<IConditionEvaluatorService>();
         var actionService = Substitute.For<IGameActionExecutionService>();
-        var engine = new StateMachineEngine(evaluator, actionService);
+        var framework = Substitute.For<IFramework>();
+        var engine = new StateMachineEngine(evaluator, actionService, framework);
 
         mockServiceProvider.GetService(typeof(StateMachineEngine)).Returns(engine);
 

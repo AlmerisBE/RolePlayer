@@ -15,9 +15,9 @@ public class ChatBroadcaster : IChatBroadcaster, IDisposable {
     private IFramework framework;
 
     private ConcurrentQueue<(string Message, GameChatChannel Channel)> messageQueue = new();
-    private DateTime lastBroadcastTime = DateTime.MinValue;
 
-    // FFXIV safely allows chat inputs spaced by ~1.2 to 1.5 seconds.
+    private DateTime lastBroadcastTime = DateTime.Now;
+
     private readonly TimeSpan broadcastDelay = TimeSpan.FromSeconds(1.5);
 
     public ChatBroadcaster(INativeExecutionService nativeExecution, IChatGui chatGui, ILoggerService logger, IFramework framework) {
@@ -56,14 +56,24 @@ public class ChatBroadcaster : IChatBroadcaster, IDisposable {
             _ => "/e"
         };
 
-        string command = $"{channelCmd} {message}";
+        var formattedMessage = message.Replace("\\n", "\n");
+        var lines = formattedMessage.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+        var sb = new System.Text.StringBuilder();
+
+        foreach (var line in lines) {
+            var trimmed = line.Trim();
+            if (trimmed.StartsWith("/") || trimmed.StartsWith("<")) sb.AppendLine(trimmed);
+            else sb.AppendLine($"{channelCmd} {trimmed}");
+        }
+
+        string finalCommand = sb.ToString().TrimEnd('\r', '\n');
 
         try {
-            this.nativeExecution.Execute(command);
+            this.nativeExecution.Execute(finalCommand);
         }
         catch (Exception ex) {
             this.logger.Error(ex, "[ChatBroadcaster] Native macro execution failed. Falling back to local echo.");
-            this.chatGui.Print($"[Bot] {command}");
+            this.chatGui.Print($"[Bot] {finalCommand}");
         }
     }
 

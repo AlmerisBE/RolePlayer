@@ -1,36 +1,31 @@
 ﻿namespace RolePlayer.UI.EmoteBrowser.Presenters;
 
 using RolePlayer.Core.Configuration.Contracts;
-using RolePlayer.Core.Logging.Contracts;
+using RolePlayer.Core.Emotes.Contracts;
+using RolePlayer.Core.Emotes.Models;
 using RolePlayer.UI.EmoteBrowser.Contracts;
 using RolePlayer.UI.EmoteBrowser.Models;
 using RolePlayer.UI.Localization.Contracts;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 public class EmoteBrowserPresenter : IEmoteBrowserPresenter {
-    private IEmoteRepository emoteRepository;
-    private IPlayerStateProvider playerStateProvider;
-    private IModStateProvider modStateProvider;
+    private IEmoteCache emoteCache;
     private IContextManagementService contextService;
     private IGroupManagementService groupManagementService;
     private ITagManagementService tagManagementService;
     private ILocalizationService localization;
-    private ILoggerService logger;
 
-    private List<EmoteDisplayData> emotesCache = new();
     private List<string> availableCategories = new();
-    private Dictionary<string, IReadOnlyList<EmoteDisplayData>> groupedEmotes = new();
+    private Dictionary<string, IReadOnlyList<EnrichedEmote>> groupedEmotes = new();
 
     private string searchQuery = string.Empty;
     private int sortColumn = -1;
     private bool sortDescending = false;
 
-    public bool IsLoading { get; private set; }
+    public bool IsLoading => !this.emoteCache.IsReady;
     public IReadOnlyList<string> AvailableCategories => this.availableCategories;
-    public IReadOnlyDictionary<string, IReadOnlyList<EmoteDisplayData>> GroupedEmotes => this.groupedEmotes;
+    public IReadOnlyDictionary<string, IReadOnlyList<EnrichedEmote>> GroupedEmotes => this.groupedEmotes;
 
     public string SearchQuery {
         get => this.searchQuery;
@@ -42,64 +37,41 @@ public class EmoteBrowserPresenter : IEmoteBrowserPresenter {
     }
 
     public EmoteBrowserPresenter(
-        IEmoteRepository emoteRepository,
-        IPlayerStateProvider playerStateProvider,
-        IModStateProvider modStateProvider,
+        IEmoteCache emoteCache,
         IContextManagementService contextService,
         IGroupManagementService groupManagementService,
         ITagManagementService tagManagementService,
-        ILocalizationService localization,
-        ILoggerService logger) {
+        ILocalizationService localization) {
 
-        this.emoteRepository = emoteRepository;
-        this.playerStateProvider = playerStateProvider;
-        this.modStateProvider = modStateProvider;
+        this.emoteCache = emoteCache;
         this.contextService = contextService;
         this.groupManagementService = groupManagementService;
         this.tagManagementService = tagManagementService;
         this.localization = localization;
-        this.logger = logger;
     }
 
     public void Initialize() {
-        this.modStateProvider.ModStateChanged += this.Refresh;
-        this.playerStateProvider.PlayerStateValid += this.Refresh;
+        this.emoteCache.CacheUpdated += this.Refresh;
         this.Refresh();
     }
 
     public void Refresh() {
-        if (!this.playerStateProvider.IsPlayerValid || this.IsLoading) return;
+        if (!this.emoteCache.IsReady) return;
 
-        this.IsLoading = true;
-        Task.Run(() => {
-            try {
-                var baseEmotes = this.emoteRepository.GetBaseEmotes().ToList();
-                var uniqueCategories = new HashSet<string>();
-                var newCache = new List<EmoteDisplayData>();
+        var emotes = this.emoteCache.GetCachedEmotes();
+        var uniqueCategories = new HashSet<string>();
 
-                foreach (var emote in baseEmotes) {
-                    emote.IsUnlocked = !emote.IsUnlockable || this.playerStateProvider.IsEmoteUnlocked(emote.Id);
-                    emote.IsModded = !string.IsNullOrEmpty(this.modStateProvider.GetModNameModifyingEmote(emote.Id));
+        foreach (var emote in emotes) {
+            if (!string.IsNullOrEmpty(emote.Category)) uniqueCategories.Add(emote.Category);
+        }
 
-                    newCache.Add(emote);
-                    if (!string.IsNullOrEmpty(emote.Category)) uniqueCategories.Add(emote.Category);
-                }
-
-                this.emotesCache = newCache;
-                this.availableCategories = uniqueCategories.OrderBy(c => c).ToList();
-                this.ApplyFilters();
-            }
-            catch (Exception ex) {
-                this.logger.Error(ex, "[EmoteBrowserPresenter] Background emote resolution failed unexpectedly.");
-            }
-            finally {
-                this.IsLoading = false;
-            }
-        });
+        this.availableCategories = uniqueCategories.OrderBy(c => c).ToList();
+        this.ApplyFilters();
     }
 
     public void ApplyFilters() {
-        var newGroupedEmotes = new Dictionary<string, List<EmoteDisplayData>>();
+        var emotes = this.emoteCache.GetCachedEmotes();
+        var newGroupedEmotes = new Dictionary<string, List<EnrichedEmote>>();
         var context = this.contextService.GetCurrentContext();
 
         var query = this.searchQuery.Trim().ToLowerInvariant();
@@ -108,7 +80,7 @@ public class EmoteBrowserPresenter : IEmoteBrowserPresenter {
         bool hasGroupFilter = context.SelectedGroups.Count > 0;
         bool hasTagFilter = context.SelectedTags.Count > 0;
 
-        foreach (var emote in this.emotesCache) {
+        foreach (var emote in emotes) {
             if (context.ShowModdedOnly && !emote.IsModded) continue;
 
             if (context.UnlockFilter == UnlockFilterMode.Unlocked && !emote.IsUnlocked) continue;
@@ -136,12 +108,12 @@ public class EmoteBrowserPresenter : IEmoteBrowserPresenter {
             if (context.CurrentGrouping == GroupingMode.NativeCategory) groupKey = string.IsNullOrEmpty(emote.Category) ? this.localization.Translate("browser_uncategorized") : emote.Category;
             else if (context.CurrentGrouping == GroupingMode.CustomGroup) groupKey = string.IsNullOrEmpty(customGroup) ? this.localization.Translate("browser_ungrouped") : customGroup;
 
-            if (!newGroupedEmotes.ContainsKey(groupKey)) newGroupedEmotes[groupKey] = new List<EmoteDisplayData>();
+            if (!newGroupedEmotes.ContainsKey(groupKey)) newGroupedEmotes[groupKey] = new List<EnrichedEmote>();
 
             newGroupedEmotes[groupKey].Add(emote);
         }
 
-        var finalizedDictionary = new Dictionary<string, IReadOnlyList<EmoteDisplayData>>();
+        var finalizedDictionary = new Dictionary<string, IReadOnlyList<EnrichedEmote>>();
 
         foreach (var key in newGroupedEmotes.Keys.ToList()) {
             var list = newGroupedEmotes[key].AsEnumerable();
@@ -164,7 +136,6 @@ public class EmoteBrowserPresenter : IEmoteBrowserPresenter {
     }
 
     public void Dispose() {
-        this.modStateProvider.ModStateChanged -= this.Refresh;
-        this.playerStateProvider.PlayerStateValid -= this.Refresh;
+        this.emoteCache.CacheUpdated -= this.Refresh;
     }
 }

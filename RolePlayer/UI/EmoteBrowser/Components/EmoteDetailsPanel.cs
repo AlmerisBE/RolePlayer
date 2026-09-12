@@ -69,6 +69,7 @@ public class EmoteDetailsPanel {
             ImGui.SetWindowFontScale(1.3f);
             ImGui.TextUnformatted(emote.Name);
             ImGui.SetWindowFontScale(1.0f);
+            ImGui.TextDisabled($"ID: {emote.Id}");
 
             ImGui.TableNextColumn();
             ImGui.PushFont(UiBuilder.IconFont);

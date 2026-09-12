@@ -1,6 +1,8 @@
 ﻿namespace RolePlayer.UI.GameDashboard.Presenters;
 
 using Dalamud.Plugin.Services;
+using RolePlayer.Core.Emotes.Contracts;
+using RolePlayer.Core.Emotes.Models;
 using RolePlayer.Core.GameEngine.Contracts;
 using RolePlayer.Core.GameEngine.Models;
 using RolePlayer.UI.GameDashboard.Contracts;
@@ -11,8 +13,10 @@ public class GameDashboardPresenter : IGameDashboardPresenter {
     private IGameLibraryService libraryService;
     private IGameSessionService sessionService;
     private ITargetManager targetManager;
+    private IEmoteCache emoteCache;
 
     public IReadOnlyList<GameDefinition> AvailableGames => this.libraryService.GetAvailableGames().ToList();
+    public IReadOnlyList<EnrichedEmote> EmotesCache => this.emoteCache.GetCachedEmotes();
     public GameDefinition? SelectedGame { get; private set; }
     public HashSet<GameChatChannel> SelectedChannels { get; private set; } = new();
     public SessionState CurrentState => this.sessionService.CurrentState;
@@ -28,10 +32,11 @@ public class GameDashboardPresenter : IGameDashboardPresenter {
 
     public string CurrentTargetName => this.targetManager.Target?.Name.TextValue ?? string.Empty;
 
-    public GameDashboardPresenter(IGameLibraryService libraryService, IGameSessionService sessionService, ITargetManager targetManager) {
+    public GameDashboardPresenter(IGameLibraryService libraryService, IGameSessionService sessionService, ITargetManager targetManager, IEmoteCache emoteCache) {
         this.libraryService = libraryService;
         this.sessionService = sessionService;
         this.targetManager = targetManager;
+        this.emoteCache = emoteCache;
     }
 
     public void SelectGame(GameDefinition? game) {
@@ -58,6 +63,10 @@ public class GameDashboardPresenter : IGameDashboardPresenter {
 
     public void StopSession() {
         this.sessionService.StopSession();
+    }
+
+    public void SetSessionVariable(string key, object value) {
+        this.sessionService.SetSessionVariable(key, value);
     }
 
     public void AdvanceStage() {

@@ -6,7 +6,7 @@ using Dalamud.Interface.Textures;
 using Dalamud.Interface.Textures.Internal;
 using Dalamud.Plugin.Services;
 using RolePlayer.Core.Configuration.Contracts;
-using RolePlayer.UI.Hotbar.Components;
+using RolePlayer.Core.Emotes.Contracts;
 using RolePlayer.UI.Hotbar.Contracts;
 using RolePlayer.UI.Hotbar.Models;
 using RolePlayer.UI.Localization.Contracts;
@@ -18,7 +18,7 @@ using System.Numerics;
 public class HotbarConfigSubTab {
     private IConfigurationService configService;
     private IContextManagementService contextService;
-    private HotbarManagerComponent hotbarManager;
+    private IEmoteCache emoteCache;
     private IHotbarResolverService hotbarResolver;
     private ITextureProvider textureProvider;
     private ILocalizationService localization;
@@ -32,14 +32,14 @@ public class HotbarConfigSubTab {
     public HotbarConfigSubTab(
         IConfigurationService configService,
         IContextManagementService contextService,
-        HotbarManagerComponent hotbarManager,
+        IEmoteCache emoteCache,
         IHotbarResolverService hotbarResolver,
         ITextureProvider textureProvider,
         ILocalizationService localization) {
 
         this.configService = configService;
         this.contextService = contextService;
-        this.hotbarManager = hotbarManager;
+        this.emoteCache = emoteCache;
         this.hotbarResolver = hotbarResolver;
         this.textureProvider = textureProvider;
         this.localization = localization;
@@ -65,7 +65,7 @@ public class HotbarConfigSubTab {
             context.Hotbars.Add(newHotbar);
             this.selectedHotbar = newHotbar;
             this.configService.Save();
-            this.hotbarManager.RefreshWindows();
+            this.contextService.NotifyHotbarsChanged();
         }
 
         ImGui.Spacing();
@@ -102,7 +102,7 @@ public class HotbarConfigSubTab {
 
                 ImGui.TableNextColumn();
                 ImGui.AlignTextToFramePadding();
-                int count = this.hotbarResolver.ResolveItemsForHotbar(hotbar, this.hotbarManager.GetEmoteCache()).Count;
+                int count = this.hotbarResolver.ResolveItemsForHotbar(hotbar, this.emoteCache.GetCachedEmotes()).Count;
                 ImGui.Text(count.ToString());
             }
             ImGui.EndTable();
@@ -312,7 +312,7 @@ public class HotbarConfigSubTab {
 
                 ImGui.Spacing();
 
-                var categories = this.hotbarManager.GetEmoteCache().Select(e => e.Category).Where(c => !string.IsNullOrEmpty(c)).Distinct().ToList();
+                var categories = this.emoteCache.GetCachedEmotes().Select(e => e.Category).Where(c => !string.IsNullOrEmpty(c)).Distinct().ToList();
                 this.DrawMultiSelectCombo(this.localization.Translate("config_common_categories"), categories, this.selectedHotbar.SelectedCategories, ref configChanged);
 
                 var groups = context.EmoteGroups.Select(g => g.Name).ToList();
@@ -334,7 +334,7 @@ public class HotbarConfigSubTab {
 
         if (configChanged) {
             this.configService.Save();
-            this.hotbarManager.RefreshWindows();
+            this.contextService.NotifyHotbarsChanged();
         }
 
         this.DrawDeleteConfirmationModal();
@@ -370,7 +370,7 @@ public class HotbarConfigSubTab {
                     if (this.selectedHotbar == this.hotbarToDelete) this.selectedHotbar = null;
 
                     this.configService.Save();
-                    this.hotbarManager.RefreshWindows();
+                    this.contextService.NotifyHotbarsChanged();
                 }
                 ImGui.CloseCurrentPopup();
             }
@@ -382,7 +382,7 @@ public class HotbarConfigSubTab {
     }
 
     private void DrawPreview() {
-        var resolvedItems = this.hotbarResolver.ResolveItemsForHotbar(this.selectedHotbar!, this.hotbarManager.GetEmoteCache());
+        var resolvedItems = this.hotbarResolver.ResolveItemsForHotbar(this.selectedHotbar!, this.emoteCache.GetCachedEmotes());
 
         ImGui.Separator();
         ImGui.Spacing();

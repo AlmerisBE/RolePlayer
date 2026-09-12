@@ -4,10 +4,11 @@ using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
+using RolePlayer.Core.Emotes.Contracts;
 using RolePlayer.UI.EmoteBrowser.Contracts;
 using System;
 
-public class PlayerStateProvider : IPlayerStateProvider {
+public class PlayerStateProvider : IPlayerStateProvider, IPlayerUnlockState {
     private IObjectTable objectTable;
     private IFramework framework;
     private ICondition condition;

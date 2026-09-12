@@ -6,6 +6,7 @@ using Dalamud.Interface;
 using Dalamud.Interface.Textures;
 using Dalamud.Plugin.Services;
 using RolePlayer.Core.Configuration.Models;
+using RolePlayer.Core.Emotes.Models;
 using RolePlayer.UI.EmoteBrowser.Contracts;
 using RolePlayer.UI.EmoteBrowser.Models;
 using RolePlayer.UI.Localization.Contracts;
@@ -122,7 +123,7 @@ public class EmoteListComponent {
         if (refreshRequested) presenter.ApplyFilters();
     }
 
-    private void DrawIconPreview(EmoteDisplayData emote, float size) {
+    private void DrawIconPreview(EnrichedEmote emote, float size) {
         if (emote.IconId == 0) {
             ImGui.Dummy(new Vector2(size, size));
             return;

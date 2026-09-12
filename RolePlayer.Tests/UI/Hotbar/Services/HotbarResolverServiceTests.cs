@@ -2,9 +2,9 @@
 
 using NSubstitute;
 using RolePlayer.Core.Configuration.Contracts;
+using RolePlayer.Core.Emotes.Models;
 using RolePlayer.Core.Macros.Models;
 using RolePlayer.UI.EmoteBrowser.Contracts;
-using RolePlayer.UI.EmoteBrowser.Models;
 using RolePlayer.UI.Hotbar.Contracts;
 using RolePlayer.UI.Hotbar.Models;
 using RolePlayer.UI.Hotbar.Services;
@@ -12,12 +12,12 @@ using System.Collections.Generic;
 using Xunit;
 
 public class HotbarResolverServiceTests {
-    private List<EmoteDisplayData> GetDummyEmotes() {
-        return new List<EmoteDisplayData> {
-            new EmoteDisplayData { Id = 1, Name = "Sit", LocalizedCommand = "/sit", IsUnlocked = true, IconId = 100, Category = "General" },
-            new EmoteDisplayData { Id = 2, Name = "Dance", LocalizedCommand = "/dance", IsUnlocked = true, IconId = 101, Category = "Social" },
-            new EmoteDisplayData { Id = 3, Name = "LockedEmote", IsUnlocked = false, IconId = 102 },
-            new EmoteDisplayData { Id = 4, Name = "ModdedDance", LocalizedCommand = "/mdance", IsUnlocked = true, IconId = 103, IsModded = true, Category = "Social" }
+    private List<EnrichedEmote> GetDummyEmotes() {
+        return new List<EnrichedEmote> {
+            new EnrichedEmote { Id = 1, Name = "Sit", LocalizedCommand = "/sit", IsUnlocked = true, IconId = 100, Category = "General" },
+            new EnrichedEmote { Id = 2, Name = "Dance", LocalizedCommand = "/dance", IsUnlocked = true, IconId = 101, Category = "Social" },
+            new EnrichedEmote { Id = 3, Name = "LockedEmote", IsUnlocked = false, IconId = 102 },
+            new EnrichedEmote { Id = 4, Name = "ModdedDance", LocalizedCommand = "/mdance", IsUnlocked = true, IconId = 103, IsModded = true, Category = "Social" }
         };
     }
 

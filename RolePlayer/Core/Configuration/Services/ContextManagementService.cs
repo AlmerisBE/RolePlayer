@@ -11,9 +11,14 @@ public class ContextManagementService : IContextManagementService {
     private IConfigurationService configService;
 
     public event Action? ContextChanged;
+    public event Action? HotbarsChanged;
 
     public ContextManagementService(IConfigurationService configService) {
         this.configService = configService;
+    }
+
+    public void NotifyHotbarsChanged() {
+        this.HotbarsChanged?.Invoke();
     }
 
     public EmoteContext GetCurrentContext() {

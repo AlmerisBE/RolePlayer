@@ -3,8 +3,8 @@
 using Dalamud.Bindings.ImGui;
 using RolePlayer.Core.Configuration.Contracts;
 using RolePlayer.Core.Configuration.Models;
+using RolePlayer.Core.Emotes.Models;
 using RolePlayer.UI.EmoteBrowser.Contracts;
-using RolePlayer.UI.EmoteBrowser.Models;
 using RolePlayer.UI.Hotbar.Components;
 using RolePlayer.UI.Hotbar.Contracts;
 using RolePlayer.UI.Hotbar.Models;
@@ -38,7 +38,7 @@ public class EmoteContextMenuComponent {
         this.hotbarManager = hotbarManager;
     }
 
-    public bool Draw(EmoteDisplayData emote, EmoteContext context) {
+    public bool Draw(EnrichedEmote emote, EmoteContext context) {
         bool needsFilterApply = false;
 
         if (ImGui.BeginPopupContextItem($"EmoteContextMenu_{emote.Id}")) {

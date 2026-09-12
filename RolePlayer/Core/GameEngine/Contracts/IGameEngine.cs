@@ -25,4 +25,5 @@ public interface IGameEngine {
     void AddParticipant(string name);
     void RemoveParticipant(string name);
     void AdvanceStage();
+    void SetVariable(string key, object value);
 }

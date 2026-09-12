@@ -6,8 +6,8 @@ using Dalamud.Interface.Textures;
 using Dalamud.Interface.Textures.Internal;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin.Services;
+using RolePlayer.Core.Emotes.Models;
 using RolePlayer.UI.EmoteBrowser.Contracts;
-using RolePlayer.UI.EmoteBrowser.Models;
 using RolePlayer.UI.Hotbar.Contracts;
 using RolePlayer.UI.Hotbar.Models;
 using RolePlayer.UI.Localization.Contracts;
@@ -22,7 +22,7 @@ public class HotbarWindow : Window {
     private IEmoteExecutionService emoteExecutionService;
     private IMacroExecutionService macroExecutionService;
     private ITextureProvider textureProvider;
-    private Func<IEnumerable<EmoteDisplayData>> emoteCacheProvider;
+    private Func<IEnumerable<EnrichedEmote>> emoteCacheProvider;
     private Func<bool> shouldHideHotbars;
     private ILocalizationService localization;
     private int currentPage = 0;
@@ -35,7 +35,7 @@ public class HotbarWindow : Window {
         IEmoteExecutionService emoteExecutionService,
         IMacroExecutionService macroExecutionService,
         ITextureProvider textureProvider,
-        Func<IEnumerable<EmoteDisplayData>> emoteCacheProvider,
+        Func<IEnumerable<EnrichedEmote>> emoteCacheProvider,
         Func<bool> shouldHideHotbars,
         ILocalizationService localization)
         : base($"RolePlayer_Hotbar_{config.Id}", ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.AlwaysAutoResize) {

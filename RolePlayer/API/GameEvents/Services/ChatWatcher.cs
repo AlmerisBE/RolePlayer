@@ -22,7 +22,7 @@ public class ChatWatcher : IGameEventWatcher {
     private bool isWatching;
 
     public event Action<GameEvent>? EventFired;
-    public bool RestrictToParticipants { get; set; } = false;
+    public bool RestrictToParticipants { get; set; } = true;
 
     public ChatWatcher(IChatGui chatGui, IObjectTable objectTable, ILoggerService logger, IClientState clientState) {
         this.chatGui = chatGui;
@@ -120,7 +120,7 @@ public class ChatWatcher : IGameEventWatcher {
 
             var lang = this.clientState.ClientLanguage;
 
-            if (lang == ClientLanguage.English || lang == ClientLanguage.German) {
+            if (lang == ClientLanguage.English || lang == ClientLanguage.German || textLower.Contains("out of") || textLower.Contains("roll a")) {
                 roll = numbers[numbers.Count - 2];
                 outOf = numbers[numbers.Count - 1];
             }

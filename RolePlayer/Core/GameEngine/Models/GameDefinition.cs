@@ -14,7 +14,7 @@ public class GameDefinition {
     public Dictionary<string, string> Messages { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public Dictionary<string, string> Parameters { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
-    // Propriétés de l'architecture EAC (Event-Action-Condition)
+    public List<GameVariableDefinition> ExposedVariables { get; set; } = new();
     public Dictionary<string, object> InitialVariables { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public List<GameStage> Stages { get; set; } = new();
 }

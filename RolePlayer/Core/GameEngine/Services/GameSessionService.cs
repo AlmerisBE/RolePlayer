@@ -121,6 +121,10 @@ public class GameSessionService : IGameSessionService {
         this.SessionStateChanged?.Invoke();
     }
 
+    public void SetSessionVariable(string key, object value) {
+        if (this.activeEngine != null) this.activeEngine.SetVariable(key, value);
+    }
+
     private void OnBroadcastRequested(string message) {
         if (this.CurrentConfig == null || !this.CurrentConfig.ListeningChannels.Any()) return;
 

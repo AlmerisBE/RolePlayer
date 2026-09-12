@@ -4,10 +4,9 @@ using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
-using RolePlayer.API.GameEvents;
-using RolePlayer.Core.GameEngine;
+using RolePlayer.API.Interop.Contracts;
+using RolePlayer.Core.Framework;
 using RolePlayer.Core.Logging.Contracts;
-using RolePlayer.UI.GameDashboard;
 using RolePlayer.UI.Localization.Contracts;
 using System.IO;
 using Xunit;
@@ -33,19 +32,17 @@ public class RolePlayerPluginTests {
         services.AddSingleton(Substitute.For<ITextureProvider>());
         services.AddSingleton(Substitute.For<IGameGui>());
 
+        services.AddSingleton(Substitute.For<ICondition>());
+        services.AddSingleton(Substitute.For<IDataManager>());
+        services.AddSingleton(Substitute.For<IKeyState>());
+        services.AddSingleton(Substitute.For<IGameInteropProvider>());
+
         // Mock internal core services
         services.AddSingleton(Substitute.For<ILoggerService>());
         services.AddSingleton(Substitute.For<ILocalizationService>());
-        services.AddSingleton(Substitute.For<RolePlayer.API.Interop.Contracts.INativeExecutionService>());
+        services.AddSingleton(Substitute.For<INativeExecutionService>());
 
-        var gameEngineFeature = new GameEngineFeature();
-        gameEngineFeature.RegisterServices(services);
-
-        var gameEventsFeature = new GameEventsFeature();
-        gameEventsFeature.RegisterServices(services);
-
-        var gameDashboardFeature = new GameDashboardFeature();
-        gameDashboardFeature.RegisterServices(services);
+        services.AddPluginFeatures();
 
         // Act & Assert
         var serviceProvider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true });
