@@ -254,6 +254,13 @@ public class GameLibraryService : IGameLibraryService {
                                         }
                                     },
                                     new GameActionConfig {
+                                        ActionType = "IncrementVariable",
+                                        Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+                                            { "TargetVar", "score_{Event.Sender}" },
+                                            { "Value", "1" }
+                                        }
+                                    },
+                                    new GameActionConfig {
                                         ActionType = "SetVariable",
                                         Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
                                             { "TargetVar", "expected_emote_id" },

@@ -11,8 +11,8 @@ using System.Numerics;
 public class GameStageEditorComponent {
     private ILocalizationService localization;
 
-    private readonly string[] moduleTypes = { "ChatListener", "DiceListener", "EmoteListener" };
-    private readonly string[] actionTypes = { "RegisterPlayer", "SetVariable", "AdvanceTurn", "BroadcastMessage", "AdvanceStage", "StopGame" };
+    private readonly string[] moduleTypes = { "ChatListener", "DiceListener", "EmoteListener", "TimerListener" };
+    private readonly string[] actionTypes = { "RegisterPlayer", "SetVariable", "IncrementVariable", "AdvanceTurn", "BroadcastMessage", "AdvanceStage", "StopGame" };
     private readonly string[] triggerTypes = { "Manual", "Auto", "OnEvent" };
 
     public GameStageEditorComponent(ILocalizationService localization) {

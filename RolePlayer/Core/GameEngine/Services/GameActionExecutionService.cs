@@ -31,6 +31,9 @@ public class GameActionExecutionService : IGameActionExecutionService {
             case "SETVARIABLE":
                 this.ExecuteSetVariable(action, context);
                 break;
+            case "INCREMENTVARIABLE":
+                this.ExecuteIncrementVariable(action, context);
+                break;
             case "ADVANCETURN":
                 this.ExecuteAdvanceTurn(action, context);
                 break;
@@ -67,13 +70,33 @@ public class GameActionExecutionService : IGameActionExecutionService {
     }
 
     private void ExecuteSetVariable(GameActionConfig action, GameSessionContext context) {
-        if (!action.Parameters.TryGetValue("TargetVar", out var targetVar) || string.IsNullOrWhiteSpace(targetVar)) return;
+        if (!action.Parameters.TryGetValue("TargetVar", out var rawTargetVar) || string.IsNullOrWhiteSpace(rawTargetVar)) return;
         if (!action.Parameters.TryGetValue("Value", out var rawValue)) return;
 
+        // Le formatage s'applique désormais au nom de la variable également
+        string targetVar = this.FormatString(rawTargetVar, context);
         string formattedValue = this.FormatString(rawValue, context);
 
         if (int.TryParse(formattedValue, out int intVal)) context.Variables[targetVar] = intVal;
         else context.Variables[targetVar] = formattedValue;
+    }
+
+    private void ExecuteIncrementVariable(GameActionConfig action, GameSessionContext context) {
+        if (!action.Parameters.TryGetValue("TargetVar", out var rawTargetVar) || string.IsNullOrWhiteSpace(rawTargetVar)) return;
+        if (!action.Parameters.TryGetValue("Value", out var rawValue)) return;
+
+        string targetVar = this.FormatString(rawTargetVar, context);
+        string formattedValue = this.FormatString(rawValue, context);
+
+        int increment = int.TryParse(formattedValue, out int inc) ? inc : 1;
+        int current = 0;
+
+        if (context.Variables.TryGetValue(targetVar, out var val)) {
+            if (val is int cInt) current = cInt;
+            else if (int.TryParse(val?.ToString(), out int pInt)) current = pInt;
+        }
+
+        context.Variables[targetVar] = current + increment;
     }
 
     private void ExecuteBroadcastMessage(GameActionConfig action, GameSessionContext context) {
