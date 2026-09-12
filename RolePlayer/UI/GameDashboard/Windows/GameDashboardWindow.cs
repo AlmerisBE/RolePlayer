@@ -157,9 +157,10 @@ public class GameDashboardWindow : Window {
                     else {
                         string? participantToRemove = null;
 
-                        // Vérification dynamique du paramètre de jeu pour activer l'affichage des scores
-                        bool hasScores = this.presenter.SelectedGame?.Parameters.ContainsKey("TrackScores") == true &&
-                                         this.presenter.SelectedGame.Parameters["TrackScores"].Equals("true", StringComparison.OrdinalIgnoreCase);
+                        // Vérification dynamique du paramètre global pour l'affichage des scores
+                        bool hasScores = this.presenter.SelectedGame != null &&
+                                         this.presenter.SelectedGame.Parameters.TryGetValue("TrackScores", out var ts) &&
+                                         ts.Equals("true", StringComparison.OrdinalIgnoreCase);
 
                         int columnCount = hasScores ? 4 : 3;
 
@@ -171,7 +172,7 @@ public class GameDashboardWindow : Window {
                             ImGui.TableSetupColumn(this.localization.Translate("config_common_actions"), ImGuiTableColumnFlags.WidthFixed, 30f);
                             ImGui.TableHeadersRow();
 
-                            // Récupération du joueur actif depuis le moteur EAC
+                            // Récupération sécurisée du joueur actif
                             string currentPlayer = this.presenter.SessionVariables.TryGetValue("current_player", out var cp) ? cp?.ToString() ?? string.Empty : string.Empty;
 
                             for (int i = 0; i < players.Count; i++) {
@@ -182,7 +183,7 @@ public class GameDashboardWindow : Window {
                                 ImGui.TableNextColumn();
                                 ImGui.AlignTextToFramePadding();
                                 if (isCurrentTurn) {
-                                    // Affichage d'un indicateur vert pour le joueur en cours
+                                    // Indicateur visuel du tour
                                     ImGui.PushFont(UiBuilder.IconFont);
                                     ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.2f, 0.8f, 0.2f, 1.0f));
                                     ImGui.Text(FontAwesomeIcon.Play.ToIconString());
@@ -199,13 +200,19 @@ public class GameDashboardWindow : Window {
                                 ImGui.Text(players[i]);
                                 if (isCurrentTurn) ImGui.PopStyleColor();
 
+                                // Affichage dynamique du score
                                 if (hasScores) {
                                     ImGui.TableNextColumn();
                                     ImGui.AlignTextToFramePadding();
 
-                                    // Lecture conventionnelle des scores dans les variables
                                     string scoreKey = $"score_{players[i]}";
-                                    int score = this.presenter.SessionVariables.TryGetValue(scoreKey, out var s) && s is int sInt ? sInt : 0;
+                                    int score = 0;
+
+                                    if (this.presenter.SessionVariables.TryGetValue(scoreKey, out var s)) {
+                                        if (s is int sInt) score = sInt;
+                                        else if (s is string sStr && int.TryParse(sStr, out int parsedScore)) score = parsedScore;
+                                    }
+
                                     ImGui.Text(score.ToString());
                                 }
 
