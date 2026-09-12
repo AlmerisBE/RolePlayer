@@ -66,7 +66,11 @@ public class GameLibraryService : IGameLibraryService {
                             }
                         },
                         Transitions = new List<GameTransition> {
-                            new GameTransition { TargetStageId = "playing", TriggerType = "Manual" }
+                            new GameTransition {
+                                TargetStageId = "playing",
+                                TriggerType = "Manual",
+                                ConditionExpression = "Participants.Count >= 2"
+                            }
                         }
                     },
                     new GameStage {
@@ -92,7 +96,7 @@ public class GameLibraryService : IGameLibraryService {
                                     new GameActionConfig {
                                         ActionType = "BroadcastMessage",
                                         Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-                                            { "Message", "⚠️ Invalid roll, {Event.Sender}! You must roll out of {Var.current_max_roll}! (Type: /random {Var.current_max_roll})" }
+                                            { "Message", "[!] Invalid roll, {Event.Sender}! You must roll out of {Var.current_max_roll}! (Type: /random {Var.current_max_roll})" }
                                         }
                                     }
                                 }
@@ -115,7 +119,7 @@ public class GameLibraryService : IGameLibraryService {
                                     new GameActionConfig {
                                         ActionType = "BroadcastMessage",
                                         Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-                                            { "Message", "🎲 {Event.Sender} rolled a {Event.Roll}. Next up: /random {Var.current_max_roll}" }
+                                            { "Message", "[Roll] {Event.Sender} rolled a {Event.Roll}. Next up: /random {Var.current_max_roll}" }
                                         }
                                     }
                                 }
@@ -131,7 +135,7 @@ public class GameLibraryService : IGameLibraryService {
                                     new GameActionConfig {
                                         ActionType = "BroadcastMessage",
                                         Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-                                            { "Message", "💀 {Event.Sender} rolled a 1 and died! Game Over." }
+                                            { "Message", "[Game Over] {Event.Sender} rolled a 1 and died! Game Over." }
                                         }
                                     },
                                     new GameActionConfig {

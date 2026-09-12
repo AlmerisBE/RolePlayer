@@ -18,7 +18,8 @@ public class ChatWatcherTests {
         var mockChatGui = Substitute.For<IChatGui>();
         var mockObjectTable = Substitute.For<IObjectTable>();
         var mockLogger = Substitute.For<ILoggerService>();
-        using var watcher = new ChatWatcher(mockChatGui, mockObjectTable, mockLogger);
+        var mockClientState = Substitute.For<IClientState>();
+        using var watcher = new ChatWatcher(mockChatGui, mockObjectTable, mockLogger, mockClientState);
 
         watcher.SetParticipants(new List<string> { "John Doe" });
         watcher.Start();
@@ -46,7 +47,8 @@ public class ChatWatcherTests {
         var mockChatGui = Substitute.For<IChatGui>();
         var mockObjectTable = Substitute.For<IObjectTable>();
         var mockLogger = Substitute.For<ILoggerService>();
-        using var watcher = new ChatWatcher(mockChatGui, mockObjectTable, mockLogger);
+        var mockClientState = Substitute.For<IClientState>();
+        using var watcher = new ChatWatcher(mockChatGui, mockObjectTable, mockLogger, mockClientState);
         watcher.Start();
 
         GameEvent? capturedEvent = null;
@@ -71,7 +73,8 @@ public class ChatWatcherTests {
         var mockChatGui = Substitute.For<IChatGui>();
         var mockObjectTable = Substitute.For<IObjectTable>();
         var mockLogger = Substitute.For<ILoggerService>();
-        using var watcher = new ChatWatcher(mockChatGui, mockObjectTable, mockLogger);
+        var mockClientState = Substitute.For<IClientState>();
+        using var watcher = new ChatWatcher(mockChatGui, mockObjectTable, mockLogger, mockClientState);
 
         watcher.SetParticipants(new List<string> { "John Doe" });
         watcher.Start();
