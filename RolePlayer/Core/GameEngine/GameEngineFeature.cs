@@ -8,6 +8,8 @@ using RolePlayer.Core.GameEngine.Services;
 
 public class GameEngineFeature : IFeatureModule {
     public void RegisterServices(IServiceCollection services) {
+        services.AddSingleton<IGameTemplateProvider, DefaultGameTemplateProvider>();
+
         services.AddSingleton<IGameLibraryService, GameLibraryService>();
         services.AddSingleton<IGameSerializerService, GameSerializerService>();
         services.AddSingleton<IGameSessionService, GameSessionService>();
@@ -15,7 +17,6 @@ public class GameEngineFeature : IFeatureModule {
         services.AddSingleton<IGameEngineFactory, GameEngineFactory>();
         services.AddSingleton<IConditionEvaluatorService, ConditionEvaluatorService>();
 
-        // Services nécessitant une nouvelle instance par partie (Transient)
         services.AddTransient<IGameActionExecutionService, GameActionExecutionService>();
         services.AddTransient<StateMachineEngine>();
     }
