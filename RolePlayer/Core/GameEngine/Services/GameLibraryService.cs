@@ -234,14 +234,14 @@ public class GameLibraryService : IGameLibraryService {
                             new GameActionConfig {
                                 ActionType = "BroadcastMessage",
                                 Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-                                    { "Message", "The riddle begins in 3...\\n<wait.1>\\n2...\\n<wait.1>\\n1...\\n<wait.1>\\n[Riddle] {Var.riddle_text}" }
+                                    { "Message", "The riddle begins in 3...\\n2...\\n1...\\n[Riddle] {Var.riddle_text}" }
                                 }
                             }
                         },
                         ActiveModules = new List<GameModuleConfig> {
                             new GameModuleConfig {
                                 ModuleType = "TimerListener",
-                                Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { { "DurationSeconds", "4" } },
+                                Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { { "DurationSeconds", "5" } },
                                 OnTriggerActions = new List<GameActionConfig> { new GameActionConfig { ActionType = "AdvanceStage" } }
                             }
                         },

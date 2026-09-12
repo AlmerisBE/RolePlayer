@@ -18,7 +18,8 @@ public class ChatBroadcaster : IChatBroadcaster, IDisposable {
 
     private DateTime lastBroadcastTime = DateTime.Now;
 
-    private readonly TimeSpan broadcastDelay = TimeSpan.FromSeconds(1.5);
+    // A safe delay of 1.6 seconds bypasses the native FFXIV spam filter entirely
+    private readonly TimeSpan broadcastDelay = TimeSpan.FromSeconds(1.6);
 
     public ChatBroadcaster(INativeExecutionService nativeExecution, IChatGui chatGui, ILoggerService logger, IFramework framework) {
         this.nativeExecution = nativeExecution;
@@ -31,7 +32,19 @@ public class ChatBroadcaster : IChatBroadcaster, IDisposable {
 
     public void Broadcast(string message, GameChatChannel channel) {
         if (string.IsNullOrWhiteSpace(message)) return;
-        this.messageQueue.Enqueue((message, channel));
+
+        var formattedMessage = message.Replace("\\n", "\n");
+        var lines = formattedMessage.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+
+        foreach (var line in lines) {
+            var trimmed = line.Trim();
+            if (string.IsNullOrWhiteSpace(trimmed)) continue;
+
+            // Strip manual macro wait tags as our C# engine now paces messages automatically
+            if (trimmed.StartsWith("<wait", StringComparison.OrdinalIgnoreCase)) continue;
+
+            this.messageQueue.Enqueue((trimmed, channel));
+        }
     }
 
     private void OnFrameworkUpdate(IFramework fw) {
@@ -56,17 +69,8 @@ public class ChatBroadcaster : IChatBroadcaster, IDisposable {
             _ => "/e"
         };
 
-        var formattedMessage = message.Replace("\\n", "\n");
-        var lines = formattedMessage.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
-        var sb = new System.Text.StringBuilder();
-
-        foreach (var line in lines) {
-            var trimmed = line.Trim();
-            if (trimmed.StartsWith("/") || trimmed.StartsWith("<")) sb.AppendLine(trimmed);
-            else sb.AppendLine($"{channelCmd} {trimmed}");
-        }
-
-        string finalCommand = sb.ToString().TrimEnd('\r', '\n');
+        // Since we process line-by-line, the command is built directly
+        string finalCommand = message.StartsWith("/") ? message : $"{channelCmd} {message}";
 
         try {
             this.nativeExecution.Execute(finalCommand);
