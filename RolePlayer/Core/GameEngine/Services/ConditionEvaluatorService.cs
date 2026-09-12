@@ -34,7 +34,7 @@ public class ConditionEvaluatorService : IConditionEvaluatorService {
     }
 
     private object? ResolveValue(string raw, GameSessionContext context) {
-        if (int.TryParse(raw, out int intVal)) return intVal;
+        if (long.TryParse(raw, out long longVal)) return longVal;
 
         if (raw.StartsWith("'") && raw.EndsWith("'")) return raw.Trim('\'');
         if (raw.StartsWith("\"") && raw.EndsWith("\"")) return raw.Trim('"');
@@ -81,15 +81,14 @@ public class ConditionEvaluatorService : IConditionEvaluatorService {
 
         if (left == null || right == null) return left == right && (op == "==" || op == "=");
 
-        if (left is int leftInt) {
-            int rightInt = right is int rInt ? rInt : (int.TryParse(right.ToString(), out int p) ? p : 0);
+        if (long.TryParse(left.ToString(), out long lVal) && long.TryParse(right.ToString(), out long rVal)) {
             return op switch {
-                "==" or "=" => leftInt == rightInt,
-                "!=" => leftInt != rightInt,
-                ">" => leftInt > rightInt,
-                ">=" => leftInt >= rightInt,
-                "<" => leftInt < rightInt,
-                "<=" => leftInt <= rightInt,
+                "==" or "=" => lVal == rVal,
+                "!=" => lVal != rVal,
+                ">" => lVal > rVal,
+                ">=" => lVal >= rVal,
+                "<" => lVal < rVal,
+                "<=" => lVal <= rVal,
                 _ => false
             };
         }

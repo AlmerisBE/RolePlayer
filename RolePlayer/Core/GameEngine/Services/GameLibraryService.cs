@@ -197,7 +197,6 @@ public class GameLibraryService : IGameLibraryService {
                     { "riddle_text", "Je suis la joie incarnée !" },
                     { "round_duration", 30 }
                 },
-                // NOUVEAU : Ce qui sera exposé à l'interface du MJ
                 ExposedVariables = new List<GameVariableDefinition> {
                     new GameVariableDefinition { Key = "expected_emote_id", Label = "Émote Attendue (Réponse)", Type = "Emote" },
                     new GameVariableDefinition { Key = "riddle_text", Label = "Texte de l'Énigme", Type = "String" },
@@ -257,9 +256,8 @@ public class GameLibraryService : IGameLibraryService {
                                     new GameActionConfig {
                                         ActionType = "SetVariable",
                                         Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-                                            // TODO : Implémenter l'incrémentation (Score++) via EAC Math dans une future update.
-                                            { "TargetVar", "score_{Event.Sender}" },
-                                            { "Value", "1" }
+                                            { "TargetVar", "expected_emote_id" },
+                                            { "Value", "0" }
                                         }
                                     },
                                     new GameActionConfig { ActionType = "AdvanceStage" }
@@ -282,8 +280,7 @@ public class GameLibraryService : IGameLibraryService {
                             }
                         },
                         Transitions = new List<GameTransition> {
-                            new GameTransition { TargetStageId = "round_end", TriggerType = "Manual" },
-                            new GameTransition { TargetStageId = "round_end", TriggerType = "Auto" }
+                            new GameTransition { TargetStageId = "round_end", TriggerType = "Manual" }
                         }
                     },
                     new GameStage {

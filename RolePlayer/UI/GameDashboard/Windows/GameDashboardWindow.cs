@@ -112,6 +112,14 @@ public class GameDashboardWindow : Window {
             if (isRunning) {
                 ImGui.TextColored(new Vector4(0.2f, 0.8f, 0.2f, 1.0f), this.presenter.CurrentStageName);
 
+                var timers = this.presenter.RemainingTimers;
+                if (timers.Count > 0) {
+                    ImGui.Spacing();
+                    foreach (var timer in timers) {
+                        ImGui.TextColored(new Vector4(1f, 0.6f, 0f, 1f), $"Chronomètre actif : {Math.Floor(timer.TotalMinutes):00}:{timer.Seconds:00}");
+                    }
+                }
+
                 ImGui.Spacing();
                 ImGui.Separator();
                 ImGui.Spacing();

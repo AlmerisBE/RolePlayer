@@ -161,4 +161,8 @@ public class GameSessionService : IGameSessionService {
     public void AdvanceStage() {
         if (this.activeEngine != null) this.activeEngine.AdvanceStage();
     }
+
+    public IReadOnlyList<TimeSpan> GetRemainingTimers() {
+        return this.activeEngine?.GetRemainingTimers() ?? Array.Empty<TimeSpan>();
+    }
 }

@@ -183,4 +183,10 @@ public class StateMachineEngine : IGameEngine {
 
         return false;
     }
+
+    public IReadOnlyList<TimeSpan> GetRemainingTimers() {
+        if (!this.IsRunning || this.activeTimers.Count == 0) return Array.Empty<TimeSpan>();
+        var now = DateTime.Now;
+        return this.activeTimers.Values.Select(t => t > now ? t - now : TimeSpan.Zero).ToList();
+    }
 }

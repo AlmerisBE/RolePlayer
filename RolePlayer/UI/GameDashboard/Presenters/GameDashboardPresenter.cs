@@ -6,6 +6,7 @@ using RolePlayer.Core.Emotes.Models;
 using RolePlayer.Core.GameEngine.Contracts;
 using RolePlayer.Core.GameEngine.Models;
 using RolePlayer.UI.GameDashboard.Contracts;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -22,6 +23,7 @@ public class GameDashboardPresenter : IGameDashboardPresenter {
     public SessionState CurrentState => this.sessionService.CurrentState;
     public IReadOnlyList<string> Participants => this.sessionService.Participants;
     public IReadOnlyDictionary<string, object> SessionVariables => this.sessionService.SessionVariables;
+    public IReadOnlyList<TimeSpan> RemainingTimers => this.sessionService.GetRemainingTimers();
 
     public string CurrentStageName => this.sessionService.CurrentStageName;
 
