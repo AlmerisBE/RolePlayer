@@ -82,7 +82,6 @@ public class GameLibraryService : IGameLibraryService {
                             }
                         },
                         ActiveModules = new List<GameModuleConfig> {
-                            // NOUVEAU : Module de gestion des erreurs (Feedback)
                             new GameModuleConfig {
                                 ModuleType = "DiceListener",
                                 ConditionExpressions = new List<string> {
@@ -93,12 +92,11 @@ public class GameLibraryService : IGameLibraryService {
                                     new GameActionConfig {
                                         ActionType = "BroadcastMessage",
                                         Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-                                            { "Message", "⚠️ {Event.Sender}, invalide ! Tu dois lancer sur {Var.current_max_roll} ! (Tape: /random {Var.current_max_roll})" }
+                                            { "Message", "⚠️ Invalid roll, {Event.Sender}! You must roll out of {Var.current_max_roll}! (Type: /random {Var.current_max_roll})" }
                                         }
                                     }
                                 }
                             },
-                            // Module de jet valide (Mise à jour)
                             new GameModuleConfig {
                                 ModuleType = "DiceListener",
                                 ConditionExpressions = new List<string> {
@@ -117,12 +115,11 @@ public class GameLibraryService : IGameLibraryService {
                                     new GameActionConfig {
                                         ActionType = "BroadcastMessage",
                                         Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-                                            { "Message", "🎲 {Event.Sender} a obtenu {Event.Roll}. Au suivant : /random {Var.current_max_roll}" }
+                                            { "Message", "🎲 {Event.Sender} rolled a {Event.Roll}. Next up: /random {Var.current_max_roll}" }
                                         }
                                     }
                                 }
                             },
-                            // Module de défaite (Jet == 1)
                             new GameModuleConfig {
                                 ModuleType = "DiceListener",
                                 ConditionExpressions = new List<string> {
@@ -134,7 +131,7 @@ public class GameLibraryService : IGameLibraryService {
                                     new GameActionConfig {
                                         ActionType = "BroadcastMessage",
                                         Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-                                            { "Message", "💀 {Event.Sender} a fait un 1 et meurt ! Fin de la partie." }
+                                            { "Message", "💀 {Event.Sender} rolled a 1 and died! Game Over." }
                                         }
                                     },
                                     new GameActionConfig {

@@ -8,6 +8,7 @@ using Dalamud.Plugin.Services;
 using NSubstitute;
 using RolePlayer.API.GameEvents.Services;
 using RolePlayer.Core.GameEngine.Models;
+using RolePlayer.Core.Logging.Contracts;
 using System.Collections.Generic;
 using Xunit;
 
@@ -16,7 +17,8 @@ public class ChatWatcherTests {
     public void EventFired_WhenChatReceived_AndSenderIsParticipant_FiresChatEvent() {
         var mockChatGui = Substitute.For<IChatGui>();
         var mockObjectTable = Substitute.For<IObjectTable>();
-        using var watcher = new ChatWatcher(mockChatGui, mockObjectTable);
+        var mockLogger = Substitute.For<ILoggerService>();
+        using var watcher = new ChatWatcher(mockChatGui, mockObjectTable, mockLogger);
 
         watcher.SetParticipants(new List<string> { "John Doe" });
         watcher.Start();
@@ -43,7 +45,8 @@ public class ChatWatcherTests {
     public void EventFired_WhenDiceRolled_ParsesValuesCorrectly() {
         var mockChatGui = Substitute.For<IChatGui>();
         var mockObjectTable = Substitute.For<IObjectTable>();
-        using var watcher = new ChatWatcher(mockChatGui, mockObjectTable);
+        var mockLogger = Substitute.For<ILoggerService>();
+        using var watcher = new ChatWatcher(mockChatGui, mockObjectTable, mockLogger);
         watcher.Start();
 
         GameEvent? capturedEvent = null;
@@ -67,7 +70,8 @@ public class ChatWatcherTests {
     public void EventFired_WhenSenderIsNotParticipant_DoesNotFire() {
         var mockChatGui = Substitute.For<IChatGui>();
         var mockObjectTable = Substitute.For<IObjectTable>();
-        using var watcher = new ChatWatcher(mockChatGui, mockObjectTable);
+        var mockLogger = Substitute.For<ILoggerService>();
+        using var watcher = new ChatWatcher(mockChatGui, mockObjectTable, mockLogger);
 
         watcher.SetParticipants(new List<string> { "John Doe" });
         watcher.Start();
