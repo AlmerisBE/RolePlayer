@@ -20,6 +20,16 @@ public class ConditionEvaluatorService : IConditionEvaluatorService {
     public bool Evaluate(string expression, GameSessionContext context) {
         if (string.IsNullOrWhiteSpace(expression)) return true;
 
+        // Pré-interpolation pour supporter les variables dynamiques (ex: Var.score_{Event.Sender})
+        if (context.CurrentEvent != null) {
+            expression = expression.Replace("{Event.Sender}", context.CurrentEvent.Sender, StringComparison.OrdinalIgnoreCase);
+            if (context.CurrentEvent is DiceRollGameEvent dice) {
+                expression = expression.Replace("{Event.Roll}", dice.Roll.ToString(), StringComparison.OrdinalIgnoreCase);
+                expression = expression.Replace("{Event.OutOf}", dice.OutOf.ToString(), StringComparison.OrdinalIgnoreCase);
+            }
+        }
+        expression = expression.Replace("{Participants.Count}", context.Participants.Count.ToString(), StringComparison.OrdinalIgnoreCase);
+
         var parts = expression.Split(' ', 3, StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length != 3) return false;
 
