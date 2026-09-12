@@ -7,6 +7,7 @@ using RolePlayer.Core.GameEngine.Contracts;
 using RolePlayer.Core.GameEngine.Models;
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 public class EmoteWatcher : IGameEventWatcher {
     private IObjectTable objectTable;
@@ -46,12 +47,24 @@ public class EmoteWatcher : IGameEventWatcher {
         this.participants.Clear();
     }
 
+    private string CleanPlayerName(string name) {
+        if (string.IsNullOrEmpty(name)) return string.Empty;
+
+        var parts = name.Split(new[] { '\uE05D', '@' }, 2);
+        var cleanName = parts[0];
+
+        cleanName = Regex.Replace(cleanName, @"^[^\p{L}]+", "");
+
+        return cleanName.Trim();
+    }
+
     private unsafe void OnFrameworkUpdate(IFramework fw) {
         foreach (var obj in this.objectTable) {
             if (obj is not ICharacter chara) continue;
 
-            string name = chara.Name.TextValue;
-            if (this.RestrictToParticipants && this.participants.Count > 0 && !this.participants.Contains(name)) continue;
+            string name = this.CleanPlayerName(chara.Name.TextValue);
+
+            if (this.RestrictToParticipants && !this.participants.Contains(name)) continue;
 
             var ptr = (Character*)chara.Address;
             if (ptr == null) continue;

@@ -37,7 +37,7 @@ public class GameLibraryService : IGameLibraryService {
                 Name = "Death Roll",
                 Author = "Almeris",
                 Description = "A classic turn-based game of successive random rolls until someone rolls a 1.",
-                AllowChatRegistration = false,
+                AllowChatRegistration = true,
                 InitialVariables = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase) {
                     { "current_max_roll", 999 },
                     { "current_player", "" }
@@ -187,7 +187,7 @@ public class GameLibraryService : IGameLibraryService {
                 Name = "Emote Riddles",
                 Author = "Almeris",
                 Description = "Answer the riddle by performing the correct emote before time runs out! First to reach the max score wins.",
-                AllowChatRegistration = false,
+                AllowChatRegistration = true,
                 Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
                     { "TrackScores", "true" }
                 },

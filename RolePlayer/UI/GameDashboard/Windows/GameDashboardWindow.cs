@@ -65,7 +65,17 @@ public class GameDashboardWindow : Window {
                 bool isSelected = this.presenter.SelectedChannels.Contains(channel);
                 if (ImGui.Checkbox(channel.ToString(), ref isSelected)) this.presenter.ToggleChannel(channel);
             }
-            ImGui.EndDisabled();
+            ImGui.EndDisabled(); // Fin de la désactivation liée au statut isRunning
+
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
+
+            // NOUVEAU PLACEMENT : La case d'inscription est désormais à gauche et toujours accessible
+            bool allowJoin = this.presenter.AllowChatRegistration;
+            if (ImGui.Checkbox("Autoriser inscriptions (!join)", ref allowJoin)) {
+                this.presenter.AllowChatRegistration = allowJoin;
+            }
 
             ImGui.Spacing();
             ImGui.Separator();
@@ -135,7 +145,6 @@ public class GameDashboardWindow : Window {
                         ImGui.SetNextItemWidth(-1f);
 
                         if (varDef.Type.Equals("Emote", StringComparison.OrdinalIgnoreCase)) {
-                            // Sélecteur d'Emote
                             uint currentEmoteId = uint.TryParse(currentValRaw, out uint parsedId) ? parsedId : 0;
                             var selectedEmote = this.presenter.EmotesCache.FirstOrDefault(e => e.Id == currentEmoteId);
                             string preview = selectedEmote != null ? selectedEmote.Name : "Sélectionner une Emote...";
@@ -150,14 +159,12 @@ public class GameDashboardWindow : Window {
                             }
                         }
                         else if (varDef.Type.Equals("Number", StringComparison.OrdinalIgnoreCase)) {
-                            // Sélecteur de Nombre
                             int currentInt = int.TryParse(currentValRaw, out int pInt) ? pInt : 0;
                             if (ImGui.InputInt($"##var_num_{varDef.Key}", ref currentInt)) {
                                 this.presenter.SetSessionVariable(varDef.Key, currentInt);
                             }
                         }
                         else {
-                            // Champ texte standard
                             if (ImGui.InputTextMultiline($"##var_str_{varDef.Key}", ref currentValRaw, 512, new Vector2(-1, ImGui.GetTextLineHeight() * 2))) {
                                 this.presenter.SetSessionVariable(varDef.Key, currentValRaw);
                             }
@@ -170,9 +177,101 @@ public class GameDashboardWindow : Window {
                     ImGui.Spacing();
                 }
 
-                if (this.presenter.CurrentStageName == "Preparation" && this.presenter.SelectedGame != null) {
-                    ImGui.TextDisabled("Messages du jeu (Édition)");
-                    if (ImGui.BeginChild("MessageEditorArea", new Vector2(0, 0), true)) {
+                // Affichage constant des participants
+                ImGui.TextDisabled(this.localization.Translate("host_participants"));
+                var players = this.presenter.Participants;
+
+                if (players.Count == 0) {
+                    ImGui.TextDisabled(this.localization.Translate("host_no_participants"));
+                }
+                else {
+                    string? participantToRemove = null;
+                    bool hasScores = this.presenter.SelectedGame != null &&
+                                     this.presenter.SelectedGame.Parameters.TryGetValue("TrackScores", out var ts) &&
+                                     ts.Equals("true", StringComparison.OrdinalIgnoreCase);
+
+                    int columnCount = hasScores ? 4 : 3;
+
+                    if (ImGui.BeginTable("ParticipantsTable", columnCount, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.ScrollY, new Vector2(0, 150))) {
+                        ImGui.TableSetupScrollFreeze(0, 1);
+                        ImGui.TableSetupColumn("#", ImGuiTableColumnFlags.WidthFixed, 30f);
+                        ImGui.TableSetupColumn(this.localization.Translate("config_common_name"), ImGuiTableColumnFlags.WidthStretch);
+                        if (hasScores) ImGui.TableSetupColumn("Score", ImGuiTableColumnFlags.WidthFixed, 60f);
+                        ImGui.TableSetupColumn(this.localization.Translate("config_common_actions"), ImGuiTableColumnFlags.WidthFixed, 30f);
+                        ImGui.TableHeadersRow();
+
+                        string currentPlayer = this.presenter.SessionVariables.TryGetValue("current_player", out var cp) ? cp?.ToString() ?? string.Empty : string.Empty;
+
+                        for (int i = 0; i < players.Count; i++) {
+                            ImGui.TableNextRow();
+
+                            bool isCurrentTurn = string.Equals(players[i], currentPlayer, StringComparison.OrdinalIgnoreCase);
+
+                            ImGui.TableNextColumn();
+                            ImGui.AlignTextToFramePadding();
+                            if (isCurrentTurn) {
+                                ImGui.PushFont(UiBuilder.IconFont);
+                                ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.2f, 0.8f, 0.2f, 1.0f));
+                                ImGui.Text(FontAwesomeIcon.Play.ToIconString());
+                                ImGui.PopStyleColor();
+                                ImGui.PopFont();
+                            }
+                            else {
+                                ImGui.Text((i + 1).ToString());
+                            }
+
+                            ImGui.TableNextColumn();
+                            ImGui.AlignTextToFramePadding();
+                            if (isCurrentTurn) ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.2f, 0.8f, 0.2f, 1.0f));
+                            ImGui.Text(players[i]);
+                            if (isCurrentTurn) ImGui.PopStyleColor();
+
+                            if (hasScores) {
+                                ImGui.TableNextColumn();
+                                ImGui.AlignTextToFramePadding();
+
+                                string scoreKey = $"score_{players[i]}";
+                                int score = 0;
+
+                                if (this.presenter.SessionVariables.TryGetValue(scoreKey, out var s)) {
+                                    if (s is int sInt) score = sInt;
+                                    else if (s is string sStr && int.TryParse(sStr, out int parsedScore)) score = parsedScore;
+                                }
+
+                                ImGui.Text(score.ToString());
+                            }
+
+                            ImGui.TableNextColumn();
+                            ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
+                            ImGui.PushFont(UiBuilder.IconFont);
+                            if (ImGui.Button($"{FontAwesomeIcon.Trash.ToIconString()}##RemPart_{i}")) {
+                                participantToRemove = players[i];
+                            }
+                            ImGui.PopFont();
+                            ImGui.PopStyleColor();
+                        }
+                        ImGui.EndTable();
+                    }
+
+                    if (participantToRemove != null) {
+                        this.presenter.RemoveParticipant(participantToRemove);
+                    }
+                }
+
+                ImGui.Spacing();
+
+                string targetName = this.presenter.CurrentTargetName;
+                if (string.IsNullOrEmpty(targetName)) ImGui.BeginDisabled();
+                if (ImGui.Button($"Ajouter Cible : {targetName ?? "Aucune"}", new Vector2(-1, 30))) this.presenter.AddTarget();
+                if (string.IsNullOrEmpty(targetName)) ImGui.EndDisabled();
+
+                ImGui.Spacing();
+                ImGui.Separator();
+                ImGui.Spacing();
+
+                // Éditeur de messages affiché de manière constante dans un accordéon
+                if (this.presenter.SelectedGame != null) {
+                    if (ImGui.CollapsingHeader("Messages du jeu (Édition)")) {
                         bool messagesChanged = false;
 
                         foreach (var key in this.defaultMessageKeys) {
@@ -192,107 +291,6 @@ public class GameDashboardWindow : Window {
 
                         if (messagesChanged) this.presenter.SaveGameConfig();
                     }
-                    ImGui.EndChild();
-                }
-                else if (this.presenter.CurrentStageName != "Preparation" && this.presenter.CurrentStageName != "Finished") {
-
-                    if (this.presenter.CurrentStageName == "Registration") {
-                        bool allowJoin = this.presenter.AllowChatRegistration;
-                        if (ImGui.Checkbox("Autoriser inscriptions (!join)", ref allowJoin)) this.presenter.AllowChatRegistration = allowJoin;
-                        ImGui.Spacing();
-                    }
-
-                    ImGui.TextDisabled(this.localization.Translate("host_participants"));
-                    var players = this.presenter.Participants;
-
-                    if (players.Count == 0) {
-                        ImGui.TextDisabled(this.localization.Translate("host_no_participants"));
-                    }
-                    else {
-                        string? participantToRemove = null;
-
-                        // Vérification dynamique du paramètre global pour l'affichage des scores
-                        bool hasScores = this.presenter.SelectedGame != null &&
-                                         this.presenter.SelectedGame.Parameters.TryGetValue("TrackScores", out var ts) &&
-                                         ts.Equals("true", StringComparison.OrdinalIgnoreCase);
-
-                        int columnCount = hasScores ? 4 : 3;
-
-                        if (ImGui.BeginTable("ParticipantsTable", columnCount, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.ScrollY, new Vector2(0, 150))) {
-                            ImGui.TableSetupScrollFreeze(0, 1);
-                            ImGui.TableSetupColumn("#", ImGuiTableColumnFlags.WidthFixed, 30f);
-                            ImGui.TableSetupColumn(this.localization.Translate("config_common_name"), ImGuiTableColumnFlags.WidthStretch);
-                            if (hasScores) ImGui.TableSetupColumn("Score", ImGuiTableColumnFlags.WidthFixed, 60f);
-                            ImGui.TableSetupColumn(this.localization.Translate("config_common_actions"), ImGuiTableColumnFlags.WidthFixed, 30f);
-                            ImGui.TableHeadersRow();
-
-                            // Récupération sécurisée du joueur actif
-                            string currentPlayer = this.presenter.SessionVariables.TryGetValue("current_player", out var cp) ? cp?.ToString() ?? string.Empty : string.Empty;
-
-                            for (int i = 0; i < players.Count; i++) {
-                                ImGui.TableNextRow();
-
-                                bool isCurrentTurn = string.Equals(players[i], currentPlayer, StringComparison.OrdinalIgnoreCase);
-
-                                ImGui.TableNextColumn();
-                                ImGui.AlignTextToFramePadding();
-                                if (isCurrentTurn) {
-                                    // Indicateur visuel du tour
-                                    ImGui.PushFont(UiBuilder.IconFont);
-                                    ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.2f, 0.8f, 0.2f, 1.0f));
-                                    ImGui.Text(FontAwesomeIcon.Play.ToIconString());
-                                    ImGui.PopStyleColor();
-                                    ImGui.PopFont();
-                                }
-                                else {
-                                    ImGui.Text((i + 1).ToString());
-                                }
-
-                                ImGui.TableNextColumn();
-                                ImGui.AlignTextToFramePadding();
-                                if (isCurrentTurn) ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.2f, 0.8f, 0.2f, 1.0f));
-                                ImGui.Text(players[i]);
-                                if (isCurrentTurn) ImGui.PopStyleColor();
-
-                                // Affichage dynamique du score
-                                if (hasScores) {
-                                    ImGui.TableNextColumn();
-                                    ImGui.AlignTextToFramePadding();
-
-                                    string scoreKey = $"score_{players[i]}";
-                                    int score = 0;
-
-                                    if (this.presenter.SessionVariables.TryGetValue(scoreKey, out var s)) {
-                                        if (s is int sInt) score = sInt;
-                                        else if (s is string sStr && int.TryParse(sStr, out int parsedScore)) score = parsedScore;
-                                    }
-
-                                    ImGui.Text(score.ToString());
-                                }
-
-                                ImGui.TableNextColumn();
-                                ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
-                                ImGui.PushFont(UiBuilder.IconFont);
-                                if (ImGui.Button($"{FontAwesomeIcon.Trash.ToIconString()}##RemPart_{i}")) {
-                                    participantToRemove = players[i];
-                                }
-                                ImGui.PopFont();
-                                ImGui.PopStyleColor();
-                            }
-                            ImGui.EndTable();
-                        }
-
-                        if (participantToRemove != null) {
-                            this.presenter.RemoveParticipant(participantToRemove);
-                        }
-                    }
-
-                    ImGui.Spacing();
-
-                    string targetName = this.presenter.CurrentTargetName;
-                    if (string.IsNullOrEmpty(targetName)) ImGui.BeginDisabled();
-                    if (ImGui.Button($"Ajouter Cible : {targetName ?? "Aucune"}", new Vector2(-1, 30))) this.presenter.AddTarget();
-                    if (string.IsNullOrEmpty(targetName)) ImGui.EndDisabled();
                 }
             }
             else {

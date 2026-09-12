@@ -24,15 +24,25 @@ public class GameDashboardPresenter : IGameDashboardPresenter {
     public IReadOnlyList<string> Participants => this.sessionService.Participants;
     public IReadOnlyDictionary<string, object> SessionVariables => this.sessionService.SessionVariables;
     public IReadOnlyList<TimeSpan> RemainingTimers => this.sessionService.RemainingTimers;
-
     public string CurrentStageName => this.sessionService.CurrentStageName;
-
-    public bool AllowChatRegistration {
-        get => this.sessionService.AllowChatRegistration;
-        set => this.sessionService.AllowChatRegistration = value;
-    }
-
     public string CurrentTargetName => this.targetManager.Target?.Name.TextValue ?? string.Empty;
+
+    // CORRECTION : Routage dynamique de la propriété selon l'état de la session
+    public bool AllowChatRegistration {
+        get {
+            if (this.CurrentState != SessionState.Inactive) return this.sessionService.AllowChatRegistration;
+            return this.SelectedGame?.AllowChatRegistration ?? false;
+        }
+        set {
+            if (this.CurrentState != SessionState.Inactive) {
+                this.sessionService.AllowChatRegistration = value;
+            }
+            else if (this.SelectedGame != null) {
+                this.SelectedGame.AllowChatRegistration = value;
+                this.SaveGameConfig();
+            }
+        }
+    }
 
     public GameDashboardPresenter(IGameLibraryService libraryService, IGameSessionService sessionService, ITargetManager targetManager, IEmoteCache emoteCache) {
         this.libraryService = libraryService;
@@ -48,7 +58,6 @@ public class GameDashboardPresenter : IGameDashboardPresenter {
 
     public void ToggleChannel(GameChatChannel channel) {
         if (this.CurrentState != SessionState.Inactive) return;
-
         if (!this.SelectedChannels.Add(channel)) this.SelectedChannels.Remove(channel);
     }
 

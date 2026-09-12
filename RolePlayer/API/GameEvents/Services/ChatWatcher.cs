@@ -51,10 +51,19 @@ public class ChatWatcher : IGameEventWatcher {
         this.participants.Clear();
     }
 
+    // CORRECTION : Nettoyage renforcé pour les canaux d'équipe/alliance
     private string CleanPlayerName(string name) {
         if (string.IsNullOrEmpty(name)) return string.Empty;
+
+        // Retirer les symboles de cross-world et les serveurs
         var parts = name.Split(new[] { '\uE05D', '@' }, 2);
-        return parts[0].Trim();
+        var cleanName = parts[0];
+
+        // Retirer tout caractère non-alphabétique au DÉBUT du nom (ex: numéros de groupe, icônes)
+        // \p{L} cible n'importe quelle lettre dans n'importe quelle langue.
+        cleanName = Regex.Replace(cleanName, @"^[^\p{L}]+", "");
+
+        return cleanName.Trim();
     }
 
     private bool IsFallbackDiceRoll(string textLower) {
@@ -97,7 +106,7 @@ public class ChatWatcher : IGameEventWatcher {
         string senderName = this.CleanPlayerName(message.Sender?.TextValue ?? string.Empty);
         if (string.IsNullOrEmpty(senderName)) return;
 
-        if (this.RestrictToParticipants && this.participants.Count > 0 && !this.participants.Contains(senderName)) return;
+        if (this.RestrictToParticipants && !this.participants.Contains(senderName)) return;
 
         var channel = this.MapChannel(message.LogKind);
         if (channel.HasValue) {
