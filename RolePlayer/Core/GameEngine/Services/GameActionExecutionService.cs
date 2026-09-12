@@ -34,6 +34,12 @@ public class GameActionExecutionService : IGameActionExecutionService {
             case "INCREMENTVARIABLE":
                 this.ExecuteIncrementVariable(action, context);
                 break;
+            case "BROADCASTSCORES":
+                this.ExecuteBroadcastScores(action, context);
+                break;
+            case "ENDGAMEIFSCOREREACHED":
+                this.ExecuteEndGameIfScoreReached(action, context);
+                break;
             case "ADVANCETURN":
                 this.ExecuteAdvanceTurn(action, context);
                 break;
@@ -127,5 +133,52 @@ public class GameActionExecutionService : IGameActionExecutionService {
         }
 
         return result;
+    }
+
+    private void ExecuteBroadcastScores(GameActionConfig action, GameSessionContext context) {
+        if (!action.Parameters.TryGetValue("Prefix", out var prefix)) prefix = "score_";
+
+        var scores = new List<(string Name, int Score)>();
+        foreach (var kvp in context.Variables) {
+            if (kvp.Key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) {
+                string playerName = kvp.Key.Substring(prefix.Length);
+                int score = int.TryParse(kvp.Value?.ToString(), out int s) ? s : 0;
+                scores.Add((playerName, score));
+            }
+        }
+
+        if (scores.Count == 0) {
+            this.BroadcastRequested?.Invoke("[Scores] No scores recorded yet.");
+            return;
+        }
+
+        scores = scores.OrderByDescending(s => s.Score).ToList();
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("[Leaderboard]");
+        for (int i = 0; i < scores.Count; i++) {
+            sb.AppendLine($"{i + 1}. {scores[i].Name} - {scores[i].Score} pts");
+        }
+
+        this.BroadcastRequested?.Invoke(sb.ToString().TrimEnd('\r', '\n'));
+    }
+
+    private void ExecuteEndGameIfScoreReached(GameActionConfig action, GameSessionContext context) {
+        if (!action.Parameters.TryGetValue("Prefix", out var prefix)) prefix = "score_";
+        if (!action.Parameters.TryGetValue("TargetScore", out var rawTarget)) return;
+
+        string targetStr = this.FormatString(rawTarget, context);
+        if (!int.TryParse(targetStr, out int targetScore)) return;
+
+        foreach (var kvp in context.Variables) {
+            if (kvp.Key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) {
+                int score = int.TryParse(kvp.Value?.ToString(), out int s) ? s : 0;
+                if (score >= targetScore) {
+                    string winner = kvp.Key.Substring(prefix.Length);
+                    this.BroadcastRequested?.Invoke($"[Game Over] {winner} reached {targetScore} points and wins the game!");
+                    this.GameStopRequested?.Invoke();
+                    return;
+                }
+            }
+        }
     }
 }

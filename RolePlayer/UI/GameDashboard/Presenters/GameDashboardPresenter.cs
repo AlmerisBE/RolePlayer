@@ -23,7 +23,7 @@ public class GameDashboardPresenter : IGameDashboardPresenter {
     public SessionState CurrentState => this.sessionService.CurrentState;
     public IReadOnlyList<string> Participants => this.sessionService.Participants;
     public IReadOnlyDictionary<string, object> SessionVariables => this.sessionService.SessionVariables;
-    public IReadOnlyList<TimeSpan> RemainingTimers => this.sessionService.GetRemainingTimers();
+    public IReadOnlyList<TimeSpan> RemainingTimers => this.sessionService.RemainingTimers;
 
     public string CurrentStageName => this.sessionService.CurrentStageName;
 

@@ -21,5 +21,5 @@ public interface IGameSessionService {
     void RemoveParticipant(string name);
     void AdvanceStage();
     void SetSessionVariable(string key, object value);
-    IReadOnlyList<TimeSpan> GetRemainingTimers();
+    IReadOnlyList<TimeSpan> RemainingTimers { get; }
 }

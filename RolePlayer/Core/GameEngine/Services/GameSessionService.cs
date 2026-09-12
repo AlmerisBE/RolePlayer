@@ -33,6 +33,7 @@ public class GameSessionService : IGameSessionService {
 
     public IReadOnlyList<string> Participants => this.activeEngine?.Participants ?? new List<string>();
     public IReadOnlyDictionary<string, object> SessionVariables => this.activeEngine?.Variables ?? new Dictionary<string, object>();
+    public IReadOnlyList<TimeSpan> RemainingTimers => this.activeEngine?.RemainingTimers ?? new List<TimeSpan>();
 
     public string CurrentStageName => this.activeEngine?.CurrentStageName ?? string.Empty;
 
@@ -160,9 +161,5 @@ public class GameSessionService : IGameSessionService {
 
     public void AdvanceStage() {
         if (this.activeEngine != null) this.activeEngine.AdvanceStage();
-    }
-
-    public IReadOnlyList<TimeSpan> GetRemainingTimers() {
-        return this.activeEngine?.GetRemainingTimers() ?? Array.Empty<TimeSpan>();
     }
 }

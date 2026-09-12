@@ -12,7 +12,7 @@ public class GameStageEditorComponent {
     private ILocalizationService localization;
 
     private readonly string[] moduleTypes = { "ChatListener", "DiceListener", "EmoteListener", "TimerListener" };
-    private readonly string[] actionTypes = { "RegisterPlayer", "SetVariable", "IncrementVariable", "AdvanceTurn", "BroadcastMessage", "AdvanceStage", "StopGame" };
+    private readonly string[] actionTypes = { "RegisterPlayer", "SetVariable", "IncrementVariable", "BroadcastScores", "EndGameIfScoreReached", "AdvanceTurn", "BroadcastMessage", "AdvanceStage", "StopGame" };
     private readonly string[] triggerTypes = { "Manual", "Auto", "OnEvent" };
 
     public GameStageEditorComponent(ILocalizationService localization) {

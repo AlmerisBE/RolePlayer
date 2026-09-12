@@ -16,8 +16,14 @@ public class StateMachineEngine : IGameEngine {
     private GameSessionContext context = new();
     private GameStage? currentStage;
 
-    // Suivi des chronomètres actifs pour les TimerListener
     private Dictionary<GameModuleConfig, DateTime> activeTimers = new();
+    public IReadOnlyList<TimeSpan> RemainingTimers {
+        get {
+            if (!this.IsRunning || this.activeTimers.Count == 0) return new List<TimeSpan>();
+            var now = DateTime.Now;
+            return this.activeTimers.Values.Select(t => t > now ? t - now : TimeSpan.Zero).ToList();
+        }
+    }
 
     public string EngineType => "StateMachineEngine";
     public bool IsRunning { get; private set; }

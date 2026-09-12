@@ -186,21 +186,22 @@ public class GameLibraryService : IGameLibraryService {
             var riddlesGame = new GameDefinition {
                 Name = "Emote Riddles",
                 Author = "Almeris",
-                Description = "Answer the riddle by performing the correct emote before time runs out!",
+                Description = "Answer the riddle by performing the correct emote before time runs out! First to reach the max score wins.",
                 AllowChatRegistration = false,
                 Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
                     { "TrackScores", "true" }
                 },
-                // Les variables initiales utilisées en arrière plan
                 InitialVariables = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase) {
                     { "expected_emote_id", 0 },
-                    { "riddle_text", "Je suis la joie incarnée !" },
-                    { "round_duration", 30 }
+                    { "riddle_text", "I am joy incarnate!" },
+                    { "round_duration", 30 },
+                    { "max_score", 3 }
                 },
                 ExposedVariables = new List<GameVariableDefinition> {
-                    new GameVariableDefinition { Key = "expected_emote_id", Label = "Émote Attendue (Réponse)", Type = "Emote" },
-                    new GameVariableDefinition { Key = "riddle_text", Label = "Texte de l'Énigme", Type = "String" },
-                    new GameVariableDefinition { Key = "round_duration", Label = "Durée du round (Secondes)", Type = "Number" }
+                    new GameVariableDefinition { Key = "expected_emote_id", Label = "Expected Emote (Answer)", Type = "Emote" },
+                    new GameVariableDefinition { Key = "riddle_text", Label = "Riddle Text", Type = "String" },
+                    new GameVariableDefinition { Key = "round_duration", Label = "Round Duration (Seconds)", Type = "Number" },
+                    new GameVariableDefinition { Key = "max_score", Label = "Score to Win", Type = "Number" }
                 },
                 Stages = new List<GameStage> {
                     new GameStage {
@@ -210,9 +211,7 @@ public class GameLibraryService : IGameLibraryService {
                         OnEnterActions = new List<GameActionConfig> {
                             new GameActionConfig {
                                 ActionType = "BroadcastMessage",
-                                Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-                                    { "Message", "Registration for Emote Riddles is open! Type !join to participate." }
-                                }
+                                Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { { "Message", "Registration for Emote Riddles is open! Type !join to participate." } }
                             }
                         },
                         ActiveModules = new List<GameModuleConfig> {
@@ -240,6 +239,13 @@ public class GameLibraryService : IGameLibraryService {
                         },
                         ActiveModules = new List<GameModuleConfig> {
                             new GameModuleConfig {
+                                ModuleType = "ChatListener",
+                                Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { { "Command", "!score" } },
+                                OnTriggerActions = new List<GameActionConfig> {
+                                    new GameActionConfig { ActionType = "BroadcastScores", Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { { "Prefix", "score_" } } }
+                                }
+                            },
+                            new GameModuleConfig {
                                 ModuleType = "EmoteListener",
                                 ConditionExpressions = new List<string> {
                                     "Participants CONTAINS Event.Sender",
@@ -249,38 +255,30 @@ public class GameLibraryService : IGameLibraryService {
                                 OnTriggerActions = new List<GameActionConfig> {
                                     new GameActionConfig {
                                         ActionType = "BroadcastMessage",
-                                        Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-                                            { "Message", "[Winner] {Event.Sender} found the correct emote! Well done!" }
-                                        }
+                                        Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { { "Message", "[Winner] {Event.Sender} found the correct emote! Well done!" } }
                                     },
                                     new GameActionConfig {
                                         ActionType = "IncrementVariable",
-                                        Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-                                            { "TargetVar", "score_{Event.Sender}" },
-                                            { "Value", "1" }
-                                        }
+                                        Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { { "TargetVar", "score_{Event.Sender}" }, { "Value", "1" } }
+                                    },
+                                    new GameActionConfig {
+                                        ActionType = "EndGameIfScoreReached",
+                                        Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { { "Prefix", "score_" }, { "TargetScore", "{Var.max_score}" } }
                                     },
                                     new GameActionConfig {
                                         ActionType = "SetVariable",
-                                        Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-                                            { "TargetVar", "expected_emote_id" },
-                                            { "Value", "0" }
-                                        }
+                                        Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { { "TargetVar", "expected_emote_id" }, { "Value", "0" } }
                                     },
                                     new GameActionConfig { ActionType = "AdvanceStage" }
                                 }
                             },
                             new GameModuleConfig {
                                 ModuleType = "TimerListener",
-                                Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-                                    { "DurationSeconds", "{Var.round_duration}" }
-                                },
+                                Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { { "DurationSeconds", "{Var.round_duration}" } },
                                 OnTriggerActions = new List<GameActionConfig> {
                                     new GameActionConfig {
                                         ActionType = "BroadcastMessage",
-                                        Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-                                            { "Message", "[Time's Up] No one found the answer in time!" }
-                                        }
+                                        Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { { "Message", "[Time's Up] No one found the answer in time!" } }
                                     },
                                     new GameActionConfig { ActionType = "AdvanceStage" }
                                 }
@@ -294,6 +292,15 @@ public class GameLibraryService : IGameLibraryService {
                         Id = "round_end",
                         Name = "Round Ended",
                         GmDescription = "Prepare the next riddle and return to Action Phase, or Stop the Session.",
+                        ActiveModules = new List<GameModuleConfig> {
+                            new GameModuleConfig {
+                                ModuleType = "ChatListener",
+                                Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { { "Command", "!score" } },
+                                OnTriggerActions = new List<GameActionConfig> {
+                                    new GameActionConfig { ActionType = "BroadcastScores", Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { { "Prefix", "score_" } } }
+                                }
+                            }
+                        },
                         Transitions = new List<GameTransition> {
                             new GameTransition { TargetStageId = "playing", TriggerType = "Manual" }
                         }
