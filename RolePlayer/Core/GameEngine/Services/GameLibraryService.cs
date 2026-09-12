@@ -222,18 +222,43 @@ public class GameLibraryService : IGameLibraryService {
                             }
                         },
                         Transitions = new List<GameTransition> {
-                            new GameTransition { TargetStageId = "playing", TriggerType = "Manual", ConditionExpression = "Participants.Count >= 1" }
+                            new GameTransition { TargetStageId = "countdown", TriggerType = "Manual", ConditionExpression = "Participants.Count >= 1" }
                         }
                     },
+
                     new GameStage {
-                        Id = "playing",
-                        Name = "Action Phase",
-                        GmDescription = "The riddle is broadcasted. Engine listens for the correct emote and tracks time.",
+                        Id = "countdown",
+                        Name = "Countdown",
+                        GmDescription = "Broadcasts the riddle with a countdown. Automatically advances to Action Phase after 4 seconds.",
                         OnEnterActions = new List<GameActionConfig> {
                             new GameActionConfig {
                                 ActionType = "BroadcastMessage",
                                 Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
                                     { "Message", "The riddle begins in 3...\\n<wait.1>\\n2...\\n<wait.1>\\n1...\\n<wait.1>\\n[Riddle] {Var.riddle_text}" }
+                                }
+                            }
+                        },
+                        ActiveModules = new List<GameModuleConfig> {
+                            new GameModuleConfig {
+                                ModuleType = "TimerListener",
+                                Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { { "DurationSeconds", "4" } },
+                                OnTriggerActions = new List<GameActionConfig> { new GameActionConfig { ActionType = "AdvanceStage" } }
+                            }
+                        },
+                        Transitions = new List<GameTransition> {
+                            new GameTransition { TargetStageId = "playing", TriggerType = "Manual" }
+                        }
+                    },
+
+                    new GameStage {
+                        Id = "playing",
+                        Name = "Action Phase",
+                        GmDescription = "Engine listens for the correct emote and tracks time.",
+                        OnEnterActions = new List<GameActionConfig> {
+                            new GameActionConfig {
+                                ActionType = "BroadcastMessage",
+                                Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+                                    { "Message", "[Start] You have {Var.round_duration} seconds to perform the emote!" }
                                 }
                             }
                         },
@@ -291,7 +316,7 @@ public class GameLibraryService : IGameLibraryService {
                     new GameStage {
                         Id = "round_end",
                         Name = "Round Ended",
-                        GmDescription = "Prepare the next riddle and return to Action Phase, or Stop the Session.",
+                        GmDescription = "Prepare the next riddle and return to Countdown, or Stop the Session.",
                         ActiveModules = new List<GameModuleConfig> {
                             new GameModuleConfig {
                                 ModuleType = "ChatListener",
@@ -302,7 +327,8 @@ public class GameLibraryService : IGameLibraryService {
                             }
                         },
                         Transitions = new List<GameTransition> {
-                            new GameTransition { TargetStageId = "playing", TriggerType = "Manual" }
+                            // CORRECTION : La boucle repart au compte à rebours, pas directement à la phase d'action
+                            new GameTransition { TargetStageId = "countdown", TriggerType = "Manual" }
                         }
                     }
                 }
