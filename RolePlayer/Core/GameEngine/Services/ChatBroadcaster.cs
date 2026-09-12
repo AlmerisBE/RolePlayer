@@ -16,10 +16,9 @@ public class ChatBroadcaster : IChatBroadcaster, IDisposable {
 
     private ConcurrentQueue<(string Message, GameChatChannel Channel)> messageQueue = new();
 
-    private DateTime lastBroadcastTime = DateTime.Now;
+    private DateTime lastBroadcastTime = DateTime.MinValue;
 
-    // A safe delay of 1.6 seconds bypasses the native FFXIV spam filter entirely
-    private readonly TimeSpan broadcastDelay = TimeSpan.FromSeconds(1.6);
+    private readonly TimeSpan broadcastDelay = TimeSpan.FromSeconds(1.5);
 
     public ChatBroadcaster(INativeExecutionService nativeExecution, IChatGui chatGui, ILoggerService logger, IFramework framework) {
         this.nativeExecution = nativeExecution;
@@ -33,6 +32,8 @@ public class ChatBroadcaster : IChatBroadcaster, IDisposable {
     public void Broadcast(string message, GameChatChannel channel) {
         if (string.IsNullOrWhiteSpace(message)) return;
 
+        bool wasEmpty = this.messageQueue.IsEmpty;
+
         var formattedMessage = message.Replace("\\n", "\n");
         var lines = formattedMessage.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
 
@@ -40,10 +41,13 @@ public class ChatBroadcaster : IChatBroadcaster, IDisposable {
             var trimmed = line.Trim();
             if (string.IsNullOrWhiteSpace(trimmed)) continue;
 
-            // Strip manual macro wait tags as our C# engine now paces messages automatically
             if (trimmed.StartsWith("<wait", StringComparison.OrdinalIgnoreCase)) continue;
 
             this.messageQueue.Enqueue((trimmed, channel));
+        }
+
+        if (wasEmpty) {
+            this.lastBroadcastTime = DateTime.Now;
         }
     }
 
@@ -69,7 +73,6 @@ public class ChatBroadcaster : IChatBroadcaster, IDisposable {
             _ => "/e"
         };
 
-        // Since we process line-by-line, the command is built directly
         string finalCommand = message.StartsWith("/") ? message : $"{channelCmd} {message}";
 
         try {

@@ -153,13 +153,11 @@ public class GameActionExecutionService : IGameActionExecutionService {
         }
 
         scores = scores.OrderByDescending(s => s.Score).ToList();
-        var sb = new System.Text.StringBuilder();
-        sb.AppendLine("[Leaderboard]");
-        for (int i = 0; i < scores.Count; i++) {
-            sb.AppendLine($"{i + 1}. {scores[i].Name} - {scores[i].Score} pts");
-        }
 
-        this.BroadcastRequested?.Invoke(sb.ToString().TrimEnd('\r', '\n'));
+        var scoreStrings = scores.Select((s, index) => $"{index + 1}. {s.Name} ({s.Score} pts)");
+        string leaderboard = $"[Leaderboard] {string.Join(" | ", scoreStrings)}";
+
+        this.BroadcastRequested?.Invoke(leaderboard);
     }
 
     private void ExecuteEndGameIfScoreReached(GameActionConfig action, GameSessionContext context) {
