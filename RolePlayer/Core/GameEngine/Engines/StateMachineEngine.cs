@@ -146,6 +146,15 @@ public class StateMachineEngine : IGameEngine {
         this.EvaluateTransitions("OnEvent");
     }
 
+    private string ResolveStringVariables(string input) {
+        if (string.IsNullOrWhiteSpace(input)) return input;
+        string result = input;
+        foreach (var kvp in this.context.Variables) {
+            result = result.Replace($"{{Var.{kvp.Key}}}", kvp.Value?.ToString() ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+        }
+        return result;
+    }
+
     private void SetStage(string stageId) {
         var stage = this.config?.Game?.Stages.FirstOrDefault(s => s.Id.Equals(stageId, StringComparison.OrdinalIgnoreCase));
         if (stage == null) return;
@@ -155,8 +164,11 @@ public class StateMachineEngine : IGameEngine {
 
         var timerModules = this.currentStage.ActiveModules.Where(m => m.ModuleType.Equals("TimerListener", StringComparison.OrdinalIgnoreCase));
         foreach (var mod in timerModules) {
-            if (mod.Parameters.TryGetValue("DurationSeconds", out var durStr) && int.TryParse(durStr, out int duration)) {
-                this.activeTimers[mod] = DateTime.Now.AddSeconds(duration);
+            if (mod.Parameters.TryGetValue("DurationSeconds", out var durStr)) {
+                string resolvedDur = this.ResolveStringVariables(durStr);
+                if (int.TryParse(resolvedDur, out int duration)) {
+                    this.activeTimers[mod] = DateTime.Now.AddSeconds(duration);
+                }
             }
         }
 
@@ -188,11 +200,5 @@ public class StateMachineEngine : IGameEngine {
         if (gameEvent is EmoteGameEvent emoteEvent && module.ModuleType.Equals("EmoteListener", StringComparison.OrdinalIgnoreCase)) return true;
 
         return false;
-    }
-
-    public IReadOnlyList<TimeSpan> GetRemainingTimers() {
-        if (!this.IsRunning || this.activeTimers.Count == 0) return Array.Empty<TimeSpan>();
-        var now = DateTime.Now;
-        return this.activeTimers.Values.Select(t => t > now ? t - now : TimeSpan.Zero).ToList();
     }
 }
