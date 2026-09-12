@@ -16,6 +16,7 @@ public interface IGameSessionService {
     void StopSession();
 
     string CurrentStageName { get; }
+    string CurrentStageDescription { get; }
     bool AllowChatRegistration { get; set; }
     void AddParticipant(string name);
     void RemoveParticipant(string name);

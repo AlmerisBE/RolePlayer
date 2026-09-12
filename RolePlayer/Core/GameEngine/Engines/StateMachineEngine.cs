@@ -15,6 +15,7 @@ public class StateMachineEngine : IGameEngine {
     private GameSessionConfig? config;
     private GameSessionContext context = new();
     private GameStage? currentStage;
+    public string CurrentStageDescription => this.currentStage?.GmDescription ?? string.Empty;
 
     private Dictionary<GameModuleConfig, DateTime> activeTimers = new();
     public IReadOnlyList<TimeSpan> RemainingTimers {

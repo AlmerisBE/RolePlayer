@@ -17,6 +17,7 @@ public interface IGameDashboardPresenter : IDisposable {
     string CurrentStageName { get; }
     bool AllowChatRegistration { get; set; }
     string CurrentTargetName { get; }
+    string CurrentStageDescription { get; }
     IReadOnlyList<TimeSpan> RemainingTimers { get; }
 
     void SelectGame(GameDefinition? game);

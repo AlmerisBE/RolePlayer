@@ -36,6 +36,7 @@ public class GameSessionService : IGameSessionService {
     public IReadOnlyList<TimeSpan> RemainingTimers => this.activeEngine?.RemainingTimers ?? new List<TimeSpan>();
 
     public string CurrentStageName => this.activeEngine?.CurrentStageName ?? string.Empty;
+    public string CurrentStageDescription => this.activeEngine?.CurrentStageDescription ?? string.Empty;
 
     public bool AllowChatRegistration {
         get => this.activeEngine?.AllowChatRegistration ?? false;

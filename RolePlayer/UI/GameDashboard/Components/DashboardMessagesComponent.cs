@@ -1,9 +1,9 @@
 ﻿namespace RolePlayer.UI.GameDashboard.Components;
 
 using Dalamud.Bindings.ImGui;
-using Dalamud.Interface;
+using RolePlayer.Core.GameEngine.Models;
 using RolePlayer.UI.GameDashboard.Contracts;
-using System.Linq;
+using System;
 using System.Numerics;
 
 public class DashboardMessagesComponent {
@@ -15,75 +15,58 @@ public class DashboardMessagesComponent {
 
     public void Draw() {
         if (this.presenter.SelectedGame == null) return;
+        var game = this.presenter.SelectedGame;
 
         if (ImGui.CollapsingHeader("Messages du jeu (Édition)")) {
-            bool changed = false;
+            bool messagesChanged = false;
 
-            float availableWidth = ImGui.GetContentRegionAvail().X;
-            float btnWidth = 32f;
+            ImGui.Spacing();
+            ImGui.TextDisabled("Modifiez ici les textes des actions BroadcastMessage de chaque étape.");
+            ImGui.Spacing();
 
-            ImGui.SetCursorPosX(availableWidth - btnWidth);
-            ImGui.PushFont(UiBuilder.IconFont);
-            if (ImGui.Button($"{FontAwesomeIcon.Plus.ToIconString()}##AddMsg", new Vector2(btnWidth, 0))) {
-                this.presenter.SelectedGame.Messages[$"New_Message_{this.presenter.SelectedGame.Messages.Count + 1}"] = string.Empty;
-                changed = true;
-            }
-            ImGui.PopFont();
+            foreach (var stage in game.Stages) {
+                bool stageNodeOpen = ImGui.TreeNodeEx($"Étape : {stage.Name}###MsgStage_{stage.Id}", ImGuiTreeNodeFlags.DefaultOpen);
 
-            if (this.presenter.SelectedGame.Messages.Count == 0) {
-                ImGui.TextDisabled("Aucun message défini.");
-                return;
-            }
-
-            if (ImGui.BeginTable("MessagesTable", 3, ImGuiTableFlags.BordersInnerH | ImGuiTableFlags.SizingStretchProp)) {
-                ImGui.TableSetupColumn("Clé", ImGuiTableColumnFlags.WidthStretch, 0.35f);
-                ImGui.TableSetupColumn("Message", ImGuiTableColumnFlags.WidthStretch, 0.65f);
-                ImGui.TableSetupColumn("Act", ImGuiTableColumnFlags.WidthFixed, 30f);
-                ImGui.TableHeadersRow();
-
-                string? keyToRemove = null;
-                var keys = this.presenter.SelectedGame.Messages.Keys.ToList();
-
-                for (int i = 0; i < keys.Count; i++) {
-                    var key = keys[i];
-                    var val = this.presenter.SelectedGame.Messages[key];
-
-                    ImGui.TableNextRow();
-
-                    ImGui.TableNextColumn();
-                    string newKey = key;
-                    ImGui.SetNextItemWidth(-1f);
-                    if (ImGui.InputText($"##MsgKey_{i}", ref newKey, 64)) {
-                        if (newKey != key && !string.IsNullOrWhiteSpace(newKey) && !this.presenter.SelectedGame.Messages.ContainsKey(newKey)) {
-                            this.presenter.SelectedGame.Messages.Remove(key);
-                            this.presenter.SelectedGame.Messages[newKey] = val;
-                            changed = true;
+                if (stageNodeOpen) {
+                    // Actions à l'entrée de l'étape
+                    for (int i = 0; i < stage.OnEnterActions.Count; i++) {
+                        var action = stage.OnEnterActions[i];
+                        if (action.ActionType.Equals("BroadcastMessage", StringComparison.OrdinalIgnoreCase)) {
+                            messagesChanged |= this.DrawMessageInput($"##msg_enter_{stage.Id}_{i}", $"Action d'entrée #{i + 1}", action);
                         }
                     }
 
-                    ImGui.TableNextColumn();
-                    ImGui.SetNextItemWidth(-1f);
-                    if (ImGui.InputText($"##MsgVal_{i}", ref val, 256)) {
-                        this.presenter.SelectedGame.Messages[keys[i]] = val;
-                        changed = true;
+                    // Actions déclenchées par les modules (Chat, Timer, Emote, etc.)
+                    for (int m = 0; m < stage.ActiveModules.Count; m++) {
+                        var module = stage.ActiveModules[m];
+                        for (int a = 0; a < module.OnTriggerActions.Count; a++) {
+                            var action = module.OnTriggerActions[a];
+                            if (action.ActionType.Equals("BroadcastMessage", StringComparison.OrdinalIgnoreCase)) {
+                                messagesChanged |= this.DrawMessageInput($"##msg_mod_{stage.Id}_{m}_{a}", $"Déclencheur [{module.ModuleType}] - Action #{a + 1}", action);
+                            }
+                        }
                     }
-
-                    ImGui.TableNextColumn();
-                    ImGui.PushFont(UiBuilder.IconFont);
-                    ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
-                    if (ImGui.Button($"{FontAwesomeIcon.Trash.ToIconString()}##DelMsg_{i}")) keyToRemove = keys[i];
-                    ImGui.PopStyleColor();
-                    ImGui.PopFont();
-                }
-                ImGui.EndTable();
-
-                if (keyToRemove != null) {
-                    this.presenter.SelectedGame.Messages.Remove(keyToRemove);
-                    changed = true;
+                    ImGui.TreePop();
                 }
             }
 
-            if (changed) this.presenter.SaveGameConfig();
+            if (messagesChanged) this.presenter.SaveGameConfig();
         }
+    }
+
+    private bool DrawMessageInput(string id, string label, GameActionConfig action) {
+        bool changed = false;
+        ImGui.TextDisabled(label);
+
+        string val = action.Parameters.TryGetValue("Message", out var msg) ? msg : string.Empty;
+
+        ImGui.SetNextItemWidth(-1f);
+        if (ImGui.InputTextMultiline(id, ref val, 512, new Vector2(-1, ImGui.GetTextLineHeight() * 3))) {
+            action.Parameters["Message"] = val;
+            changed = true;
+        }
+
+        ImGui.Spacing();
+        return changed;
     }
 }

@@ -62,6 +62,14 @@ public class GameDashboardWindow : Window {
             if (isRunning) {
                 ImGui.TextColored(new Vector4(0.2f, 0.8f, 0.2f, 1.0f), this.presenter.CurrentStageName);
 
+                string desc = this.presenter.CurrentStageDescription;
+                if (!string.IsNullOrEmpty(desc)) {
+                    ImGui.Spacing();
+                    ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.7f, 0.7f, 0.7f, 1.0f));
+                    ImGui.TextWrapped(desc);
+                    ImGui.PopStyleColor();
+                }
+
                 var timers = this.presenter.RemainingTimers;
                 if (timers != null && timers.Count > 0) {
                     ImGui.Spacing();

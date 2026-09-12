@@ -25,6 +25,7 @@ public interface IGameEngine {
     void AddParticipant(string name);
     void RemoveParticipant(string name);
     void AdvanceStage();
+    string CurrentStageDescription { get; }
     void SetVariable(string key, object value);
     IReadOnlyList<TimeSpan> RemainingTimers { get; }
 }

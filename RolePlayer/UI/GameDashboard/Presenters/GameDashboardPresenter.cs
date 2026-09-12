@@ -25,6 +25,7 @@ public class GameDashboardPresenter : IGameDashboardPresenter {
     public IReadOnlyDictionary<string, object> SessionVariables => this.sessionService.SessionVariables;
     public IReadOnlyList<TimeSpan> RemainingTimers => this.sessionService.RemainingTimers;
     public string CurrentStageName => this.sessionService.CurrentStageName;
+    public string CurrentStageDescription => this.sessionService.CurrentStageDescription;
     public string CurrentTargetName => this.targetManager.Target?.Name.TextValue ?? string.Empty;
 
     // CORRECTION : Routage dynamique de la propriété selon l'état de la session
