@@ -26,6 +26,7 @@ public class HotbarManagerComponent : IDisposable {
     private ILocalizationService localization;
 
     private WindowSystem windowSystem;
+    private bool needsRefresh = false;
 
     public HotbarManagerComponent(
         IDalamudPluginInterface pluginInterface,
@@ -51,7 +52,8 @@ public class HotbarManagerComponent : IDisposable {
         this.localization = localization;
 
         this.windowSystem = new WindowSystem("RolePlayer_Hotbars");
-        this.pluginInterface.UiBuilder.Draw += this.windowSystem.Draw;
+
+        this.pluginInterface.UiBuilder.Draw += this.OnDraw;
 
         this.emoteCache.CacheUpdated += this.RefreshWindows;
         this.configService.ProfileLoaded += this.RefreshWindows;
@@ -71,6 +73,19 @@ public class HotbarManagerComponent : IDisposable {
     }
 
     public void RefreshWindows() {
+        this.needsRefresh = true;
+    }
+
+    private void OnDraw() {
+        if (this.needsRefresh) {
+            this.PerformRefreshWindows();
+            this.needsRefresh = false;
+        }
+
+        this.windowSystem.Draw();
+    }
+
+    private void PerformRefreshWindows() {
         this.windowSystem.RemoveAllWindows();
         var context = this.contextService.GetCurrentContext();
 
@@ -92,7 +107,7 @@ public class HotbarManagerComponent : IDisposable {
     }
 
     public void Dispose() {
-        this.pluginInterface.UiBuilder.Draw -= this.windowSystem.Draw;
+        this.pluginInterface.UiBuilder.Draw -= this.OnDraw;
         this.emoteCache.CacheUpdated -= this.RefreshWindows;
         this.configService.ProfileLoaded -= this.RefreshWindows;
         this.contextService.ContextChanged -= this.RefreshWindows;
