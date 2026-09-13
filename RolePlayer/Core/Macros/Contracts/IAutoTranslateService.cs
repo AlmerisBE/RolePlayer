@@ -1,6 +1,6 @@
-﻿namespace RolePlayer.UI.MainWindow.Contracts;
+﻿namespace RolePlayer.Core.Macros.Contracts;
 
-using RolePlayer.UI.MainWindow.Models;
+using RolePlayer.Core.Macros.Models;
 using System.Collections.Generic;
 
 public interface IAutoTranslateService {

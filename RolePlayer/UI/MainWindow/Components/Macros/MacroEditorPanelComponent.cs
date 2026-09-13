@@ -13,7 +13,6 @@ using RolePlayer.Core.Macros.Models;
 using RolePlayer.Core.MetaData.Contracts;
 using RolePlayer.UI.Localization.Contracts;
 using RolePlayer.UI.MainWindow.Contracts;
-using RolePlayer.UI.MainWindow.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;

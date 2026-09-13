@@ -1,4 +1,4 @@
-﻿namespace RolePlayer.UI.EmoteBrowser.Contracts;
+﻿namespace RolePlayer.Core.Emotes.Contracts;
 
 public interface IEmoteExecutionService {
     void ExecuteEmote(uint emoteId);

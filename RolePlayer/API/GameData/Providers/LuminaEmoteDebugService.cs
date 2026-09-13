@@ -3,8 +3,8 @@
 using Dalamud.Plugin.Services;
 using Lumina.Excel.Sheets;
 using RolePlayer.API.Penumbra.Contracts;
+using RolePlayer.Core.Emotes.Contracts;
 using RolePlayer.Core.Logging.Contracts;
-using RolePlayer.UI.EmoteBrowser.Contracts;
 
 public class LuminaEmoteDebugService : IEmoteDebugService {
     private IDataManager dataManager;

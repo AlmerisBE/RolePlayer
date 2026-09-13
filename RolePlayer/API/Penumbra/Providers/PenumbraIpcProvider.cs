@@ -7,12 +7,11 @@ using global::Penumbra.Api.IpcSubscribers;
 using RolePlayer.API.Penumbra.Contracts;
 using RolePlayer.Core.Emotes.Contracts;
 using RolePlayer.Core.Logging.Contracts;
-using RolePlayer.UI.EmoteBrowser.Contracts;
 using System;
 using System.Collections.Generic;
 using System.IO;
 
-public class PenumbraIpcProvider : IModStateProvider, IEmoteModState, IDisposable {
+public class PenumbraIpcProvider : IEmoteModState, IDisposable {
     private IDalamudPluginInterface pluginInterface;
     private IEmotePathProvider emotePathProvider;
     private ILoggerService logger;

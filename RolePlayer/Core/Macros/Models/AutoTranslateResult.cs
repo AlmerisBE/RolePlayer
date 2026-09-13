@@ -1,4 +1,4 @@
-﻿namespace RolePlayer.UI.MainWindow.Models;
+﻿namespace RolePlayer.Core.Macros.Models;
 
 public class AutoTranslateResult {
     public string DisplayText { get; set; } = string.Empty;

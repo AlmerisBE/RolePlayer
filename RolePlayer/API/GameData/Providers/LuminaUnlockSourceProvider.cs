@@ -2,7 +2,7 @@
 
 using Dalamud.Plugin.Services;
 using Lumina.Excel.Sheets;
-using RolePlayer.UI.EmoteBrowser.Contracts;
+using RolePlayer.Core.Emotes.Contracts;
 using RolePlayer.UI.Localization.Contracts;
 using System;
 using System.Collections;

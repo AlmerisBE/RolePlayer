@@ -1,8 +1,0 @@
-﻿namespace RolePlayer.UI.EmoteBrowser.Contracts;
-
-using RolePlayer.Core.Emotes.Models;
-using System.Collections.Generic;
-
-public interface IEmoteRepository {
-    IEnumerable<EnrichedEmote> GetBaseEmotes();
-}
