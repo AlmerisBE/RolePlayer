@@ -46,5 +46,18 @@
   "games_editor_transition_target": "Ziel-Phasen-ID",
   "games_editor_transition_trigger": "Auslösertyp",
   "games_restore_defaults": "Standard wiederherstellen",
-  "games_restore_tooltip": "Stellt gelöschte Standardspiele wieder her, ohne Ihre vorhandenen Änderungen zu überschreiben."
+  "games_restore_tooltip": "Stellt gelöschte Standardspiele wieder her, ohne Ihre vorhandenen Änderungen zu überschreiben.",
+  "host_no_channel": "Kein Kanal",
+  "host_channels_selected": "{0} Kanal/Kanäle",
+  "host_allow_registration": "Registrierung erlauben (!join)",
+  "host_next_stage": "Zur nächsten Phase übergehen",
+  "host_messages_title": "Spielnachrichten (Bearbeiten)",
+  "host_messages_desc": "Bearbeiten Sie hier die BroadcastMessage-Aktionstexte für jede Phase.",
+  "host_stage_prefix": "Phase: {0}",
+  "host_enter_action_prefix": "Eingangsaktion #{0}",
+  "host_trigger_action_prefix": "Auslöser [{0}] - Aktion #{1}",
+  "host_add_target": "Ziel hinzufügen: {0}",
+  "host_target_none": "Keines",
+  "host_variables_title": "Spieleinstellungen (Variablen)",
+  "host_variables_select_emote": "Ein Emote auswählen..."
 }

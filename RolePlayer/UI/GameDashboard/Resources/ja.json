@@ -46,5 +46,18 @@
   "games_editor_transition_target": "対象ステージID",
   "games_editor_transition_trigger": "トリガータイプ",
   "games_restore_defaults": "デフォルトを復元",
-  "games_restore_tooltip": "既存の変更を上書きせずに、削除されたデフォルトゲームを復元します。"
+  "games_restore_tooltip": "既存の変更を上書きせずに、削除されたデフォルトゲームを復元します。",
+  "host_no_channel": "チャンネルなし",
+  "host_channels_selected": "{0} チャンネル",
+  "host_allow_registration": "登録を許可 (!join)",
+  "host_next_stage": "次のステージへ進む",
+  "host_messages_title": "ゲームメッセージ (編集)",
+  "host_messages_desc": "各ステージの BroadcastMessage アクションのテキストをここで編集します。",
+  "host_stage_prefix": "ステージ: {0}",
+  "host_enter_action_prefix": "入場アクション #{0}",
+  "host_trigger_action_prefix": "トリガー [{0}] - アクション #{1}",
+  "host_add_target": "ターゲットを追加: {0}",
+  "host_target_none": "なし",
+  "host_variables_title": "ゲーム設定 (変数)",
+  "host_variables_select_emote": "エモートを選択..."
 }

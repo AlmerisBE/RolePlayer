@@ -2,21 +2,24 @@
 
 using Dalamud.Bindings.ImGui;
 using RolePlayer.UI.GameDashboard.Contracts;
+using RolePlayer.UI.Localization.Contracts;
 using System;
 using System.Linq;
 using System.Numerics;
 
 public class DashboardVariablesComponent {
     private IGameDashboardPresenter presenter;
+    private ILocalizationService localization;
 
-    public DashboardVariablesComponent(IGameDashboardPresenter presenter) {
+    public DashboardVariablesComponent(IGameDashboardPresenter presenter, ILocalizationService localization) {
         this.presenter = presenter;
+        this.localization = localization;
     }
 
     public void Draw() {
         if (this.presenter.SelectedGame == null || this.presenter.SelectedGame.ExposedVariables.Count == 0) return;
 
-        ImGui.TextDisabled("Paramètres du Jeu (Variables)");
+        ImGui.TextDisabled(this.localization.Translate("host_variables_title"));
         ImGui.Spacing();
 
         foreach (var varDef in this.presenter.SelectedGame.ExposedVariables) {
@@ -28,7 +31,7 @@ public class DashboardVariablesComponent {
             if (varDef.Type.Equals("Emote", StringComparison.OrdinalIgnoreCase)) {
                 uint currentEmoteId = uint.TryParse(currentValRaw, out uint parsedId) ? parsedId : 0;
                 var selectedEmote = this.presenter.EmotesCache.FirstOrDefault(e => e.Id == currentEmoteId);
-                string preview = selectedEmote != null ? selectedEmote.Name : "Sélectionner une Emote...";
+                string preview = selectedEmote != null ? selectedEmote.Name : this.localization.Translate("host_variables_select_emote");
 
                 if (ImGui.BeginCombo($"##var_combo_{varDef.Key}", preview)) {
                     foreach (var emote in this.presenter.EmotesCache.Where(e => e.IsUnlocked).OrderBy(e => e.Name)) {

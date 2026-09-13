@@ -3,35 +3,38 @@
 using Dalamud.Bindings.ImGui;
 using RolePlayer.Core.GameEngine.Models;
 using RolePlayer.UI.GameDashboard.Contracts;
+using RolePlayer.UI.Localization.Contracts;
 using System;
 using System.Numerics;
 
 public class DashboardMessagesComponent {
     private IGameDashboardPresenter presenter;
+    private ILocalizationService localization;
 
-    public DashboardMessagesComponent(IGameDashboardPresenter presenter) {
+    public DashboardMessagesComponent(IGameDashboardPresenter presenter, ILocalizationService localization) {
         this.presenter = presenter;
+        this.localization = localization;
     }
 
     public void Draw() {
         if (this.presenter.SelectedGame == null) return;
         var game = this.presenter.SelectedGame;
 
-        if (ImGui.CollapsingHeader("Messages du jeu (Édition)")) {
+        if (ImGui.CollapsingHeader(this.localization.Translate("host_messages_title"))) {
             bool messagesChanged = false;
 
             ImGui.Spacing();
-            ImGui.TextDisabled("Modifiez ici les textes des actions BroadcastMessage de chaque étape.");
+            ImGui.TextDisabled(this.localization.Translate("host_messages_desc"));
             ImGui.Spacing();
 
             foreach (var stage in game.Stages) {
-                bool stageNodeOpen = ImGui.TreeNodeEx($"Étape : {stage.Name}###MsgStage_{stage.Id}", ImGuiTreeNodeFlags.DefaultOpen);
+                bool stageNodeOpen = ImGui.TreeNodeEx($"{this.localization.Translate("host_stage_prefix", stage.Name)}###MsgStage_{stage.Id}", ImGuiTreeNodeFlags.DefaultOpen);
 
                 if (stageNodeOpen) {
                     for (int i = 0; i < stage.OnEnterActions.Count; i++) {
                         var action = stage.OnEnterActions[i];
                         if (action.ActionType.Equals("BroadcastMessage", StringComparison.OrdinalIgnoreCase)) {
-                            messagesChanged |= this.DrawMessageInput($"##msg_enter_{stage.Id}_{i}", $"Action d'entrée #{i + 1}", action);
+                            messagesChanged |= this.DrawMessageInput($"##msg_enter_{stage.Id}_{i}", this.localization.Translate("host_enter_action_prefix", i + 1), action);
                         }
                     }
 
@@ -40,7 +43,7 @@ public class DashboardMessagesComponent {
                         for (int a = 0; a < module.OnTriggerActions.Count; a++) {
                             var action = module.OnTriggerActions[a];
                             if (action.ActionType.Equals("BroadcastMessage", StringComparison.OrdinalIgnoreCase)) {
-                                messagesChanged |= this.DrawMessageInput($"##msg_mod_{stage.Id}_{m}_{a}", $"Déclencheur [{module.ModuleType}] - Action #{a + 1}", action);
+                                messagesChanged |= this.DrawMessageInput($"##msg_mod_{stage.Id}_{m}_{a}", this.localization.Translate("host_trigger_action_prefix", module.ModuleType, a + 1), action);
                             }
                         }
                     }

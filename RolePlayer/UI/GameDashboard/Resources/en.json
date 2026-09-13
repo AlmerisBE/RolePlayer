@@ -46,5 +46,18 @@
   "games_editor_transition_target": "Target Stage ID",
   "games_editor_transition_trigger": "Trigger Type",
   "games_restore_defaults": "Restore Defaults",
-  "games_restore_tooltip": "Restores deleted default games without overwriting your existing modifications."
+  "games_restore_tooltip": "Restores deleted default games without overwriting your existing modifications.",
+  "host_no_channel": "No channel",
+  "host_channels_selected": "{0} channel(s)",
+  "host_allow_registration": "Allow registration (!join)",
+  "host_next_stage": "Advance to next stage",
+  "host_messages_title": "Game Messages (Edit)",
+  "host_messages_desc": "Edit the BroadcastMessage action texts for each stage here.",
+  "host_stage_prefix": "Stage: {0}",
+  "host_enter_action_prefix": "Enter Action #{0}",
+  "host_trigger_action_prefix": "Trigger [{0}] - Action #{1}",
+  "host_add_target": "Add Target: {0}",
+  "host_target_none": "None",
+  "host_variables_title": "Game Settings (Variables)",
+  "host_variables_select_emote": "Select an Emote..."
 }

@@ -40,7 +40,7 @@ public class DashboardControlComponent {
         ImGui.TextDisabled(this.localization.Translate("host_listening_channels"));
         ImGui.Spacing();
 
-        string channelPreview = this.presenter.SelectedChannels.Count == 0 ? "Aucun canal" : $"{this.presenter.SelectedChannels.Count} canal(aux)";
+        string channelPreview = this.presenter.SelectedChannels.Count == 0 ? this.localization.Translate("host_no_channel") : this.localization.Translate("host_channels_selected", this.presenter.SelectedChannels.Count);
 
         ImGui.SetNextItemWidth(-1f);
         if (ImGui.BeginCombo("##ListeningChannels", channelPreview)) {
@@ -59,7 +59,7 @@ public class DashboardControlComponent {
         ImGui.Spacing();
 
         bool allowJoin = this.presenter.AllowChatRegistration;
-        if (ImGui.Checkbox("Autoriser inscriptions (!join)", ref allowJoin)) {
+        if (ImGui.Checkbox(this.localization.Translate("host_allow_registration"), ref allowJoin)) {
             this.presenter.AllowChatRegistration = allowJoin;
         }
 
@@ -81,7 +81,7 @@ public class DashboardControlComponent {
             if (this.presenter.CurrentStageName != "Finished") {
                 ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.2f, 0.4f, 0.8f, 1.0f));
                 string stepIcon = FontAwesomeIcon.StepForward.ToIconString();
-                if (ImGui.Button($"{stepIcon} Passer à l'étape suivante", new Vector2(-1, 35))) this.presenter.AdvanceStage();
+                if (ImGui.Button($"{stepIcon} {this.localization.Translate("host_next_stage")}", new Vector2(-1, 35))) this.presenter.AdvanceStage();
                 ImGui.PopStyleColor();
                 ImGui.Spacing();
             }

@@ -100,8 +100,10 @@ public class DashboardParticipantsComponent {
         ImGui.Spacing();
 
         string targetName = this.presenter.CurrentTargetName;
+        string displayTarget = string.IsNullOrEmpty(targetName) ? this.localization.Translate("host_target_none") : targetName;
+
         if (string.IsNullOrEmpty(targetName)) ImGui.BeginDisabled();
-        if (ImGui.Button($"Ajouter Cible : {targetName ?? "Aucune"}", new Vector2(-1, 30))) this.presenter.AddTarget();
+        if (ImGui.Button(this.localization.Translate("host_add_target", displayTarget), new Vector2(-1, 30))) this.presenter.AddTarget();
         if (string.IsNullOrEmpty(targetName)) ImGui.EndDisabled();
     }
 }
