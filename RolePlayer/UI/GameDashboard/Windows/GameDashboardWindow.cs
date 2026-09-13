@@ -56,46 +56,59 @@ public class GameDashboardWindow : Window {
             // COLONNE DROITE
             ImGui.TableNextColumn();
 
-            ImGui.TextDisabled(this.localization.Translate("host_session_status"));
-            ImGui.Spacing();
-
-            if (isRunning) {
-                ImGui.TextColored(new Vector4(0.2f, 0.8f, 0.2f, 1.0f), this.presenter.CurrentStageName);
-
-                string desc = this.presenter.CurrentStageDescription;
-                if (!string.IsNullOrEmpty(desc)) {
+            // NOUVEAU : Encapsulation dans un Child pour gérer le clipping et le scroll
+            if (ImGui.BeginChild("SessionDetailsChild", new Vector2(0, 0), false, ImGuiWindowFlags.None)) {
+                if (this.presenter.SelectedGame != null) {
+                    ImGui.TextDisabled(this.localization.Translate("host_session_status"));
                     ImGui.Spacing();
-                    ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.7f, 0.7f, 0.7f, 1.0f));
-                    ImGui.TextWrapped(desc);
-                    ImGui.PopStyleColor();
-                }
 
-                var timers = this.presenter.RemainingTimers;
-                if (timers != null && timers.Count > 0) {
-                    ImGui.Spacing();
-                    foreach (var timer in timers) {
-                        ImGui.TextColored(new Vector4(1f, 0.6f, 0f, 1f), $"Chronomètre : {Math.Floor(timer.TotalMinutes):00}:{timer.Seconds:00}");
+                    if (isRunning) {
+                        ImGui.TextColored(new Vector4(0.2f, 0.8f, 0.2f, 1.0f), this.presenter.CurrentStageName);
+
+                        string desc = this.presenter.CurrentStageDescription;
+                        if (!string.IsNullOrEmpty(desc)) {
+                            ImGui.Spacing();
+                            ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.7f, 0.7f, 0.7f, 1.0f));
+                            ImGui.TextWrapped(desc);
+                            ImGui.PopStyleColor();
+                        }
+
+                        var timers = this.presenter.RemainingTimers;
+                        if (timers != null && timers.Count > 0) {
+                            ImGui.Spacing();
+                            foreach (var timer in timers) {
+                                ImGui.TextColored(new Vector4(1f, 0.6f, 0f, 1f), $"Chronomètre : {Math.Floor(timer.TotalMinutes):00}:{timer.Seconds:00}");
+                            }
+                        }
                     }
+                    else {
+                        string stateString = this.localization.Translate($"host_state_{this.presenter.CurrentState.ToString().ToLowerInvariant()}");
+                        ImGui.TextColored(new Vector4(0.8f, 0.8f, 0.8f, 1.0f), stateString);
+                    }
+
+                    ImGui.Spacing();
+                    ImGui.Separator();
+                    ImGui.Spacing();
+
+                    // Affiché avant ET pendant la session
+                    this.variablesComponent.Draw();
+
+                    // Les participants n'ont de sens qu'une fois la session active
+                    if (isRunning) {
+                        this.participantsComponent.Draw();
+                        ImGui.Spacing();
+                        ImGui.Separator();
+                        ImGui.Spacing();
+                    }
+
+                    // Affiché avant ET pendant la session
+                    this.messagesComponent.Draw();
                 }
-
-                ImGui.Spacing();
-                ImGui.Separator();
-                ImGui.Spacing();
-
-                this.variablesComponent.Draw();
-                this.participantsComponent.Draw();
-
-                ImGui.Spacing();
-                ImGui.Separator();
-                ImGui.Spacing();
-
-                this.messagesComponent.Draw();
+                else {
+                    ImGui.TextDisabled(this.localization.Translate("host_select_game"));
+                }
             }
-            else {
-                string stateString = this.localization.Translate($"host_state_{this.presenter.CurrentState.ToString().ToLowerInvariant()}");
-                ImGui.TextColored(new Vector4(0.8f, 0.8f, 0.8f, 1.0f), stateString);
-            }
-
+            ImGui.EndChild();
             ImGui.EndTable();
         }
     }

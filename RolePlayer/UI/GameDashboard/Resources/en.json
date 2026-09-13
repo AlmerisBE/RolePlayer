@@ -59,5 +59,7 @@
   "host_add_target": "Add Target: {0}",
   "host_target_none": "None",
   "host_variables_title": "Game Settings (Variables)",
-  "host_variables_select_emote": "Select an Emote..."
+  "host_variables_select_emote": "Select an Emote...",
+  "host_stages_list": "Stage Progression",
+  "host_next_stage_specific": "Advance to: {0}"
 }

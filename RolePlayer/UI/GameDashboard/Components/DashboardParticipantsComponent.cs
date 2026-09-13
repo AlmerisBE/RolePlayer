@@ -39,7 +39,7 @@ public class DashboardParticipantsComponent {
                 ImGui.TableSetupColumn(this.localization.Translate("config_common_actions"), ImGuiTableColumnFlags.WidthFixed, 30f);
                 ImGui.TableHeadersRow();
 
-                string currentPlayer = this.presenter.SessionVariables.TryGetValue("current_player", out var cp) ? cp?.ToString() ?? string.Empty : string.Empty;
+                string currentPlayer = this.presenter.ActiveVariables.TryGetValue("current_player", out var cp) ? cp?.ToString() ?? string.Empty : string.Empty;
 
                 for (int i = 0; i < players.Count; i++) {
                     ImGui.TableNextRow();
@@ -72,7 +72,7 @@ public class DashboardParticipantsComponent {
                         string scoreKey = $"score_{players[i]}";
                         int score = 0;
 
-                        if (this.presenter.SessionVariables.TryGetValue(scoreKey, out var s)) {
+                        if (this.presenter.ActiveVariables.TryGetValue(scoreKey, out var s)) {
                             if (s is int sInt) score = sInt;
                             else if (s is string sStr && int.TryParse(sStr, out int parsedScore)) score = parsedScore;
                         }

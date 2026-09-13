@@ -10,6 +10,7 @@ public interface IGameEngine {
     IReadOnlyList<string> Participants { get; }
     IReadOnlyDictionary<string, object> Variables { get; }
     string CurrentStageName { get; }
+    string NextManualStageName { get; }
     bool AllowChatRegistration { get; set; }
 
     event Action<string>? BroadcastRequested;

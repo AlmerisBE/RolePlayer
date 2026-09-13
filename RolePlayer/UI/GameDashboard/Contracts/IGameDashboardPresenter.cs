@@ -12,9 +12,11 @@ public interface IGameDashboardPresenter : IDisposable {
     HashSet<GameChatChannel> SelectedChannels { get; }
     SessionState CurrentState { get; }
     IReadOnlyList<string> Participants { get; }
-    IReadOnlyDictionary<string, object> SessionVariables { get; }
+
+    IReadOnlyDictionary<string, object> ActiveVariables { get; }
 
     string CurrentStageName { get; }
+    string NextManualStageName { get; }
     bool AllowChatRegistration { get; set; }
     string CurrentTargetName { get; }
     string CurrentStageDescription { get; }
@@ -28,7 +30,8 @@ public interface IGameDashboardPresenter : IDisposable {
     void AdvanceStage();
     void AddTarget();
     void RemoveParticipant(string name);
-    void SetSessionVariable(string key, object value);
+
+    void SetVariable(string key, object value);
 
     void SaveGameConfig();
 }

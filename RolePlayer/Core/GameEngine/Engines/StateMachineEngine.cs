@@ -33,6 +33,23 @@ public class StateMachineEngine : IGameEngine {
     public IReadOnlyDictionary<string, object> Variables => this.context.Variables;
     public string CurrentStageName => this.currentStage?.Name ?? "Unknown";
 
+    public string NextManualStageName {
+        get {
+            if (this.currentStage == null || this.config?.Game == null) return string.Empty;
+
+            var manualTransitions = this.currentStage.Transitions.Where(t => t.TriggerType.Equals("Manual", StringComparison.OrdinalIgnoreCase));
+
+            foreach (var transition in manualTransitions) {
+                if (string.IsNullOrWhiteSpace(transition.ConditionExpression) || this.conditionEvaluator.Evaluate(transition.ConditionExpression, this.context)) {
+                    var target = this.config.Game.Stages.FirstOrDefault(s => s.Id.Equals(transition.TargetStageId, StringComparison.OrdinalIgnoreCase));
+                    if (target != null) return target.Name;
+                }
+            }
+
+            return string.Empty;
+        }
+    }
+
     public bool AllowChatRegistration { get; set; } = false;
 
     public event Action<string>? BroadcastRequested;

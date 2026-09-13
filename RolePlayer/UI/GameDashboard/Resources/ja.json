@@ -59,5 +59,7 @@
   "host_add_target": "ターゲットを追加: {0}",
   "host_target_none": "なし",
   "host_variables_title": "ゲーム設定 (変数)",
-  "host_variables_select_emote": "エモートを選択..."
+  "host_variables_select_emote": "エモートを選択...",
+  "host_stages_list": "ステージの進行",
+  "host_next_stage_specific": "次に進む: {0}"
 }

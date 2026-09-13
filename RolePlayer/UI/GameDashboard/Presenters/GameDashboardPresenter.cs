@@ -22,13 +22,18 @@ public class GameDashboardPresenter : IGameDashboardPresenter {
     public HashSet<GameChatChannel> SelectedChannels { get; private set; } = new();
     public SessionState CurrentState => this.sessionService.CurrentState;
     public IReadOnlyList<string> Participants => this.sessionService.Participants;
-    public IReadOnlyDictionary<string, object> SessionVariables => this.sessionService.SessionVariables;
+    public IReadOnlyDictionary<string, object> ActiveVariables {
+        get {
+            if (this.CurrentState != SessionState.Inactive) return this.sessionService.SessionVariables;
+            return this.SelectedGame?.InitialVariables ?? new Dictionary<string, object>();
+        }
+    }
     public IReadOnlyList<TimeSpan> RemainingTimers => this.sessionService.RemainingTimers;
     public string CurrentStageName => this.sessionService.CurrentStageName;
+    public string NextManualStageName => this.sessionService.NextManualStageName;
     public string CurrentStageDescription => this.sessionService.CurrentStageDescription;
     public string CurrentTargetName => this.targetManager.Target?.Name.TextValue ?? string.Empty;
 
-    // CORRECTION : Routage dynamique de la propriété selon l'état de la session
     public bool AllowChatRegistration {
         get {
             if (this.CurrentState != SessionState.Inactive) return this.sessionService.AllowChatRegistration;
@@ -77,8 +82,14 @@ public class GameDashboardPresenter : IGameDashboardPresenter {
         this.sessionService.StopSession();
     }
 
-    public void SetSessionVariable(string key, object value) {
-        this.sessionService.SetSessionVariable(key, value);
+    public void SetVariable(string key, object value) {
+        if (this.CurrentState != SessionState.Inactive) {
+            this.sessionService.SetSessionVariable(key, value);
+        }
+        else if (this.SelectedGame != null) {
+            this.SelectedGame.InitialVariables[key] = value;
+            this.SaveGameConfig();
+        }
     }
 
     public void AdvanceStage() {

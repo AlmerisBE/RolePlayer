@@ -5,7 +5,6 @@ using RolePlayer.Core.GameEngine.Models;
 using RolePlayer.UI.GameDashboard.Contracts;
 using RolePlayer.UI.Localization.Contracts;
 using System;
-using System.Numerics;
 
 public class DashboardMessagesComponent {
     private IGameDashboardPresenter presenter;
@@ -61,10 +60,8 @@ public class DashboardMessagesComponent {
 
         string val = action.Parameters.TryGetValue("Message", out var msg) ? msg : string.Empty;
 
-        float width = ImGui.GetContentRegionAvail().X;
-        float height = ImGui.GetTextLineHeight() * 4;
-
-        if (ImGui.InputTextMultiline(id, ref val, 512, new Vector2(width, height), ImGuiInputTextFlags.NoHorizontalScroll)) {
+        ImGui.SetNextItemWidth(-1f);
+        if (ImGui.InputText(id, ref val, 512)) {
             action.Parameters["Message"] = val;
             changed = true;
         }

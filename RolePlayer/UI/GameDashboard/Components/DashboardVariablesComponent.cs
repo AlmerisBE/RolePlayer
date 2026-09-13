@@ -5,7 +5,6 @@ using RolePlayer.UI.GameDashboard.Contracts;
 using RolePlayer.UI.Localization.Contracts;
 using System;
 using System.Linq;
-using System.Numerics;
 
 public class DashboardVariablesComponent {
     private IGameDashboardPresenter presenter;
@@ -23,20 +22,20 @@ public class DashboardVariablesComponent {
         ImGui.Spacing();
 
         foreach (var varDef in this.presenter.SelectedGame.ExposedVariables) {
-            string currentValRaw = this.presenter.SessionVariables.TryGetValue(varDef.Key, out var v) ? v?.ToString() ?? string.Empty : string.Empty;
+            string currentValRaw = this.presenter.ActiveVariables.TryGetValue(varDef.Key, out var v) ? v?.ToString() ?? string.Empty : string.Empty;
 
             ImGui.Text(varDef.Label);
-            ImGui.SetNextItemWidth(-1f);
 
             if (varDef.Type.Equals("Emote", StringComparison.OrdinalIgnoreCase)) {
                 uint currentEmoteId = uint.TryParse(currentValRaw, out uint parsedId) ? parsedId : 0;
                 var selectedEmote = this.presenter.EmotesCache.FirstOrDefault(e => e.Id == currentEmoteId);
                 string preview = selectedEmote != null ? selectedEmote.Name : this.localization.Translate("host_variables_select_emote");
 
+                ImGui.SetNextItemWidth(-1f);
                 if (ImGui.BeginCombo($"##var_combo_{varDef.Key}", preview)) {
                     foreach (var emote in this.presenter.EmotesCache.Where(e => e.IsUnlocked).OrderBy(e => e.Name)) {
                         if (ImGui.Selectable(emote.Name, emote.Id == currentEmoteId)) {
-                            this.presenter.SetSessionVariable(varDef.Key, emote.Id);
+                            this.presenter.SetVariable(varDef.Key, emote.Id);
                         }
                     }
                     ImGui.EndCombo();
@@ -44,13 +43,16 @@ public class DashboardVariablesComponent {
             }
             else if (varDef.Type.Equals("Number", StringComparison.OrdinalIgnoreCase)) {
                 int currentInt = int.TryParse(currentValRaw, out int pInt) ? pInt : 0;
+
+                ImGui.SetNextItemWidth(-1f);
                 if (ImGui.InputInt($"##var_num_{varDef.Key}", ref currentInt)) {
-                    this.presenter.SetSessionVariable(varDef.Key, currentInt);
+                    this.presenter.SetVariable(varDef.Key, currentInt);
                 }
             }
             else {
-                if (ImGui.InputTextMultiline($"##var_str_{varDef.Key}", ref currentValRaw, 512, new Vector2(-1, ImGui.GetTextLineHeight() * 2))) {
-                    this.presenter.SetSessionVariable(varDef.Key, currentValRaw);
+                ImGui.SetNextItemWidth(-1f);
+                if (ImGui.InputText($"##var_str_{varDef.Key}", ref currentValRaw, 512)) {
+                    this.presenter.SetVariable(varDef.Key, currentValRaw);
                 }
             }
             ImGui.Spacing();

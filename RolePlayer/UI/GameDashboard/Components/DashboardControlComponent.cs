@@ -1,7 +1,6 @@
 ﻿namespace RolePlayer.UI.GameDashboard.Components;
 
 using Dalamud.Bindings.ImGui;
-using Dalamud.Interface;
 using RolePlayer.Core.GameEngine.Models;
 using RolePlayer.UI.GameDashboard.Contracts;
 using RolePlayer.UI.Localization.Contracts;
@@ -63,6 +62,31 @@ public class DashboardControlComponent {
             this.presenter.AllowChatRegistration = allowJoin;
         }
 
+        if (this.presenter.SelectedGame != null && this.presenter.SelectedGame.Stages.Count > 0) {
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
+
+            ImGui.TextDisabled(this.localization.Translate("host_stages_list"));
+            ImGui.Spacing();
+
+            if (ImGui.BeginChild("StagesListDisplay", new Vector2(-1, 130), true, ImGuiWindowFlags.None)) {
+                foreach (var stage in this.presenter.SelectedGame.Stages) {
+                    bool isCurrent = isRunning && this.presenter.CurrentStageName.Equals(stage.Name, StringComparison.OrdinalIgnoreCase);
+
+                    if (isCurrent) {
+                        ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.2f, 0.8f, 0.2f, 1.0f));
+                        ImGui.Text($"▶ {stage.Name}");
+                        ImGui.PopStyleColor();
+                    }
+                    else {
+                        ImGui.TextDisabled($"   {stage.Name}");
+                    }
+                }
+            }
+            ImGui.EndChild();
+        }
+
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
@@ -71,24 +95,26 @@ public class DashboardControlComponent {
             ImGui.BeginDisabled(this.presenter.SelectedGame == null || this.presenter.SelectedChannels.Count == 0);
             ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.2f, 0.6f, 0.2f, 1.0f));
 
-            string playIcon = FontAwesomeIcon.Play.ToIconString();
-            if (ImGui.Button($"{playIcon} {this.localization.Translate("host_start_session")}", new Vector2(-1, 40))) this.presenter.StartSession();
+            if (ImGui.Button(this.localization.Translate("host_start_session"), new Vector2(-1, 40))) this.presenter.StartSession();
 
             ImGui.PopStyleColor();
             ImGui.EndDisabled();
         }
         else {
-            if (this.presenter.CurrentStageName != "Finished") {
+            if (this.presenter.CurrentState != SessionState.Finished) {
+                string nextStageName = this.presenter.NextManualStageName;
+                string btnText = string.IsNullOrEmpty(nextStageName)
+                    ? this.localization.Translate("host_next_stage")
+                    : this.localization.Translate("host_next_stage_specific", nextStageName);
+
                 ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.2f, 0.4f, 0.8f, 1.0f));
-                string stepIcon = FontAwesomeIcon.StepForward.ToIconString();
-                if (ImGui.Button($"{stepIcon} {this.localization.Translate("host_next_stage")}", new Vector2(-1, 35))) this.presenter.AdvanceStage();
+                if (ImGui.Button(btnText, new Vector2(-1, 35))) this.presenter.AdvanceStage();
                 ImGui.PopStyleColor();
                 ImGui.Spacing();
             }
 
             ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
-            string stopIcon = FontAwesomeIcon.Stop.ToIconString();
-            if (ImGui.Button($"{stopIcon} {this.localization.Translate("host_stop_session")}", new Vector2(-1, 40))) this.presenter.StopSession();
+            if (ImGui.Button(this.localization.Translate("host_stop_session"), new Vector2(-1, 40))) this.presenter.StopSession();
             ImGui.PopStyleColor();
         }
     }
