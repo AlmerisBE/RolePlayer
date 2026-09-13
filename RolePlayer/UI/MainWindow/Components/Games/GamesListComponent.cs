@@ -36,14 +36,25 @@ public class GamesListComponent {
     }
 
     public void Draw() {
-        float availableWidth = ImGui.GetContentRegionAvail().X;
-        float btnWidth = 160f;
-        float restoreBtnWidth = 200f;
-        float spacing = ImGui.GetStyle().ItemSpacing.X;
+        string syncText = this.localization.Translate("games_restore_defaults");
+        string createText = this.localization.Translate("games_create_new");
 
-        ImGui.SetCursorPosX(availableWidth - btnWidth - restoreBtnWidth - spacing);
+        ImGui.PushFont(UiBuilder.IconFont);
+        float syncIconWidth = ImGui.CalcTextSize(FontAwesomeIcon.Sync.ToIconString()).X;
+        float createIconWidth = ImGui.CalcTextSize(FontAwesomeIcon.Plus.ToIconString()).X;
+        ImGui.PopFont();
 
-        if (ImGuiComponents.IconButtonWithText(FontAwesomeIcon.Sync, this.localization.Translate("games_restore_defaults"))) {
+        float framePaddingX = ImGui.GetStyle().FramePadding.X * 2;
+        float innerSpacingX = ImGui.GetStyle().ItemInnerSpacing.X;
+
+        float syncBtnWidth = syncIconWidth + innerSpacingX + ImGui.CalcTextSize(syncText).X + framePaddingX;
+        float createBtnWidth = createIconWidth + innerSpacingX + ImGui.CalcTextSize(createText).X + framePaddingX;
+
+        float totalWidth = syncBtnWidth + createBtnWidth + ImGui.GetStyle().ItemSpacing.X;
+
+        ImGui.SetCursorPosX(ImGui.GetWindowContentRegionMax().X - totalWidth);
+
+        if (ImGuiComponents.IconButtonWithText(FontAwesomeIcon.Sync, syncText)) {
             this.libraryService.RestoreDefaultGames();
         }
 
@@ -51,7 +62,7 @@ public class GamesListComponent {
 
         ImGui.SameLine();
 
-        if (ImGuiComponents.IconButtonWithText(FontAwesomeIcon.Plus, this.localization.Translate("games_create_new"))) {
+        if (ImGuiComponents.IconButtonWithText(FontAwesomeIcon.Plus, createText)) {
             this.editorWindow.OpenForEditing(null);
         }
 
@@ -102,7 +113,6 @@ public class GamesListComponent {
                 float startY = ImGui.GetCursorPosY() - ImGui.GetStyle().CellPadding.Y;
                 ImGui.SetCursorPosY(startY + (rowHeight - buttonHeight) / 2f);
 
-                // Edit Button
                 ImGui.PushFont(UiBuilder.IconFont);
                 ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.2f, 0.4f, 0.8f, 1.0f));
                 bool editClicked = ImGui.Button($"{FontAwesomeIcon.Edit.ToIconString()}##Edit_{game.Id}");
@@ -112,7 +122,6 @@ public class GamesListComponent {
 
                 ImGui.SameLine();
 
-                // Host/Play Button
                 ImGui.PushFont(UiBuilder.IconFont);
                 ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.2f, 0.8f, 0.2f, 1.0f));
                 bool playClicked = ImGui.Button($"{FontAwesomeIcon.Play.ToIconString()}##Host_{game.Id}");
@@ -122,7 +131,6 @@ public class GamesListComponent {
 
                 ImGui.SameLine();
 
-                // Delete Button
                 ImGui.PushFont(UiBuilder.IconFont);
                 ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
                 bool deleteClicked = ImGui.Button($"{FontAwesomeIcon.Trash.ToIconString()}##Del_{game.Id}");
@@ -130,7 +138,6 @@ public class GamesListComponent {
                 ImGui.PopFont();
                 if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("games_ctx_delete"));
 
-                // Action Handling
                 if (editClicked) this.editorWindow.OpenForEditing(game);
                 if (playClicked) {
                     this.dashboardPresenter.SelectGame(game);
