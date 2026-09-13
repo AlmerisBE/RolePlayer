@@ -1,8 +1,8 @@
 ﻿namespace RolePlayer.Core.Macros.Services;
 
 using RolePlayer.API.Interop.Contracts;
+using RolePlayer.Core.Macros.Contracts;
 using RolePlayer.Core.Macros.Models;
-using RolePlayer.UI.Hotbar.Contracts;
 
 public class MacroExecutionService : IMacroExecutionService {
     private INativeExecutionService nativeExecution;

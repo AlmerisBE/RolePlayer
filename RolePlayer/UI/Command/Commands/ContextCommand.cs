@@ -1,4 +1,4 @@
-﻿namespace RolePlayer.Core.Configuration.Commands;
+﻿namespace RolePlayer.UI.Command.Commands;
 
 using RolePlayer.Core.Configuration.Contracts;
 using RolePlayer.UI.Command.Contracts;

@@ -3,9 +3,9 @@
 using Dalamud.Bindings.ImGui;
 using RolePlayer.Core.Configuration.Contracts;
 using RolePlayer.Core.Configuration.Models;
+using RolePlayer.Core.Macros.Contracts;
 using RolePlayer.Core.Macros.Models;
-using RolePlayer.UI.EmoteBrowser.Contracts;
-using RolePlayer.UI.Hotbar.Contracts;
+using RolePlayer.Core.MetaData.Contracts;
 using RolePlayer.UI.Localization.Contracts;
 using System.Linq;
 

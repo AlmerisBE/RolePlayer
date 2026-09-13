@@ -8,6 +8,7 @@ using Dalamud.Interface.Windowing;
 using Dalamud.Plugin.Services;
 using RolePlayer.Core.Configuration.Models;
 using RolePlayer.Core.Emotes.Models;
+using RolePlayer.Core.Macros.Contracts;
 using RolePlayer.UI.EmoteBrowser.Contracts;
 using RolePlayer.UI.Hotbar.Contracts;
 using RolePlayer.UI.Hotbar.Models;

@@ -1,8 +1,8 @@
 ﻿namespace RolePlayer.Tests.Core.Configuration.Commands;
 
 using NSubstitute;
-using RolePlayer.Core.Configuration.Commands;
 using RolePlayer.Core.Configuration.Contracts;
+using RolePlayer.UI.Command.Commands;
 using Xunit;
 
 public class ContextCommandTests {

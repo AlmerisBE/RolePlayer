@@ -1,8 +1,8 @@
 ﻿namespace RolePlayer.Core.MetaData.Services;
 
 using RolePlayer.Core.Configuration.Contracts;
+using RolePlayer.Core.MetaData.Contracts;
 using RolePlayer.Core.MetaData.Models;
-using RolePlayer.UI.EmoteBrowser.Contracts;
 using System;
 using System.Collections.Generic;
 using System.Linq;

@@ -2,7 +2,7 @@
 
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
-using RolePlayer.UI.EmoteBrowser.Contracts;
+using RolePlayer.Core.MetaData.Contracts;
 using RolePlayer.UI.Localization.Contracts;
 using System.Linq;
 using System.Numerics;

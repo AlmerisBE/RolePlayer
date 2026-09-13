@@ -3,7 +3,8 @@
 using RolePlayer.Core.Configuration.Contracts;
 using RolePlayer.Core.Configuration.Models;
 using RolePlayer.Core.Emotes.Models;
-using RolePlayer.UI.EmoteBrowser.Contracts;
+using RolePlayer.Core.Macros.Contracts;
+using RolePlayer.Core.MetaData.Contracts;
 using RolePlayer.UI.Hotbar.Contracts;
 using RolePlayer.UI.Hotbar.Models;
 using System.Collections.Generic;

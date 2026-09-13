@@ -1,4 +1,4 @@
-﻿namespace RolePlayer.UI.EmoteBrowser.Contracts;
+﻿namespace RolePlayer.Core.MetaData.Contracts;
 
 using System;
 using System.Collections.Generic;

@@ -1,8 +1,8 @@
 ﻿namespace RolePlayer.UI.MainWindow.Components.Macros;
 
 using Dalamud.Bindings.ImGui;
-using RolePlayer.UI.EmoteBrowser.Contracts;
-using RolePlayer.UI.Hotbar.Contracts;
+using RolePlayer.Core.Macros.Contracts;
+using RolePlayer.Core.MetaData.Contracts;
 using RolePlayer.UI.Localization.Contracts;
 using RolePlayer.UI.MainWindow.Contracts;
 using System;

@@ -2,8 +2,8 @@
 
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
+using RolePlayer.Core.Macros.Contracts;
 using RolePlayer.Core.Macros.Models;
-using RolePlayer.UI.Hotbar.Contracts;
 using RolePlayer.UI.Localization.Contracts;
 using RolePlayer.UI.MainWindow.Contracts;
 using System.Numerics;
