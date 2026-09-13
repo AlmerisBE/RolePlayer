@@ -6,6 +6,7 @@ using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Plugin.Services;
 using NSubstitute;
+using RolePlayer.API.GameEvents.Contracts;
 using RolePlayer.API.GameEvents.Services;
 using RolePlayer.Core.GameEngine.Models;
 using RolePlayer.Core.Logging.Contracts;
@@ -18,8 +19,9 @@ public class ChatWatcherTests {
         var mockChatGui = Substitute.For<IChatGui>();
         var mockObjectTable = Substitute.For<IObjectTable>();
         var mockLogger = Substitute.For<ILoggerService>();
-        var mockClientState = Substitute.For<IClientState>();
-        using var watcher = new ChatWatcher(mockChatGui, mockObjectTable, mockLogger, mockClientState);
+        var mockDiceParser = Substitute.For<IDiceRollParser>();
+        var mockNameNormalizer = Substitute.For<IPlayerNameNormalizer>();
+        using var watcher = new ChatWatcher(mockChatGui, mockObjectTable, mockLogger, mockDiceParser, mockNameNormalizer);
 
         watcher.SetParticipants(new List<string> { "John Doe" });
         watcher.Start();
@@ -47,8 +49,9 @@ public class ChatWatcherTests {
         var mockChatGui = Substitute.For<IChatGui>();
         var mockObjectTable = Substitute.For<IObjectTable>();
         var mockLogger = Substitute.For<ILoggerService>();
-        var mockClientState = Substitute.For<IClientState>();
-        using var watcher = new ChatWatcher(mockChatGui, mockObjectTable, mockLogger, mockClientState);
+        var mockDiceParser = Substitute.For<IDiceRollParser>();
+        var mockNameNormalizer = Substitute.For<IPlayerNameNormalizer>();
+        using var watcher = new ChatWatcher(mockChatGui, mockObjectTable, mockLogger, mockDiceParser, mockNameNormalizer);
         watcher.Start();
 
         GameEvent? capturedEvent = null;
@@ -65,7 +68,7 @@ public class ChatWatcherTests {
         Assert.NotNull(capturedEvent);
         Assert.IsType<DiceRollGameEvent>(capturedEvent);
         Assert.Equal(42, ((DiceRollGameEvent)capturedEvent).Roll);
-        Assert.Equal(100, ((DiceRollGameEvent)capturedEvent).OutOf);
+        Assert.Equal(100, ((DiceRollGameEvent)capturedEvent).MaxRoll);
     }
 
     [Fact]
@@ -73,8 +76,9 @@ public class ChatWatcherTests {
         var mockChatGui = Substitute.For<IChatGui>();
         var mockObjectTable = Substitute.For<IObjectTable>();
         var mockLogger = Substitute.For<ILoggerService>();
-        var mockClientState = Substitute.For<IClientState>();
-        using var watcher = new ChatWatcher(mockChatGui, mockObjectTable, mockLogger, mockClientState);
+        var mockDiceParser = Substitute.For<IDiceRollParser>();
+        var mockNameNormalizer = Substitute.For<IPlayerNameNormalizer>();
+        using var watcher = new ChatWatcher(mockChatGui, mockObjectTable, mockLogger, mockDiceParser, mockNameNormalizer);
 
         watcher.SetParticipants(new List<string> { "John Doe" });
         watcher.Start();

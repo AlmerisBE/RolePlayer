@@ -44,6 +44,7 @@ public class MainWindowFeature : IFeatureModule {
 
         services.AddSingleton<Window>(provider => provider.GetRequiredService<MainWindow>());
         services.AddSingleton<ICommand, OpenMainWindowCommand>();
+        services.AddSingleton<ICommand, ConfigCommand>();
 
         services.AddSingleton<GamesListComponent>();
 

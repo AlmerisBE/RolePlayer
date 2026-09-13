@@ -20,22 +20,31 @@ public class ConditionEvaluatorService : IConditionEvaluatorService {
     public bool Evaluate(string expression, GameSessionContext context) {
         if (string.IsNullOrWhiteSpace(expression)) return true;
 
-        // Pré-interpolation pour supporter les variables dynamiques (ex: Var.score_{Event.Sender})
         if (context.CurrentEvent != null) {
             expression = expression.Replace("{Event.Sender}", context.CurrentEvent.Sender, StringComparison.OrdinalIgnoreCase);
             if (context.CurrentEvent is DiceRollGameEvent dice) {
                 expression = expression.Replace("{Event.Roll}", dice.Roll.ToString(), StringComparison.OrdinalIgnoreCase);
-                expression = expression.Replace("{Event.OutOf}", dice.OutOf.ToString(), StringComparison.OrdinalIgnoreCase);
+                expression = expression.Replace("{Event.MaxRoll}", dice.MaxRoll.ToString(), StringComparison.OrdinalIgnoreCase);
             }
         }
         expression = expression.Replace("{Participants.Count}", context.Participants.Count.ToString(), StringComparison.OrdinalIgnoreCase);
 
-        var parts = expression.Split(' ', 3, StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length != 3) return false;
+        string[] knownOperators = { "==", "!=", ">=", "<=", " CONTAINS ", " NOT_CONTAINS ", ">", "<", "=" };
+        string leftRaw = string.Empty;
+        string op = string.Empty;
+        string rightRaw = string.Empty;
 
-        string leftRaw = parts[0];
-        string op = parts[1].ToUpperInvariant();
-        string rightRaw = parts[2];
+        foreach (var knownOp in knownOperators) {
+            int idx = expression.IndexOf(knownOp, StringComparison.OrdinalIgnoreCase);
+            if (idx != -1) {
+                leftRaw = expression.Substring(0, idx).Trim();
+                op = knownOp.Trim().ToUpperInvariant();
+                rightRaw = expression.Substring(idx + knownOp.Length).Trim();
+                break;
+            }
+        }
+
+        if (string.IsNullOrEmpty(op)) return false;
 
         object? leftValue = this.ResolveValue(leftRaw, context);
         object? rightValue = this.ResolveValue(rightRaw, context);
@@ -70,7 +79,7 @@ public class ConditionEvaluatorService : IConditionEvaluatorService {
             }
             else if (context.CurrentEvent is DiceRollGameEvent dice) {
                 if (prop == "roll") return dice.Roll;
-                if (prop == "outof") return dice.OutOf;
+                if (prop == "maxroll") return dice.MaxRoll;
             }
             else if (context.CurrentEvent is EmoteGameEvent emote) {
                 if (prop == "emoteid") return emote.EmoteId;

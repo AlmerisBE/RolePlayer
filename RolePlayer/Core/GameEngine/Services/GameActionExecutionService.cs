@@ -40,6 +40,9 @@ public class GameActionExecutionService : IGameActionExecutionService {
             case "ENDGAMEIFSCOREREACHED":
                 this.ExecuteEndGameIfScoreReached(action, context);
                 break;
+            case "RESOLVEBLACKJACKWINNER":
+                this.ExecuteResolveBlackjackWinner(action, context);
+                break;
             case "ADVANCETURN":
                 this.ExecuteAdvanceTurn(action, context);
                 break;
@@ -79,7 +82,6 @@ public class GameActionExecutionService : IGameActionExecutionService {
         if (!action.Parameters.TryGetValue("TargetVar", out var rawTargetVar) || string.IsNullOrWhiteSpace(rawTargetVar)) return;
         if (!action.Parameters.TryGetValue("Value", out var rawValue)) return;
 
-        // Le formatage s'applique désormais au nom de la variable également
         string targetVar = this.FormatString(rawTargetVar, context);
         string formattedValue = this.FormatString(rawValue, context);
 
@@ -122,7 +124,7 @@ public class GameActionExecutionService : IGameActionExecutionService {
 
             if (context.CurrentEvent is DiceRollGameEvent dice) {
                 result = result.Replace("{Event.Roll}", dice.Roll.ToString(), StringComparison.OrdinalIgnoreCase);
-                result = result.Replace("{Event.OutOf}", dice.OutOf.ToString(), StringComparison.OrdinalIgnoreCase);
+                result = result.Replace("{Event.MaxRoll}", dice.MaxRoll.ToString(), StringComparison.OrdinalIgnoreCase);
             }
         }
 
@@ -178,5 +180,43 @@ public class GameActionExecutionService : IGameActionExecutionService {
                 }
             }
         }
+    }
+
+    private void ExecuteResolveBlackjackWinner(GameActionConfig action, GameSessionContext context) {
+        if (!action.Parameters.TryGetValue("ScorePrefix", out var prefix)) prefix = "score_";
+        if (!action.Parameters.TryGetValue("TargetScore", out var rawTarget)) rawTarget = "21";
+
+        string targetStr = this.FormatString(rawTarget, context);
+        if (!int.TryParse(targetStr, out int targetScore)) targetScore = 21;
+
+        var validScores = new List<(string Name, int Score)>();
+
+        foreach (var kvp in context.Variables) {
+            if (kvp.Key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) {
+                string playerName = kvp.Key.Substring(prefix.Length);
+                int score = int.TryParse(kvp.Value?.ToString(), out int s) ? s : 0;
+
+                if (score <= targetScore) {
+                    validScores.Add((playerName, score));
+                }
+            }
+        }
+
+        if (validScores.Count == 0) {
+            this.BroadcastRequested?.Invoke("[Game Over] Everyone busted! The house wins.");
+        }
+        else {
+            var maxScore = validScores.Max(s => s.Score);
+            var winners = validScores.Where(s => s.Score == maxScore).Select(s => s.Name).ToList();
+
+            if (winners.Count > 1) {
+                this.BroadcastRequested?.Invoke($"[Game Over] It's a tie between {string.Join(" and ", winners)} with {maxScore} points!");
+            }
+            else {
+                this.BroadcastRequested?.Invoke($"[Game Over] {winners[0]} wins with {maxScore} points!");
+            }
+        }
+
+        this.GameStopRequested?.Invoke();
     }
 }

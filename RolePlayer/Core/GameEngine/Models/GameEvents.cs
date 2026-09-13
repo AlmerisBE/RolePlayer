@@ -9,11 +9,6 @@ public class ChatGameEvent : GameEvent {
     public GameChatChannel Channel { get; init; }
 }
 
-public class DiceRollGameEvent : GameEvent {
-    public int Roll { get; init; }
-    public int OutOf { get; init; }
-}
-
 public class EmoteGameEvent : GameEvent {
     public uint EmoteId { get; init; }
 }

@@ -15,6 +15,8 @@ public class EmoteCacheService : IEmoteCache, IDisposable {
     private ILoggerService logger;
 
     private List<EnrichedEmote> cache = new();
+    private Task? refreshTask;
+
     public bool IsReady { get; private set; } = false;
 
     public event Action? CacheUpdated;
@@ -41,7 +43,7 @@ public class EmoteCacheService : IEmoteCache, IDisposable {
     public void ForceRefresh() {
         if (!this.playerState.IsPlayerValid) return;
 
-        Task.Run(() => {
+        this.refreshTask = Task.Run(() => {
             try {
                 var baseEmotes = this.emoteRepository.GetBaseEmotes().ToList();
                 var newCache = new List<EnrichedEmote>();

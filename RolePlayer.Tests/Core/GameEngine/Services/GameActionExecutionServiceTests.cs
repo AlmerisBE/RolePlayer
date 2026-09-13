@@ -24,7 +24,7 @@ public class GameActionExecutionServiceTests {
     [Fact]
     public void Execute_SetVariable_UpdatesContextVariable() {
         var context = new GameSessionContext();
-        context.CurrentEvent = new DiceRollGameEvent { Sender = "Jane", Roll = 42, OutOf = 999 };
+        context.CurrentEvent = new DiceRollGameEvent { Sender = "Jane", Roll = 42, MaxRoll = 999 };
 
         var action = new GameActionConfig {
             ActionType = "SetVariable",

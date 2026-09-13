@@ -33,9 +33,9 @@ public class ConditionEvaluatorServiceTests {
     public void Evaluate_VariableComparison_EvaluatesCorrectly() {
         var context = new GameSessionContext();
         context.Variables["current_max_roll"] = 999;
-        context.CurrentEvent = new DiceRollGameEvent { Sender = "Player1", Roll = 50, OutOf = 999 };
+        context.CurrentEvent = new DiceRollGameEvent { Sender = "Player1", Roll = 50, MaxRoll = 999 };
 
-        bool result = this.evaluator.Evaluate("Event.OutOf == Var.current_max_roll", context);
+        bool result = this.evaluator.Evaluate("Event.MaxRoll == Var.current_max_roll", context);
 
         Assert.True(result);
     }
@@ -43,7 +43,7 @@ public class ConditionEvaluatorServiceTests {
     [Fact]
     public void Evaluate_RollEqualsOne_ReturnsTrue() {
         var context = new GameSessionContext();
-        context.CurrentEvent = new DiceRollGameEvent { Sender = "Player1", Roll = 1, OutOf = 50 };
+        context.CurrentEvent = new DiceRollGameEvent { Sender = "Player1", Roll = 1, MaxRoll = 50 };
 
         bool result = this.evaluator.Evaluate("Event.Roll == 1", context);
 
