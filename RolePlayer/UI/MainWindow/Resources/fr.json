@@ -120,5 +120,7 @@
   "main_tab_games": "Jeux",
   "games_ctx_edit": "Éditer le Jeu",
   "games_ctx_duplicate": "Dupliquer le Jeu",
-  "games_ctx_delete": "Supprimer le Jeu"
+  "games_ctx_delete": "Supprimer le Jeu",
+  "config_common_author": "Auteur",
+  "config_common_unknown": "Inconnu"
 }

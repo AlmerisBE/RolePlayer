@@ -120,5 +120,7 @@
   "main_tab_games": "ゲーム",
   "games_ctx_edit": "ゲームを編集",
   "games_ctx_duplicate": "ゲームを複製",
-  "games_ctx_delete": "ゲームを削除"
+  "games_ctx_delete": "ゲームを削除",
+  "config_common_author": "作者",
+  "config_common_unknown": "不明"
 }

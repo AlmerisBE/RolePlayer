@@ -120,5 +120,7 @@
   "main_tab_games": "Spiele",
   "games_ctx_edit": "Spiel bearbeiten",
   "games_ctx_duplicate": "Spiel duplizieren",
-  "games_ctx_delete": "Spiel löschen"
+  "games_ctx_delete": "Spiel löschen",
+  "config_common_author": "Autor",
+  "config_common_unknown": "Unbekannt"
 }
