@@ -2,11 +2,11 @@
 
 using NSubstitute;
 using RolePlayer.Core.Configuration.Contracts;
+using RolePlayer.Core.Configuration.Models;
 using RolePlayer.Core.Emotes.Models;
 using RolePlayer.Core.Macros.Models;
 using RolePlayer.UI.EmoteBrowser.Contracts;
 using RolePlayer.UI.Hotbar.Contracts;
-using RolePlayer.UI.Hotbar.Models;
 using RolePlayer.UI.Hotbar.Services;
 using System.Collections.Generic;
 using Xunit;

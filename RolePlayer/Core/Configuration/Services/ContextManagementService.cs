@@ -1,11 +1,11 @@
 ﻿namespace RolePlayer.Core.Configuration.Services;
 
-using Newtonsoft.Json;
 using RolePlayer.Core.Configuration.Contracts;
 using RolePlayer.Core.Configuration.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 
 public class ContextManagementService : IContextManagementService {
     private IConfigurationService configService;
@@ -51,8 +51,8 @@ public class ContextManagementService : IContextManagementService {
         EmoteContext newContext;
 
         if (cloneFromId.HasValue && config.Contexts.TryGetValue(cloneFromId.Value, out var sourceContext)) {
-            var serialized = JsonConvert.SerializeObject(sourceContext);
-            newContext = JsonConvert.DeserializeObject<EmoteContext>(serialized) ?? new EmoteContext();
+            var serialized = JsonSerializer.Serialize(sourceContext);
+            newContext = JsonSerializer.Deserialize<EmoteContext>(serialized) ?? new EmoteContext();
             newContext.Id = Guid.NewGuid();
             newContext.Name = name.Trim();
 

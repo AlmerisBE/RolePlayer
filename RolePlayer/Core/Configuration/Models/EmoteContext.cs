@@ -1,8 +1,6 @@
 ﻿namespace RolePlayer.Core.Configuration.Models;
 
 using RolePlayer.Core.MetaData.Models;
-using RolePlayer.UI.EmoteBrowser.Models;
-using RolePlayer.UI.Hotbar.Models;
 using System;
 using System.Collections.Generic;
 

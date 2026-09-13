@@ -7,7 +7,6 @@ using RolePlayer.Core.Emotes.Models;
 using RolePlayer.UI.EmoteBrowser.Contracts;
 using RolePlayer.UI.Hotbar.Components;
 using RolePlayer.UI.Hotbar.Contracts;
-using RolePlayer.UI.Hotbar.Models;
 using RolePlayer.UI.Localization.Contracts;
 using System.Linq;
 

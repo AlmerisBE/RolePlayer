@@ -1,4 +1,4 @@
-﻿namespace RolePlayer.UI.EmoteBrowser.Models;
+﻿namespace RolePlayer.Core.Configuration.Models;
 
 public enum GroupingMode {
     None,

@@ -1,4 +1,4 @@
-﻿namespace RolePlayer.UI.Hotbar.Models;
+﻿namespace RolePlayer.Core.Configuration.Models;
 
 using System;
 using System.Collections.Generic;

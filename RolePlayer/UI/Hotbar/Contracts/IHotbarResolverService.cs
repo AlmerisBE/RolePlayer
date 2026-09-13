@@ -1,5 +1,6 @@
 ﻿namespace RolePlayer.UI.Hotbar.Contracts;
 
+using RolePlayer.Core.Configuration.Models;
 using RolePlayer.Core.Emotes.Models;
 using RolePlayer.UI.Hotbar.Models;
 using System.Collections.Generic;

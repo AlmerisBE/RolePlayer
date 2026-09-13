@@ -1,4 +1,4 @@
-﻿namespace RolePlayer.UI.Hotbar.Models;
+﻿namespace RolePlayer.Core.Configuration.Models;
 
 public enum HotbarPopulationMode {
     Manual,

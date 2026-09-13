@@ -8,7 +8,6 @@ using Dalamud.Plugin.Services;
 using RolePlayer.Core.Configuration.Models;
 using RolePlayer.Core.Emotes.Models;
 using RolePlayer.UI.EmoteBrowser.Contracts;
-using RolePlayer.UI.EmoteBrowser.Models;
 using RolePlayer.UI.Localization.Contracts;
 using System;
 using System.Linq;

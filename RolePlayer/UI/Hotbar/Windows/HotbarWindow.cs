@@ -6,6 +6,7 @@ using Dalamud.Interface.Textures;
 using Dalamud.Interface.Textures.Internal;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin.Services;
+using RolePlayer.Core.Configuration.Models;
 using RolePlayer.Core.Emotes.Models;
 using RolePlayer.UI.EmoteBrowser.Contracts;
 using RolePlayer.UI.Hotbar.Contracts;

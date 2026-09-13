@@ -1,10 +1,10 @@
 ﻿namespace RolePlayer.UI.EmoteBrowser.Presenters;
 
 using RolePlayer.Core.Configuration.Contracts;
+using RolePlayer.Core.Configuration.Models;
 using RolePlayer.Core.Emotes.Contracts;
 using RolePlayer.Core.Emotes.Models;
 using RolePlayer.UI.EmoteBrowser.Contracts;
-using RolePlayer.UI.EmoteBrowser.Models;
 using RolePlayer.UI.Localization.Contracts;
 using System.Collections.Generic;
 using System.Linq;

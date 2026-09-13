@@ -16,6 +16,7 @@ public class EmoteCacheService : IEmoteCache, IDisposable {
 
     private List<EnrichedEmote> cache = new();
     private Task? refreshTask;
+    private int pendingRefreshes = 0;
 
     public bool IsReady { get; private set; } = false;
 
@@ -43,7 +44,17 @@ public class EmoteCacheService : IEmoteCache, IDisposable {
     public void ForceRefresh() {
         if (!this.playerState.IsPlayerValid) return;
 
-        this.refreshTask = Task.Run(() => {
+        this.pendingRefreshes++;
+
+        if (this.refreshTask == null || this.refreshTask.IsCompleted) {
+            this.refreshTask = Task.Run(this.ProcessRefreshesAsync);
+        }
+    }
+
+    private void ProcessRefreshesAsync() {
+        while (this.pendingRefreshes > 0) {
+            this.pendingRefreshes = 0;
+
             try {
                 var baseEmotes = this.emoteRepository.GetBaseEmotes().ToList();
                 var newCache = new List<EnrichedEmote>();
@@ -64,7 +75,7 @@ public class EmoteCacheService : IEmoteCache, IDisposable {
             catch (Exception ex) {
                 this.logger.Error(ex, "[EmoteCacheService] Background emote resolution failed.");
             }
-        });
+        }
     }
 
     public void Dispose() {
