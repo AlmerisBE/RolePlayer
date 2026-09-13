@@ -61,5 +61,15 @@
   "host_variables_title": "Paramètres du Jeu (Variables)",
   "host_variables_select_emote": "Sélectionner une Emote...",
   "host_stages_list": "Progression des Étapes",
-  "host_next_stage_specific": "Passer à : {0}"
+  "host_next_stage_specific": "Passer à : {0}",
+  "error_no_manual_transition": "Aucune transition manuelle n'est configurée pour cette étape.",
+  "error_transition_conditions_not_met": "Les conditions requises pour passer à l'étape suivante ne sont pas remplies.",
+  "host_broadcast_channel": "Canal de Diffusion",
+  "channel_say": "Dire",
+  "channel_yell": "Crier",
+  "channel_shout": "Hurler",
+  "channel_party": "Équipe",
+  "channel_alliance": "Alliance",
+  "channel_freecompany": "CL",
+  "channel_custom": "Personnalisé"
 }

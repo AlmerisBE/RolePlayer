@@ -15,6 +15,7 @@ public class GameSessionService : IGameSessionService {
     private IChatBroadcaster chatBroadcaster;
 
     public event Action? SessionStateChanged;
+    public event Action<string>? ErrorReported;
 
     public SessionState CurrentState { get; private set; } = SessionState.Inactive;
     public GameSessionConfig? CurrentConfig { get; private set; }
@@ -79,6 +80,7 @@ public class GameSessionService : IGameSessionService {
         this.activeEngine.GameFinished += this.OnGameFinished;
         this.activeEngine.BroadcastRequested += this.OnBroadcastRequested;
         this.activeEngine.ParticipantsChanged += this.OnParticipantsChanged;
+        this.activeEngine.ErrorReported += this.OnErrorReported;
         this.activeEngine.Initialize(config);
 
         foreach (var watcher in this.eventWatchers) {
@@ -113,6 +115,7 @@ public class GameSessionService : IGameSessionService {
             this.activeEngine.GameFinished -= this.OnGameFinished;
             this.activeEngine.BroadcastRequested -= this.OnBroadcastRequested;
             this.activeEngine.ParticipantsChanged -= this.OnParticipantsChanged;
+            this.activeEngine.ErrorReported -= this.OnErrorReported;
             this.activeEngine.Stop();
             this.activeEngine = null;
         }
@@ -124,18 +127,27 @@ public class GameSessionService : IGameSessionService {
         this.SessionStateChanged?.Invoke();
     }
 
+    private void OnErrorReported(string errorKey) {
+        this.ErrorReported?.Invoke(errorKey);
+    }
+
     public void SetSessionVariable(string key, object value) {
         if (this.activeEngine != null) this.activeEngine.SetVariable(key, value);
     }
 
     private void OnBroadcastRequested(string message) {
-        if (this.CurrentConfig == null || !this.CurrentConfig.ListeningChannels.Any()) return;
+        if (this.CurrentConfig == null) return;
 
-        var targetChannel = this.CurrentConfig.ListeningChannels.First();
-        this.chatBroadcaster.Broadcast(message, targetChannel);
+        this.chatBroadcaster.Broadcast(message, this.CurrentConfig.BroadcastChannel);
     }
 
     private void OnGameEventFired(GameEvent gameEvent) {
+        if (this.CurrentConfig != null && gameEvent is ChatGameEvent chatEvent) {
+            if (!this.CurrentConfig.ListeningChannels.Contains(chatEvent.Channel)) {
+                return;
+            }
+        }
+
         this.activeEngine?.ProcessEvent(gameEvent);
     }
 

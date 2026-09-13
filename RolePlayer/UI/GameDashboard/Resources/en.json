@@ -61,5 +61,15 @@
   "host_variables_title": "Game Settings (Variables)",
   "host_variables_select_emote": "Select an Emote...",
   "host_stages_list": "Stage Progression",
-  "host_next_stage_specific": "Advance to: {0}"
+  "host_next_stage_specific": "Advance to: {0}",
+  "error_no_manual_transition": "No manual transition is configured for this stage.",
+  "error_transition_conditions_not_met": "The conditions required to advance to the next stage are not met.",
+  "host_broadcast_channel": "Broadcast Channel",
+  "channel_say": "Say",
+  "channel_yell": "Yell",
+  "channel_shout": "Shout",
+  "channel_party": "Party",
+  "channel_alliance": "Alliance",
+  "channel_freecompany": "FC",
+  "channel_custom": "Custom"
 }

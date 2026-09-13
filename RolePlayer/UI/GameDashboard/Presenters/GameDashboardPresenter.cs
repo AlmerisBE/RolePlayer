@@ -19,7 +19,8 @@ public class GameDashboardPresenter : IGameDashboardPresenter {
     public IReadOnlyList<GameDefinition> AvailableGames => this.libraryService.GetAvailableGames().ToList();
     public IReadOnlyList<EnrichedEmote> EmotesCache => this.emoteCache.GetCachedEmotes();
     public GameDefinition? SelectedGame { get; private set; }
-    public HashSet<GameChatChannel> SelectedChannels { get; private set; } = new();
+    public GameChatChannel SelectedBroadcastChannel { get; private set; } = GameChatChannel.Say;
+    public HashSet<GameChatChannel> SelectedChannels { get; private set; } = new() { GameChatChannel.Say };
     public SessionState CurrentState => this.sessionService.CurrentState;
     public IReadOnlyList<string> Participants => this.sessionService.Participants;
     public IReadOnlyDictionary<string, object> ActiveVariables {
@@ -33,6 +34,7 @@ public class GameDashboardPresenter : IGameDashboardPresenter {
     public string NextManualStageName => this.sessionService.NextManualStageName;
     public string CurrentStageDescription => this.sessionService.CurrentStageDescription;
     public string CurrentTargetName => this.targetManager.Target?.Name.TextValue ?? string.Empty;
+    public string LastErrorKey { get; private set; } = string.Empty;
 
     public bool AllowChatRegistration {
         get {
@@ -55,6 +57,9 @@ public class GameDashboardPresenter : IGameDashboardPresenter {
         this.sessionService = sessionService;
         this.targetManager = targetManager;
         this.emoteCache = emoteCache;
+
+        this.sessionService.ErrorReported += key => this.LastErrorKey = key;
+        this.sessionService.SessionStateChanged += this.DismissError;
     }
 
     public void SelectGame(GameDefinition? game) {
@@ -67,11 +72,19 @@ public class GameDashboardPresenter : IGameDashboardPresenter {
         if (!this.SelectedChannels.Add(channel)) this.SelectedChannels.Remove(channel);
     }
 
+    public void SetBroadcastChannel(GameChatChannel channel) {
+        if (this.CurrentState != SessionState.Inactive) return;
+
+        this.SelectedBroadcastChannel = channel;
+        this.SelectedChannels.Add(channel);
+    }
+
     public void StartSession() {
         if (this.SelectedGame == null || !this.SelectedChannels.Any()) return;
 
         var config = new GameSessionConfig {
             Game = this.SelectedGame,
+            BroadcastChannel = this.SelectedBroadcastChannel,
             ListeningChannels = new HashSet<GameChatChannel>(this.SelectedChannels)
         };
 
@@ -92,7 +105,12 @@ public class GameDashboardPresenter : IGameDashboardPresenter {
         }
     }
 
+    public void DismissError() {
+        this.LastErrorKey = string.Empty;
+    }
+
     public void AdvanceStage() {
+        this.DismissError();
         this.sessionService.AdvanceStage();
     }
 

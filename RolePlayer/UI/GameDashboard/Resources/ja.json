@@ -61,5 +61,15 @@
   "host_variables_title": "ゲーム設定 (変数)",
   "host_variables_select_emote": "エモートを選択...",
   "host_stages_list": "ステージの進行",
-  "host_next_stage_specific": "次に進む: {0}"
+  "host_next_stage_specific": "次に進む: {0}",
+  "error_no_manual_transition": "このステージには手動の移行が設定されていません。",
+  "error_transition_conditions_not_met": "次のステージに進むための条件が満たされていません。",
+  "host_broadcast_channel": "発信チャンネル",
+  "channel_say": "Say",
+  "channel_yell": "Yell",
+  "channel_shout": "Shout",
+  "channel_party": "Party",
+  "channel_alliance": "Alliance",
+  "channel_freecompany": "FC",
+  "channel_custom": "カスタム"
 }

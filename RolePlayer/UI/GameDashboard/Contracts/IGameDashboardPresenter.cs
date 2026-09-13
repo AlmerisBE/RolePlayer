@@ -9,6 +9,7 @@ public interface IGameDashboardPresenter : IDisposable {
     IReadOnlyList<GameDefinition> AvailableGames { get; }
     IReadOnlyList<EnrichedEmote> EmotesCache { get; }
     GameDefinition? SelectedGame { get; }
+    GameChatChannel SelectedBroadcastChannel { get; }
     HashSet<GameChatChannel> SelectedChannels { get; }
     SessionState CurrentState { get; }
     IReadOnlyList<string> Participants { get; }
@@ -21,11 +22,15 @@ public interface IGameDashboardPresenter : IDisposable {
     string CurrentTargetName { get; }
     string CurrentStageDescription { get; }
     IReadOnlyList<TimeSpan> RemainingTimers { get; }
+    string LastErrorKey { get; }
 
     void SelectGame(GameDefinition? game);
+    void SetBroadcastChannel(GameChatChannel channel);
     void ToggleChannel(GameChatChannel channel);
     void StartSession();
     void StopSession();
+
+    void DismissError();
 
     void AdvanceStage();
     void AddTarget();

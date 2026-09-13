@@ -17,6 +17,7 @@ public interface IGameEngine {
     event Action? GameFinished;
     event Action? ParticipantsChanged;
     event Action? StageChanged;
+    event Action<string>? ErrorReported;
 
     void Initialize(GameSessionConfig config);
     void Start();

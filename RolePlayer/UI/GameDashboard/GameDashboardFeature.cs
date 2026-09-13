@@ -16,10 +16,12 @@ using RolePlayer.UI.MainWindow.Contracts;
 public class GameDashboardFeature : IFeatureModule {
     public void RegisterServices(IServiceCollection services) {
         services.AddSingleton<ILocalizationProvider, GameDashboardLocalizationProvider>();
-
         services.AddSingleton<IGameDashboardPresenter, GameDashboardPresenter>();
 
         services.AddSingleton<GameStageEditorComponent>();
+
+        services.AddSingleton<DashboardHeaderComponent>();
+        services.AddSingleton<DashboardFooterComponent>();
         services.AddSingleton<DashboardControlComponent>();
         services.AddSingleton<DashboardVariablesComponent>();
         services.AddSingleton<DashboardParticipantsComponent>();

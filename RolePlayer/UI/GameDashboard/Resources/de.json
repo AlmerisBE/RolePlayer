@@ -61,5 +61,15 @@
   "host_variables_title": "Spieleinstellungen (Variablen)",
   "host_variables_select_emote": "Ein Emote auswählen...",
   "host_stages_list": "Phasenfortschritt",
-  "host_next_stage_specific": "Weiter zu: {0}"
+  "host_next_stage_specific": "Weiter zu: {0}",
+  "error_no_manual_transition": "Für diese Phase ist kein manueller Übergang konfiguriert.",
+  "error_transition_conditions_not_met": "Die Bedingungen für den Übergang in die nächste Phase sind nicht erfüllt.",
+  "host_broadcast_channel": "Sende-Kanal",
+  "channel_say": "Sagen",
+  "channel_yell": "Rufen",
+  "channel_shout": "Schreien",
+  "channel_party": "Gruppe",
+  "channel_alliance": "Allianz",
+  "channel_freecompany": "FG",
+  "channel_custom": "Benutzerdefiniert"
 }

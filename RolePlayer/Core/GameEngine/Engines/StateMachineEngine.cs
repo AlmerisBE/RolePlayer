@@ -56,6 +56,7 @@ public class StateMachineEngine : IGameEngine {
     public event Action? GameFinished;
     public event Action? ParticipantsChanged;
     public event Action? StageChanged;
+    public event Action<string>? ErrorReported;
 
     public StateMachineEngine(IConditionEvaluatorService conditionEvaluator, IGameActionExecutionService actionExecutionService, IFramework framework) {
         this.conditionEvaluator = conditionEvaluator;
@@ -141,7 +142,18 @@ public class StateMachineEngine : IGameEngine {
     }
 
     public void AdvanceStage() {
-        this.EvaluateTransitions("Manual");
+        if (this.currentStage == null) return;
+
+        var manualTransitions = this.currentStage.Transitions.Where(t => t.TriggerType.Equals("Manual", StringComparison.OrdinalIgnoreCase)).ToList();
+
+        if (manualTransitions.Count == 0) {
+            this.ErrorReported?.Invoke("error_no_manual_transition");
+            return;
+        }
+
+        if (!this.EvaluateTransitions("Manual")) {
+            this.ErrorReported?.Invoke("error_transition_conditions_not_met");
+        }
     }
 
     public void ProcessEvent(GameEvent gameEvent) {
@@ -195,16 +207,18 @@ public class StateMachineEngine : IGameEngine {
         this.EvaluateTransitions("Auto");
     }
 
-    private void EvaluateTransitions(string triggerType) {
-        if (this.currentStage == null) return;
+    private bool EvaluateTransitions(string triggerType) {
+        if (this.currentStage == null) return false;
         var transitions = this.currentStage.Transitions.Where(t => t.TriggerType.Equals(triggerType, StringComparison.OrdinalIgnoreCase)).ToList();
 
         foreach (var transition in transitions) {
             if (string.IsNullOrWhiteSpace(transition.ConditionExpression) || this.conditionEvaluator.Evaluate(transition.ConditionExpression, this.context)) {
                 this.SetStage(transition.TargetStageId);
-                return;
+                return true;
             }
         }
+
+        return false;
     }
 
     private bool IsModuleTriggeredByEvent(GameModuleConfig module, GameEvent gameEvent) {

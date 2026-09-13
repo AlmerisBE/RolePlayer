@@ -6,6 +6,7 @@ using System.Collections.Generic;
 
 public interface IGameSessionService {
     event Action? SessionStateChanged;
+    event Action<string>? ErrorReported;
 
     SessionState CurrentState { get; }
     GameSessionConfig? CurrentConfig { get; }

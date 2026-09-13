@@ -6,6 +6,5 @@ public enum GameChatChannel {
     Shout,
     Party,
     Alliance,
-    FreeCompany,
-    Custom
+    FreeCompany
 }
