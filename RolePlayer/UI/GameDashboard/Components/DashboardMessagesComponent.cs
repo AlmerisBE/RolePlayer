@@ -28,7 +28,6 @@ public class DashboardMessagesComponent {
                 bool stageNodeOpen = ImGui.TreeNodeEx($"Étape : {stage.Name}###MsgStage_{stage.Id}", ImGuiTreeNodeFlags.DefaultOpen);
 
                 if (stageNodeOpen) {
-                    // Actions à l'entrée de l'étape
                     for (int i = 0; i < stage.OnEnterActions.Count; i++) {
                         var action = stage.OnEnterActions[i];
                         if (action.ActionType.Equals("BroadcastMessage", StringComparison.OrdinalIgnoreCase)) {
@@ -36,7 +35,6 @@ public class DashboardMessagesComponent {
                         }
                     }
 
-                    // Actions déclenchées par les modules (Chat, Timer, Emote, etc.)
                     for (int m = 0; m < stage.ActiveModules.Count; m++) {
                         var module = stage.ActiveModules[m];
                         for (int a = 0; a < module.OnTriggerActions.Count; a++) {
@@ -60,8 +58,10 @@ public class DashboardMessagesComponent {
 
         string val = action.Parameters.TryGetValue("Message", out var msg) ? msg : string.Empty;
 
-        ImGui.SetNextItemWidth(-1f);
-        if (ImGui.InputTextMultiline(id, ref val, 512, new Vector2(-1, ImGui.GetTextLineHeight() * 3))) {
+        float width = ImGui.GetContentRegionAvail().X;
+        float height = ImGui.GetTextLineHeight() * 4;
+
+        if (ImGui.InputTextMultiline(id, ref val, 512, new Vector2(width, height), ImGuiInputTextFlags.NoHorizontalScroll)) {
             action.Parameters["Message"] = val;
             changed = true;
         }

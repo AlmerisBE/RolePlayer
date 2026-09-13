@@ -40,9 +40,17 @@ public class DashboardControlComponent {
         ImGui.TextDisabled(this.localization.Translate("host_listening_channels"));
         ImGui.Spacing();
 
-        foreach (GameChatChannel channel in Enum.GetValues(typeof(GameChatChannel))) {
-            bool isSelected = this.presenter.SelectedChannels.Contains(channel);
-            if (ImGui.Checkbox(channel.ToString(), ref isSelected)) this.presenter.ToggleChannel(channel);
+        string channelPreview = this.presenter.SelectedChannels.Count == 0 ? "Aucun canal" : $"{this.presenter.SelectedChannels.Count} canal(aux)";
+
+        ImGui.SetNextItemWidth(-1f);
+        if (ImGui.BeginCombo("##ListeningChannels", channelPreview)) {
+            foreach (GameChatChannel channel in Enum.GetValues(typeof(GameChatChannel))) {
+                bool isSelected = this.presenter.SelectedChannels.Contains(channel);
+                if (ImGui.Checkbox(channel.ToString(), ref isSelected)) {
+                    this.presenter.ToggleChannel(channel);
+                }
+            }
+            ImGui.EndCombo();
         }
         ImGui.EndDisabled();
 
@@ -63,10 +71,7 @@ public class DashboardControlComponent {
             ImGui.BeginDisabled(this.presenter.SelectedGame == null || this.presenter.SelectedChannels.Count == 0);
             ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.2f, 0.6f, 0.2f, 1.0f));
 
-            ImGui.PushFont(UiBuilder.IconFont);
             string playIcon = FontAwesomeIcon.Play.ToIconString();
-            ImGui.PopFont();
-
             if (ImGui.Button($"{playIcon} {this.localization.Translate("host_start_session")}", new Vector2(-1, 40))) this.presenter.StartSession();
 
             ImGui.PopStyleColor();
@@ -75,16 +80,14 @@ public class DashboardControlComponent {
         else {
             if (this.presenter.CurrentStageName != "Finished") {
                 ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.2f, 0.4f, 0.8f, 1.0f));
-                if (ImGui.Button("Passer à l'étape suivante", new Vector2(-1, 35))) this.presenter.AdvanceStage();
+                string stepIcon = FontAwesomeIcon.StepForward.ToIconString();
+                if (ImGui.Button($"{stepIcon} Passer à l'étape suivante", new Vector2(-1, 35))) this.presenter.AdvanceStage();
                 ImGui.PopStyleColor();
                 ImGui.Spacing();
             }
 
             ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
-            ImGui.PushFont(UiBuilder.IconFont);
             string stopIcon = FontAwesomeIcon.Stop.ToIconString();
-            ImGui.PopFont();
-
             if (ImGui.Button($"{stopIcon} {this.localization.Translate("host_stop_session")}", new Vector2(-1, 40))) this.presenter.StopSession();
             ImGui.PopStyleColor();
         }
