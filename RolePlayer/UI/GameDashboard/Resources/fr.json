@@ -44,5 +44,7 @@
   "games_editor_transitions": "Transitions d'étape",
   "games_editor_add_transition": "Ajouter une transition",
   "games_editor_transition_target": "ID de l'étape cible",
-  "games_editor_transition_trigger": "Type de déclencheur"
+  "games_editor_transition_trigger": "Type de déclencheur",
+  "games_restore_defaults": "Restaurer par défaut",
+  "games_restore_tooltip": "Restaure les jeux par défaut supprimés sans écraser vos modifications existantes."
 }

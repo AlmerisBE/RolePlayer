@@ -18,4 +18,6 @@ public class PluginConfiguration : IPluginConfiguration {
     public string SelectedTheme { get; set; } = "Default";
 
     public bool EnableHotbars { get; set; } = true;
+
+    public bool HasInstalledDefaultGames { get; set; } = false;
 }

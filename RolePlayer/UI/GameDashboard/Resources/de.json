@@ -44,5 +44,7 @@
   "games_editor_transitions": "Phasenübergänge",
   "games_editor_add_transition": "Übergang hinzufügen",
   "games_editor_transition_target": "Ziel-Phasen-ID",
-  "games_editor_transition_trigger": "Auslösertyp"
+  "games_editor_transition_trigger": "Auslösertyp",
+  "games_restore_defaults": "Standard wiederherstellen",
+  "games_restore_tooltip": "Stellt gelöschte Standardspiele wieder her, ohne Ihre vorhandenen Änderungen zu überschreiben."
 }

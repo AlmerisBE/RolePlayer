@@ -44,5 +44,7 @@
   "games_editor_transitions": "Stage Transitions",
   "games_editor_add_transition": "Add Transition",
   "games_editor_transition_target": "Target Stage ID",
-  "games_editor_transition_trigger": "Trigger Type"
+  "games_editor_transition_trigger": "Trigger Type",
+  "games_restore_defaults": "Restore Defaults",
+  "games_restore_tooltip": "Restores deleted default games without overwriting your existing modifications."
 }

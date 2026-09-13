@@ -39,13 +39,24 @@ public class GamesListComponent {
 
         float availableWidth = ImGui.GetContentRegionAvail().X;
         float btnWidth = 150f;
+        float restoreBtnWidth = 180f;
+        float spacing = ImGui.GetStyle().ItemSpacing.X;
 
-        ImGui.SetCursorPosX(availableWidth - btnWidth);
+        ImGui.SetCursorPosX(availableWidth - btnWidth - restoreBtnWidth - spacing);
+
         ImGui.PushFont(UiBuilder.IconFont);
+        string syncIcon = FontAwesomeIcon.Sync.ToIconString();
         string plusIcon = FontAwesomeIcon.Plus.ToIconString();
         ImGui.PopFont();
 
-        // CORRECTION : Appel direct à l'ouverture de l'éditeur pour un nouveau jeu
+        if (ImGui.Button($"{syncIcon} {this.localization.Translate("games_restore_defaults")}", new Vector2(restoreBtnWidth, 0))) {
+            this.libraryService.RestoreDefaultGames();
+        }
+
+        if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("games_restore_tooltip"));
+
+        ImGui.SameLine();
+
         if (ImGui.Button($"{plusIcon} {this.localization.Translate("games_create_new")}", new Vector2(btnWidth, 0))) {
             this.editorWindow.OpenForEditing(null);
         }
@@ -72,15 +83,8 @@ public class GamesListComponent {
                 ImGui.Text(game.Name);
 
                 if (ImGui.BeginPopupContextItem($"GameContextMenu_{game.Id}")) {
-
-                    if (ImGui.MenuItem(this.localization.Translate("games_ctx_edit"))) {
-                        this.editorWindow.OpenForEditing(game);
-                    }
-
-                    if (ImGui.MenuItem(this.localization.Translate("games_ctx_duplicate"))) {
-                        this.libraryService.DuplicateGame(game.Id);
-                    }
-
+                    if (ImGui.MenuItem(this.localization.Translate("games_ctx_edit"))) this.editorWindow.OpenForEditing(game);
+                    if (ImGui.MenuItem(this.localization.Translate("games_ctx_duplicate"))) this.libraryService.DuplicateGame(game.Id);
                     if (ImGui.MenuItem(this.localization.Translate("games_editor_export"))) {
                         var base64 = this.serializerService.ToBase64Export(game);
                         ImGui.SetClipboardText(base64);
@@ -89,9 +93,7 @@ public class GamesListComponent {
                     ImGui.Separator();
 
                     ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
-                    if (ImGui.MenuItem(this.localization.Translate("games_ctx_delete"))) {
-                        this.libraryService.DeleteGame(game.Id);
-                    }
+                    if (ImGui.MenuItem(this.localization.Translate("games_ctx_delete"))) this.libraryService.DeleteGame(game.Id);
                     ImGui.PopStyleColor();
 
                     ImGui.EndPopup();

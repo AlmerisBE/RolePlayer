@@ -44,5 +44,7 @@
   "games_editor_transitions": "ステージ移行",
   "games_editor_add_transition": "移行を追加",
   "games_editor_transition_target": "対象ステージID",
-  "games_editor_transition_trigger": "トリガータイプ"
+  "games_editor_transition_trigger": "トリガータイプ",
+  "games_restore_defaults": "デフォルトを復元",
+  "games_restore_tooltip": "既存の変更を上書きせずに、削除されたデフォルトゲームを復元します。"
 }

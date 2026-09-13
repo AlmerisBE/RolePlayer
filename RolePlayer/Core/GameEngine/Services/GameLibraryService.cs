@@ -1,6 +1,7 @@
 ﻿namespace RolePlayer.Core.GameEngine.Services;
 
 using Dalamud.Plugin;
+using RolePlayer.Core.Configuration.Contracts;
 using RolePlayer.Core.GameEngine.Contracts;
 using RolePlayer.Core.GameEngine.Models;
 using RolePlayer.Core.Logging.Contracts;
@@ -15,16 +16,23 @@ public class GameLibraryService : IGameLibraryService {
     private IDalamudPluginInterface pluginInterface;
     private ILoggerService logger;
     private IGameTemplateProvider templateProvider;
+    private IConfigurationService configService;
 
     private List<GameDefinition> cachedGames = new();
     private Dictionary<Guid, string> filePaths = new();
 
     public string LibraryDirectory => Path.Combine(this.pluginInterface.ConfigDirectory.FullName, "Games");
 
-    public GameLibraryService(IDalamudPluginInterface pluginInterface, ILoggerService logger, IGameTemplateProvider templateProvider) {
+    public GameLibraryService(
+        IDalamudPluginInterface pluginInterface,
+        ILoggerService logger,
+        IGameTemplateProvider templateProvider,
+        IConfigurationService configService) {
+
         this.pluginInterface = pluginInterface;
         this.logger = logger;
         this.templateProvider = templateProvider;
+        this.configService = configService;
 
         this.EnsureDirectoryAndDefaultGames();
         this.ReloadLibrary();
@@ -33,10 +41,25 @@ public class GameLibraryService : IGameLibraryService {
     private void EnsureDirectoryAndDefaultGames() {
         if (!Directory.Exists(this.LibraryDirectory)) Directory.CreateDirectory(this.LibraryDirectory);
 
+        var config = this.configService.GetConfig();
+        if (config.HasInstalledDefaultGames) return;
+
+        this.RestoreDefaultGames();
+
+        config.HasInstalledDefaultGames = true;
+        this.configService.Save();
+    }
+
+    public void RestoreDefaultGames() {
+        if (!Directory.Exists(this.LibraryDirectory)) Directory.CreateDirectory(this.LibraryDirectory);
+
         foreach (var kvp in this.templateProvider.GetDefaultTemplates()) {
             var filePath = Path.Combine(this.LibraryDirectory, kvp.Key);
+            // On ne restaure que les fichiers manquants pour ne pas écraser les modifications de l'utilisateur
             if (!File.Exists(filePath)) this.WriteGameToFile(filePath, kvp.Value);
         }
+
+        this.ReloadLibrary();
     }
 
     private void WriteGameToFile(string path, GameDefinition game) {
@@ -119,10 +142,7 @@ public class GameLibraryService : IGameLibraryService {
         if (!Directory.Exists(this.LibraryDirectory)) Directory.CreateDirectory(this.LibraryDirectory);
 
         try {
-            Process.Start(new ProcessStartInfo {
-                FileName = this.LibraryDirectory,
-                UseShellExecute = true
-            });
+            Process.Start(new ProcessStartInfo { FileName = this.LibraryDirectory, UseShellExecute = true });
         }
         catch (Exception ex) {
             this.logger.Error(ex, "Failed to open games directory.");

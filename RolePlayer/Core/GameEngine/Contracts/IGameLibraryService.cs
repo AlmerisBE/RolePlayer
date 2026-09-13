@@ -12,4 +12,5 @@ public interface IGameLibraryService {
     void DuplicateGame(Guid gameId);
     void ReloadLibrary();
     void OpenLibraryDirectory();
+    void RestoreDefaultGames();
 }
