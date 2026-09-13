@@ -12,7 +12,7 @@ public class BlackjackTemplate : IDefaultGameTemplate {
         return new GameDefinition {
             Name = "Dice Blackjack",
             Author = "Almeris",
-            Description = "Roll closer to 21 without busting. Type !hit to roll or !stand to pass.",
+            Description = "Roll closer to 21 without busting. Use /random 10 to hit or type !stand to pass.",
             AllowChatRegistration = true,
             Parameters = new Dictionary<string, string> { { "TrackScores", "true" } },
             InitialVariables = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase) { { "current_player", "" }, { "played_count", 0 } },
@@ -27,7 +27,7 @@ public class BlackjackTemplate : IDefaultGameTemplate {
                     Id = "playing", Name = "Player Turn", GmDescription = "Current player decides to hit or stand.",
                     OnEnterActions = new List<GameActionConfig> {
                         new GameActionConfig { ActionType = "AdvanceTurn", Parameters = new Dictionary<string, string> { { "TargetVar", "current_player" } } },
-                        new GameActionConfig { ActionType = "BroadcastMessage", Parameters = new Dictionary<string, string> { { "Message", "{Var.current_player}'s turn! Type !hit to roll (/random 10) or !stand." } } }
+                        new GameActionConfig { ActionType = "BroadcastMessage", Parameters = new Dictionary<string, string> { { "Message", "{Var.current_player}'s turn! Use /random 10 to hit, or type !stand." } } }
                     },
                     ActiveModules = new List<GameModuleConfig> {
                         new GameModuleConfig { ModuleType = "DiceListener", ConditionExpressions = new List<string> { "Event.Sender == Var.current_player" }, OnTriggerActions = new List<GameActionConfig> { new GameActionConfig { ActionType = "IncrementVariable", Parameters = new Dictionary<string, string> { { "TargetVar", "score_{Event.Sender}" }, { "Value", "{Event.Roll}" } } }, new GameActionConfig { ActionType = "BroadcastMessage", Parameters = new Dictionary<string, string> { { "Message", "{Event.Sender} rolled {Event.Roll}. Total: {Var.score_{Event.Sender}}" } } } } },
