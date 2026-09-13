@@ -2,6 +2,7 @@
 
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
+using Dalamud.Interface.Components;
 using RolePlayer.Core.GameEngine.Contracts;
 using RolePlayer.UI.GameDashboard.Contracts;
 using RolePlayer.UI.GameDashboard.Windows;
@@ -35,21 +36,14 @@ public class GamesListComponent {
     }
 
     public void Draw() {
-        ImGui.TextDisabled(this.localization.Translate("main_tab_games"));
-
         float availableWidth = ImGui.GetContentRegionAvail().X;
-        float btnWidth = 150f;
-        float restoreBtnWidth = 180f;
+        float btnWidth = 160f;
+        float restoreBtnWidth = 200f;
         float spacing = ImGui.GetStyle().ItemSpacing.X;
 
         ImGui.SetCursorPosX(availableWidth - btnWidth - restoreBtnWidth - spacing);
 
-        ImGui.PushFont(UiBuilder.IconFont);
-        string syncIcon = FontAwesomeIcon.Sync.ToIconString();
-        string plusIcon = FontAwesomeIcon.Plus.ToIconString();
-        ImGui.PopFont();
-
-        if (ImGui.Button($"{syncIcon} {this.localization.Translate("games_restore_defaults")}", new Vector2(restoreBtnWidth, 0))) {
+        if (ImGuiComponents.IconButtonWithText(FontAwesomeIcon.Sync, this.localization.Translate("games_restore_defaults"))) {
             this.libraryService.RestoreDefaultGames();
         }
 
@@ -57,7 +51,7 @@ public class GamesListComponent {
 
         ImGui.SameLine();
 
-        if (ImGui.Button($"{plusIcon} {this.localization.Translate("games_create_new")}", new Vector2(btnWidth, 0))) {
+        if (ImGuiComponents.IconButtonWithText(FontAwesomeIcon.Plus, this.localization.Translate("games_create_new"))) {
             this.editorWindow.OpenForEditing(null);
         }
 
@@ -71,7 +65,7 @@ public class GamesListComponent {
         if (ImGui.BeginTable("GamesListTable", 3, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit)) {
             ImGui.TableSetupColumn(this.localization.Translate("config_common_name"), ImGuiTableColumnFlags.WidthStretch);
             ImGui.TableSetupColumn("Author", ImGuiTableColumnFlags.WidthFixed, 120f);
-            ImGui.TableSetupColumn(this.localization.Translate("config_common_actions"), ImGuiTableColumnFlags.WidthFixed, 80f);
+            ImGui.TableSetupColumn(this.localization.Translate("config_common_actions"), ImGuiTableColumnFlags.WidthFixed, 110f);
             ImGui.TableHeadersRow();
 
             foreach (var game in games) {
@@ -108,18 +102,41 @@ public class GamesListComponent {
                 float startY = ImGui.GetCursorPosY() - ImGui.GetStyle().CellPadding.Y;
                 ImGui.SetCursorPosY(startY + (rowHeight - buttonHeight) / 2f);
 
+                // Edit Button
                 ImGui.PushFont(UiBuilder.IconFont);
-                ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.2f, 0.6f, 0.2f, 1.0f));
+                ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.2f, 0.4f, 0.8f, 1.0f));
+                bool editClicked = ImGui.Button($"{FontAwesomeIcon.Edit.ToIconString()}##Edit_{game.Id}");
+                ImGui.PopStyleColor();
+                ImGui.PopFont();
+                if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("games_ctx_edit"));
 
-                if (ImGui.Button($"{FontAwesomeIcon.Play.ToIconString()}##Host_{game.Id}")) {
+                ImGui.SameLine();
+
+                // Host/Play Button
+                ImGui.PushFont(UiBuilder.IconFont);
+                ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.2f, 0.8f, 0.2f, 1.0f));
+                bool playClicked = ImGui.Button($"{FontAwesomeIcon.Play.ToIconString()}##Host_{game.Id}");
+                ImGui.PopStyleColor();
+                ImGui.PopFont();
+                if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("games_host_session"));
+
+                ImGui.SameLine();
+
+                // Delete Button
+                ImGui.PushFont(UiBuilder.IconFont);
+                ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
+                bool deleteClicked = ImGui.Button($"{FontAwesomeIcon.Trash.ToIconString()}##Del_{game.Id}");
+                ImGui.PopStyleColor();
+                ImGui.PopFont();
+                if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("games_ctx_delete"));
+
+                // Action Handling
+                if (editClicked) this.editorWindow.OpenForEditing(game);
+                if (playClicked) {
                     this.dashboardPresenter.SelectGame(game);
                     this.dashboardWindow.OpenForGame();
                 }
-
-                ImGui.PopStyleColor();
-                ImGui.PopFont();
-
-                if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("games_host_session"));
+                if (deleteClicked) this.libraryService.DeleteGame(game.Id);
             }
             ImGui.EndTable();
         }
