@@ -19,8 +19,6 @@ using RolePlayer.UI.MainWindow.Windows;
 
 public class MainWindowFeature : IFeatureModule {
     public void RegisterServices(IServiceCollection services) {
-        services.AddSingleton<MainWindow>();
-
         services.AddSingleton<TabManagerComponent>();
         services.AddSingleton<StatusBarComponent>();
         services.AddSingleton<MainLayoutComponent>();
@@ -42,7 +40,10 @@ public class MainWindowFeature : IFeatureModule {
         services.AddSingleton<MacroListComponent>();
         services.AddSingleton<MacroEditorPanelComponent>();
 
+        services.AddSingleton<MainWindow>();
+        services.AddSingleton<IMainWindow>(provider => provider.GetRequiredService<MainWindow>());
         services.AddSingleton<Window>(provider => provider.GetRequiredService<MainWindow>());
+
         services.AddSingleton<ICommand, OpenMainWindowCommand>();
         services.AddSingleton<ICommand, ConfigCommand>();
 

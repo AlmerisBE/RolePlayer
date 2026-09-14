@@ -7,7 +7,7 @@ public class PlayerNameNormalizer : IPlayerNameNormalizer {
     public string Normalize(string name) {
         if (string.IsNullOrEmpty(name)) return string.Empty;
 
-        var parts = name.Split(new[] { '\uE05D', '@' }, 2);
+        var parts = name.Split('@', 2);
         var cleanName = Regex.Replace(parts[0], @"^[^\p{L}]+", "");
 
         return cleanName.Trim();

@@ -4,11 +4,12 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
 using RolePlayer.UI.MainWindow.Components;
+using RolePlayer.UI.MainWindow.Contracts;
 using RolePlayer.UI.MainWindow.Tabs;
 using System;
 using System.Numerics;
 
-public class MainWindow : Window, IDisposable {
+public class MainWindow : Window, IDisposable, IMainWindow {
     private TabManagerComponent tabManager;
     private StatusBarComponent statusBar;
     private MainLayoutComponent layoutManager;

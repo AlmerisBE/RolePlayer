@@ -1,15 +1,15 @@
 ﻿namespace RolePlayer.UI.MainWindow.Commands;
 
 using RolePlayer.UI.Command.Contracts;
-using RolePlayer.UI.MainWindow.Windows;
+using RolePlayer.UI.MainWindow.Contracts;
 
 public class OpenMainWindowCommand : ICommand {
-    private MainWindow mainWindow;
+    private IMainWindow mainWindow;
 
     public string CommandTrigger => "emotes";
     public string Description => "Ouvre le navigateur d'emotes de RolePlayer.";
 
-    public OpenMainWindowCommand(MainWindow mainWindow) {
+    public OpenMainWindowCommand(IMainWindow mainWindow) {
         this.mainWindow = mainWindow;
     }
 

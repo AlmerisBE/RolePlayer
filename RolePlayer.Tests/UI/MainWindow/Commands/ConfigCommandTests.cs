@@ -2,16 +2,13 @@
 
 using NSubstitute;
 using RolePlayer.UI.MainWindow.Commands;
+using RolePlayer.UI.MainWindow.Contracts;
 using Xunit;
 
 public class ConfigCommandTests {
     [Fact]
     public void Execute_CallsOpenConfigOnMainWindow() {
-        var mockMainWindow = Substitute.ForPartsOf<RolePlayer.UI.MainWindow.Windows.MainWindow>(
-            Substitute.For<Dalamud.Plugin.IDalamudPluginInterface>(),
-            null!, null!, null!
-        );
-
+        var mockMainWindow = Substitute.For<IMainWindow>();
         var command = new ConfigCommand(mockMainWindow);
 
         command.Execute(string.Empty);

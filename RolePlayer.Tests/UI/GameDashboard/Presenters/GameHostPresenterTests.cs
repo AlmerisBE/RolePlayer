@@ -40,11 +40,11 @@ public class GameHostPresenterTests {
 
         using var presenter = new GameDashboardPresenter(mockLibrary, mockSession, mockTargetManager, mockEmoteCache);
 
-        presenter.ToggleChannel(GameChatChannel.Say);
-        Assert.Contains(GameChatChannel.Say, presenter.SelectedChannels);
+        presenter.ToggleChannel(GameChatChannel.Yell);
+        Assert.Contains(GameChatChannel.Yell, presenter.SelectedChannels);
 
-        presenter.ToggleChannel(GameChatChannel.Say);
-        Assert.DoesNotContain(GameChatChannel.Say, presenter.SelectedChannels);
+        presenter.ToggleChannel(GameChatChannel.Yell);
+        Assert.DoesNotContain(GameChatChannel.Yell, presenter.SelectedChannels);
     }
 
     [Fact]

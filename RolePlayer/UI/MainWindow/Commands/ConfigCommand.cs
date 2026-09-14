@@ -1,15 +1,15 @@
 ﻿namespace RolePlayer.UI.MainWindow.Commands;
 
 using RolePlayer.UI.Command.Contracts;
-using RolePlayer.UI.MainWindow.Windows;
+using RolePlayer.UI.MainWindow.Contracts;
 
 public class ConfigCommand : ICommand {
-    private MainWindow mainWindow;
+    private IMainWindow mainWindow;
 
     public string CommandTrigger => "config";
     public string Description => "Ouvre la fenêtre principale sur l'onglet de configuration.";
 
-    public ConfigCommand(MainWindow mainWindow) {
+    public ConfigCommand(IMainWindow mainWindow) {
         this.mainWindow = mainWindow;
     }
 

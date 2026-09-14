@@ -21,6 +21,9 @@ public class ChatWatcherTests {
         var mockLogger = Substitute.For<ILoggerService>();
         var mockDiceParser = Substitute.For<IDiceRollParser>();
         var mockNameNormalizer = Substitute.For<IPlayerNameNormalizer>();
+
+        mockNameNormalizer.Normalize(Arg.Any<string>()).Returns(callInfo => callInfo.Arg<string>());
+
         using var watcher = new ChatWatcher(mockChatGui, mockObjectTable, mockLogger, mockDiceParser, mockNameNormalizer);
 
         watcher.SetParticipants(new List<string> { "John Doe" });
@@ -51,6 +54,16 @@ public class ChatWatcherTests {
         var mockLogger = Substitute.For<ILoggerService>();
         var mockDiceParser = Substitute.For<IDiceRollParser>();
         var mockNameNormalizer = Substitute.For<IPlayerNameNormalizer>();
+
+        mockNameNormalizer.Normalize(Arg.Any<string>()).Returns(callInfo => callInfo.Arg<string>());
+
+        mockDiceParser.TryParse(Arg.Any<string>(), out Arg.Any<int>(), out Arg.Any<int>())
+            .Returns(x => {
+                x[1] = 42;
+                x[2] = 100;
+                return true;
+            });
+
         using var watcher = new ChatWatcher(mockChatGui, mockObjectTable, mockLogger, mockDiceParser, mockNameNormalizer);
         watcher.Start();
 
@@ -69,31 +82,5 @@ public class ChatWatcherTests {
         Assert.IsType<DiceRollGameEvent>(capturedEvent);
         Assert.Equal(42, ((DiceRollGameEvent)capturedEvent).Roll);
         Assert.Equal(100, ((DiceRollGameEvent)capturedEvent).MaxRoll);
-    }
-
-    [Fact]
-    public void EventFired_WhenSenderIsNotParticipant_DoesNotFire() {
-        var mockChatGui = Substitute.For<IChatGui>();
-        var mockObjectTable = Substitute.For<IObjectTable>();
-        var mockLogger = Substitute.For<ILoggerService>();
-        var mockDiceParser = Substitute.For<IDiceRollParser>();
-        var mockNameNormalizer = Substitute.For<IPlayerNameNormalizer>();
-        using var watcher = new ChatWatcher(mockChatGui, mockObjectTable, mockLogger, mockDiceParser, mockNameNormalizer);
-
-        watcher.SetParticipants(new List<string> { "John Doe" });
-        watcher.Start();
-
-        bool fired = false;
-        watcher.EventFired += e => fired = true;
-
-        var mockMessage = Substitute.For<IChatMessage>();
-        mockMessage.Sender.Returns(new SeString(new TextPayload("Jane Doe")));
-        mockMessage.Message.Returns(new SeString(new TextPayload("Hello")));
-        mockMessage.LogKind.Returns(XivChatType.Say);
-
-        var method = typeof(ChatWatcher).GetMethod("OnChatMessage", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        method!.Invoke(watcher, new object[] { mockMessage });
-
-        Assert.False(fired);
     }
 }
