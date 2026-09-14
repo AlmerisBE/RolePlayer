@@ -1,4 +1,4 @@
-﻿namespace RolePlayer.Tests.Core.Configuration.Commands;
+﻿namespace RolePlayer.Tests.UI.Command.Commands;
 
 using NSubstitute;
 using RolePlayer.Core.Configuration.Contracts;
