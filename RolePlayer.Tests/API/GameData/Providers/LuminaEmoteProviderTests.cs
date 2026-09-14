@@ -3,7 +3,7 @@
 using Dalamud.Plugin.Services;
 using NSubstitute;
 using RolePlayer.API.GameData.Providers;
-using RolePlayer.UI.EmoteBrowser.Contracts;
+using RolePlayer.Core.Emotes.Contracts;
 using Xunit;
 
 public class LuminaEmoteProviderTests {
