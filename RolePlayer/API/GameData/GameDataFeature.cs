@@ -6,9 +6,8 @@ using RolePlayer.API.GameData.Providers;
 using RolePlayer.API.Penumbra.Contracts;
 using RolePlayer.Core.Emotes.Contracts;
 using RolePlayer.Core.Framework;
+using RolePlayer.Core.Macros.Contracts;
 using RolePlayer.UI.Command.Contracts;
-using RolePlayer.UI.EmoteBrowser.Contracts;
-using RolePlayer.UI.MainWindow.Contracts;
 
 public class GameDataFeature : IFeatureModule {
     public void RegisterServices(IServiceCollection services) {
