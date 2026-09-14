@@ -2,17 +2,16 @@
 
 using Dalamud.Plugin;
 using Dalamud.Plugin.Ipc;
-using Dalamud.Plugin.Services;
 using global::Penumbra.Api.Enums;
 using global::Penumbra.Api.IpcSubscribers;
 using RolePlayer.API.Penumbra.Contracts;
+using RolePlayer.Core.Emotes.Contracts;
 using RolePlayer.Core.Logging.Contracts;
-using RolePlayer.UI.EmoteBrowser.Contracts;
 using System;
 using System.Collections.Generic;
 using System.IO;
 
-public class PenumbraIpcProvider : IModStateProvider, IDisposable {
+public class PenumbraIpcProvider : IEmoteModState, IDisposable {
     private IDalamudPluginInterface pluginInterface;
     private IEmotePathProvider emotePathProvider;
     private ILoggerService logger;
@@ -37,9 +36,7 @@ public class PenumbraIpcProvider : IModStateProvider, IDisposable {
     public PenumbraIpcProvider(
         IDalamudPluginInterface pluginInterface,
         IEmotePathProvider emotePathProvider,
-        ILoggerService logger,
-        IFramework framework,
-        IObjectTable objectTable) {
+        ILoggerService logger) {
 
         this.pluginInterface = pluginInterface;
         this.emotePathProvider = emotePathProvider;
@@ -87,7 +84,6 @@ public class PenumbraIpcProvider : IModStateProvider, IDisposable {
             this.penumbraRootPath = this.getModDirectorySubscriber.Invoke();
             var mods = this.getModListSubscriber.Invoke();
 
-            // Atomic allocation for thread-safety during background reading
             var newCache = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var kvp in mods) {
@@ -141,7 +137,6 @@ public class PenumbraIpcProvider : IModStateProvider, IDisposable {
 
     private string ExtractModNameFromPath(string resolvedPath) {
         try {
-            // Strategic isolation of the mod directory using the exact Penumbra Root Directory
             if (!string.IsNullOrEmpty(this.penumbraRootPath) && resolvedPath.StartsWith(this.penumbraRootPath, StringComparison.OrdinalIgnoreCase)) {
                 var relativePath = resolvedPath.Substring(this.penumbraRootPath.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
                 var parts = relativePath.Split(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries);
@@ -156,7 +151,6 @@ public class PenumbraIpcProvider : IModStateProvider, IDisposable {
                 }
             }
 
-            // Fallback for edge cases outside the standard root path
             var fallbackParts = resolvedPath.Split(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries);
             int pivotIndex = -1;
 

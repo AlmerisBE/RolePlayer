@@ -12,6 +12,7 @@ public class HotbarFeature : IFeatureModule {
     public void RegisterServices(IServiceCollection services) {
         services.AddSingleton<IHotbarResolverService, HotbarResolverService>();
         services.AddSingleton<ILocalizationProvider, HotbarLocalizationProvider>();
+
         services.AddSingleton<HotbarManagerComponent>();
     }
 }

@@ -4,10 +4,10 @@ using Dalamud.Game;
 using Dalamud.Plugin.Services;
 using RolePlayer.API.FFXIVCollect.Models;
 using RolePlayer.API.GameData.Providers;
+using RolePlayer.Core.Emotes.Contracts;
 using RolePlayer.Core.Logging.Contracts;
-using RolePlayer.UI.EmoteBrowser.Contracts;
 using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
@@ -19,15 +19,16 @@ public class FFXIVCollectUnlockSourceProvider : IUnlockSourceProvider, IDisposab
     private ILoggerService logger;
     private HttpClient httpClient;
 
-    private Dictionary<uint, string> externalCache;
+    private ConcurrentDictionary<uint, string> externalCache;
     private bool isReady;
+    private Task initializationTask;
 
     public FFXIVCollectUnlockSourceProvider(LuminaUnlockSourceProvider fallbackProvider, IClientState clientState, ILoggerService logger) {
         this.fallbackProvider = fallbackProvider;
         this.clientState = clientState;
         this.logger = logger;
         this.httpClient = new HttpClient();
-        this.externalCache = new Dictionary<uint, string>();
+        this.externalCache = new ConcurrentDictionary<uint, string>();
         this.isReady = false;
 
         string langCode = this.clientState.ClientLanguage switch {
@@ -37,7 +38,7 @@ public class FFXIVCollectUnlockSourceProvider : IUnlockSourceProvider, IDisposab
             _ => "en"
         };
 
-        Task.Run(() => this.FetchExternalDataAsync(langCode));
+        this.initializationTask = Task.Run(() => this.FetchExternalDataAsync(langCode));
     }
 
     private async Task FetchExternalDataAsync(string language) {

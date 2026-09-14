@@ -1,8 +1,8 @@
 ﻿namespace RolePlayer.Core.Macros.Services;
 
 using RolePlayer.Core.Configuration.Contracts;
+using RolePlayer.Core.Macros.Contracts;
 using RolePlayer.Core.Macros.Models;
-using RolePlayer.UI.Hotbar.Contracts;
 using System;
 using System.Collections.Generic;
 using System.Linq;

@@ -8,6 +8,7 @@ using RolePlayer.UI.EmoteBrowser.Contracts;
 using RolePlayer.UI.Localization.Contracts;
 using RolePlayer.UI.MainWindow.Commands;
 using RolePlayer.UI.MainWindow.Components;
+using RolePlayer.UI.MainWindow.Components.Games;
 using RolePlayer.UI.MainWindow.Components.Macros;
 using RolePlayer.UI.MainWindow.Contracts;
 using RolePlayer.UI.MainWindow.Providers;
@@ -18,8 +19,6 @@ using RolePlayer.UI.MainWindow.Windows;
 
 public class MainWindowFeature : IFeatureModule {
     public void RegisterServices(IServiceCollection services) {
-        services.AddSingleton<MainWindow>();
-
         services.AddSingleton<TabManagerComponent>();
         services.AddSingleton<StatusBarComponent>();
         services.AddSingleton<MainLayoutComponent>();
@@ -41,12 +40,19 @@ public class MainWindowFeature : IFeatureModule {
         services.AddSingleton<MacroListComponent>();
         services.AddSingleton<MacroEditorPanelComponent>();
 
+        services.AddSingleton<MainWindow>();
+        services.AddSingleton<IMainWindow>(provider => provider.GetRequiredService<MainWindow>());
         services.AddSingleton<Window>(provider => provider.GetRequiredService<MainWindow>());
+
         services.AddSingleton<ICommand, OpenMainWindowCommand>();
+        services.AddSingleton<ICommand, ConfigCommand>();
+
+        services.AddSingleton<GamesListComponent>();
 
         services.AddSingleton<IEmoteBrowserTab, ConfigurationTab>();
         services.AddSingleton<IEmoteBrowserTab, AboutTab>();
         services.AddSingleton<IEmoteBrowserTab, MacrosTab>();
+        services.AddSingleton<IEmoteBrowserTab, GamesTab>();
 
         services.AddSingleton<ILocalizationProvider, MainWindowLocalizationProvider>();
     }

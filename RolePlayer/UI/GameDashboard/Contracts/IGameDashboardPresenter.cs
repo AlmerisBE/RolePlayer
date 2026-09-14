@@ -1,0 +1,42 @@
+﻿namespace RolePlayer.UI.GameDashboard.Contracts;
+
+using RolePlayer.Core.Emotes.Models;
+using RolePlayer.Core.GameEngine.Models;
+using System;
+using System.Collections.Generic;
+
+public interface IGameDashboardPresenter : IDisposable {
+    IReadOnlyList<GameDefinition> AvailableGames { get; }
+    IReadOnlyList<EnrichedEmote> EmotesCache { get; }
+    GameDefinition? SelectedGame { get; }
+    GameChatChannel SelectedBroadcastChannel { get; }
+    HashSet<GameChatChannel> SelectedChannels { get; }
+    SessionState CurrentState { get; }
+    IReadOnlyList<string> Participants { get; }
+
+    IReadOnlyDictionary<string, object> ActiveVariables { get; }
+
+    string CurrentStageName { get; }
+    string NextManualStageName { get; }
+    bool AllowChatRegistration { get; set; }
+    string CurrentTargetName { get; }
+    string CurrentStageDescription { get; }
+    IReadOnlyList<TimeSpan> RemainingTimers { get; }
+    string LastErrorKey { get; }
+
+    void SelectGame(GameDefinition? game);
+    void SetBroadcastChannel(GameChatChannel channel);
+    void ToggleChannel(GameChatChannel channel);
+    void StartSession();
+    void StopSession();
+
+    void DismissError();
+
+    void AdvanceStage();
+    void AddTarget();
+    void RemoveParticipant(string name);
+
+    void SetVariable(string key, object value);
+
+    void SaveGameConfig();
+}

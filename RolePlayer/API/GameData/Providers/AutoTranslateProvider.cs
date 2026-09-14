@@ -2,8 +2,8 @@
 
 using Dalamud.Plugin.Services;
 using Lumina.Excel.Sheets;
-using RolePlayer.UI.MainWindow.Contracts;
-using RolePlayer.UI.MainWindow.Models;
+using RolePlayer.Core.Macros.Contracts;
+using RolePlayer.Core.Macros.Models;
 using System.Collections.Generic;
 using System.Linq;
 

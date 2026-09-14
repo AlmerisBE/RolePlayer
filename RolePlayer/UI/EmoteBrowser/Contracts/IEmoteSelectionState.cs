@@ -1,7 +1,7 @@
 ﻿namespace RolePlayer.UI.EmoteBrowser.Contracts;
 
-using RolePlayer.UI.EmoteBrowser.Models;
+using RolePlayer.Core.Emotes.Models;
 
 public interface IEmoteSelectionState {
-    EmoteDisplayData? SelectedEmote { get; set; }
+    EnrichedEmote? SelectedEmote { get; set; }
 }

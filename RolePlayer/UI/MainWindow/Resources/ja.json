@@ -116,5 +116,11 @@
   "config_macro_copy": "マクロの内容をコピー",
   "config_macro_toggle_lock": "マクロのロックを切り替える",
   "browser_ctx_append_macro": "マクロに追加...",
-  "browser_ctx_no_unlocked_macros": "利用可能なマクロがありません"
+  "browser_ctx_no_unlocked_macros": "利用可能なマクロがありません",
+  "main_tab_games": "ゲーム",
+  "games_ctx_edit": "ゲームを編集",
+  "games_ctx_duplicate": "ゲームを複製",
+  "games_ctx_delete": "ゲームを削除",
+  "config_common_author": "作者",
+  "config_common_unknown": "不明"
 }

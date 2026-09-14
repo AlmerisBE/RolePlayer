@@ -4,8 +4,8 @@ using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using Lumina.Excel.Sheets;
 using RolePlayer.API.Interop.Contracts;
+using RolePlayer.Core.Emotes.Contracts;
 using RolePlayer.Core.Logging.Contracts;
-using RolePlayer.UI.EmoteBrowser.Contracts;
 using System;
 using System.Collections.Generic;
 

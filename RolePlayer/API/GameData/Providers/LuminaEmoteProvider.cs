@@ -3,12 +3,13 @@
 using Dalamud.Game;
 using Dalamud.Plugin.Services;
 using Lumina.Excel.Sheets;
+using RolePlayer.Core.Emotes.Contracts;
+using RolePlayer.Core.Emotes.Models;
 using RolePlayer.UI.EmoteBrowser.Contracts;
-using RolePlayer.UI.EmoteBrowser.Models;
 using System.Collections.Generic;
 using System.Linq;
 
-public class LuminaEmoteProvider : IEmoteRepository {
+public class LuminaEmoteProvider : IRawEmoteRepository {
     private IDataManager dataManager;
     private IUnlockSourceProvider unlockSourceProvider;
     private IClientState clientState;
@@ -21,11 +22,11 @@ public class LuminaEmoteProvider : IEmoteRepository {
         this.clientState = clientState;
     }
 
-    public IEnumerable<EmoteDisplayData> GetBaseEmotes() {
+    public IEnumerable<EnrichedEmote> GetBaseEmotes() {
         var emoteSheet = this.dataManager.GetExcelSheet<Emote>();
         var textCommandSheetEn = this.dataManager.GetExcelSheet<TextCommand>(ClientLanguage.English);
 
-        if (emoteSheet == null) return Enumerable.Empty<EmoteDisplayData>();
+        if (emoteSheet == null) return Enumerable.Empty<EnrichedEmote>();
 
         return emoteSheet
             .Where(e => !string.IsNullOrEmpty(e.Name.ToString()) &&
@@ -41,7 +42,7 @@ public class LuminaEmoteProvider : IEmoteRepository {
                     if (enRow.HasValue) englishCommand = enRow.Value.Command.ToString();
                 }
 
-                return new EmoteDisplayData {
+                return new EnrichedEmote {
                     Id = e.RowId,
                     Name = e.Name.ToString(),
                     IconId = e.Icon,

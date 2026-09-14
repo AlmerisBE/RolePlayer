@@ -3,16 +3,18 @@
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using RolePlayer.Core.Configuration.Contracts;
+using RolePlayer.Core.Configuration.Models;
+using RolePlayer.Core.Emotes.Contracts;
+using RolePlayer.Core.Macros.Contracts;
+using RolePlayer.Core.MetaData.Contracts;
 using RolePlayer.UI.EmoteBrowser.Contracts;
 using RolePlayer.UI.Hotbar.Components;
-using RolePlayer.UI.Hotbar.Contracts;
-using RolePlayer.UI.Hotbar.Models;
 using RolePlayer.UI.Localization.Contracts;
 using System.Linq;
 using System.Numerics;
 
 public class EmoteDetailsPanel {
-    private IModStateProvider modStateProvider;
+    private IEmoteModState modStateProvider;
     private IEmoteSelectionState selectionState;
     private IEmoteDebugService debugService;
     private IEmoteExecutionService executionService;
@@ -25,7 +27,7 @@ public class EmoteDetailsPanel {
     private IMacroManagementService macroService;
 
     public EmoteDetailsPanel(
-        IModStateProvider modStateProvider,
+        IEmoteModState modStateProvider,
         IEmoteSelectionState selectionState,
         IEmoteDebugService debugService,
         IEmoteExecutionService executionService,
@@ -69,6 +71,7 @@ public class EmoteDetailsPanel {
             ImGui.SetWindowFontScale(1.3f);
             ImGui.TextUnformatted(emote.Name);
             ImGui.SetWindowFontScale(1.0f);
+            ImGui.TextDisabled($"ID: {emote.Id}");
 
             ImGui.TableNextColumn();
             ImGui.PushFont(UiBuilder.IconFont);
@@ -85,7 +88,6 @@ public class EmoteDetailsPanel {
 
         ImGui.Separator();
 
-        // Zone de défilement isolée pour le contenu
         if (ImGui.BeginChild("EmoteDetailsScrollArea")) {
             ImGui.Spacing();
 

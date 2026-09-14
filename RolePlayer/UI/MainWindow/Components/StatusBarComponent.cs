@@ -2,20 +2,17 @@
 
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
-using Dalamud.Plugin.Services;
 using RolePlayer.Core.Configuration.Contracts;
+using RolePlayer.Core.Emotes.Contracts;
 using RolePlayer.UI.EmoteBrowser.Contracts;
 using RolePlayer.UI.Localization.Contracts;
 using System;
 using System.Linq;
 using System.Numerics;
-using System.Threading.Tasks;
 
 public class StatusBarComponent : IDisposable {
     private IEmoteExecutionService executionService;
-    private IEmoteRepository emoteRepository;
-    private IPlayerStateProvider playerStateProvider;
-    private IClientState clientState;
+    private IEmoteCache emoteCache;
     private IContextManagementService contextService;
     private ILocalizationService localization;
 
@@ -24,31 +21,25 @@ public class StatusBarComponent : IDisposable {
 
     public StatusBarComponent(
         IEmoteExecutionService executionService,
-        IEmoteRepository emoteRepository,
-        IPlayerStateProvider playerStateProvider,
-        IClientState clientState,
+        IEmoteCache emoteCache,
         IContextManagementService contextService,
         ILocalizationService localization) {
 
         this.executionService = executionService;
-        this.emoteRepository = emoteRepository;
-        this.playerStateProvider = playerStateProvider;
-        this.clientState = clientState;
+        this.emoteCache = emoteCache;
         this.contextService = contextService;
         this.localization = localization;
 
-        this.playerStateProvider.PlayerStateValid += this.CalculateEmoteStatsAsync;
-        this.CalculateEmoteStatsAsync();
+        this.emoteCache.CacheUpdated += this.UpdateStats;
+        this.UpdateStats();
     }
 
-    private void CalculateEmoteStatsAsync() {
-        if (!this.playerStateProvider.IsPlayerValid) return;
+    private void UpdateStats() {
+        if (!this.emoteCache.IsReady) return;
 
-        Task.Run(() => {
-            var emotes = this.emoteRepository.GetBaseEmotes().ToList();
-            this.totalEmotesCount = emotes.Count;
-            this.unlockedEmotesCount = emotes.Count(e => !e.IsUnlockable || this.playerStateProvider.IsEmoteUnlocked(e.Id));
-        });
+        var emotes = this.emoteCache.GetCachedEmotes();
+        this.totalEmotesCount = emotes.Count;
+        this.unlockedEmotesCount = emotes.Count(e => e.IsUnlocked);
     }
 
     public void Draw() {
@@ -84,5 +75,7 @@ public class StatusBarComponent : IDisposable {
         ImGui.EndChild();
     }
 
-    public void Dispose() => this.playerStateProvider.PlayerStateValid -= this.CalculateEmoteStatsAsync;
+    public void Dispose() {
+        this.emoteCache.CacheUpdated -= this.UpdateStats;
+    }
 }

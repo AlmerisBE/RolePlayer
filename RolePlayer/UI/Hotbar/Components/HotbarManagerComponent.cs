@@ -5,15 +5,14 @@ using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using RolePlayer.Core.Configuration.Contracts;
+using RolePlayer.Core.Configuration.Models;
+using RolePlayer.Core.Emotes.Contracts;
+using RolePlayer.Core.Macros.Contracts;
 using RolePlayer.UI.EmoteBrowser.Contracts;
-using RolePlayer.UI.EmoteBrowser.Models;
 using RolePlayer.UI.Hotbar.Contracts;
-using RolePlayer.UI.Hotbar.Models;
 using RolePlayer.UI.Hotbar.Windows;
 using RolePlayer.UI.Localization.Contracts;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 
 public class HotbarManagerComponent : IDisposable {
     private IDalamudPluginInterface pluginInterface;
@@ -23,16 +22,12 @@ public class HotbarManagerComponent : IDisposable {
     private IEmoteExecutionService executionService;
     private IMacroExecutionService macroExecutionService;
     private ITextureProvider textureProvider;
-    private IEmoteRepository emoteRepository;
-    private IPlayerStateProvider playerStateProvider;
-    private IModStateProvider modStateProvider;
+    private IEmoteCache emoteCache;
     private ICondition condition;
-    private IFramework framework;
     private ILocalizationService localization;
 
     private WindowSystem windowSystem;
-    private List<EmoteDisplayData> sharedCache = new();
-    private DateTime? pendingRebuildTime = null;
+    private bool needsRefresh = false;
 
     public HotbarManagerComponent(
         IDalamudPluginInterface pluginInterface,
@@ -42,11 +37,8 @@ public class HotbarManagerComponent : IDisposable {
         IEmoteExecutionService executionService,
         IMacroExecutionService macroExecutionService,
         ITextureProvider textureProvider,
-        IEmoteRepository emoteRepository,
-        IPlayerStateProvider playerStateProvider,
-        IModStateProvider modStateProvider,
+        IEmoteCache emoteCache,
         ICondition condition,
-        IFramework framework,
         ILocalizationService localization) {
 
         this.pluginInterface = pluginInterface;
@@ -56,48 +48,23 @@ public class HotbarManagerComponent : IDisposable {
         this.executionService = executionService;
         this.macroExecutionService = macroExecutionService;
         this.textureProvider = textureProvider;
-        this.emoteRepository = emoteRepository;
-        this.playerStateProvider = playerStateProvider;
-        this.modStateProvider = modStateProvider;
+        this.emoteCache = emoteCache;
         this.condition = condition;
-        this.framework = framework;
         this.localization = localization;
 
         this.windowSystem = new WindowSystem("RolePlayer_Hotbars");
-        this.pluginInterface.UiBuilder.Draw += this.windowSystem.Draw;
-        this.modStateProvider.ModStateChanged += this.RebuildCache;
-        this.configService.ProfileLoaded += this.OnProfileLoaded;
-        this.contextService.ContextChanged += this.OnContextChanged;
 
-        this.playerStateProvider.PlayerStateValid += this.OnPlayerStateValid;
-        this.framework.Update += this.OnFrameworkUpdate;
+        this.pluginInterface.UiBuilder.Draw += this.OnDraw;
 
-        this.RebuildCache();
-        this.RefreshWindows();
-    }
+        this.emoteCache.CacheUpdated += this.RefreshWindows;
+        this.configService.ProfileLoaded += this.RefreshWindows;
+        this.contextService.ContextChanged += this.RefreshWindows;
+        this.contextService.HotbarsChanged += this.RefreshWindows;
 
-    private void OnFrameworkUpdate(IFramework fw) {
-        if (this.pendingRebuildTime.HasValue && DateTime.Now >= this.pendingRebuildTime.Value) {
-            this.pendingRebuildTime = null;
-            this.RebuildCache();
-            this.RefreshWindows();
-        }
-    }
-
-    private void OnPlayerStateValid() => this.pendingRebuildTime = DateTime.Now.AddSeconds(2);
-
-    private void OnProfileLoaded() {
-        this.RebuildCache();
-        this.RefreshWindows();
-    }
-
-    private void OnContextChanged() {
-        this.RebuildCache();
         this.RefreshWindows();
     }
 
     private bool EvaluateHotbarVisibility(HotbarConfig config) {
-        if (!this.playerStateProvider.IsPlayerValid) return true;
         if (!this.configService.GetConfig().EnableHotbars) return true;
         if (this.condition[ConditionFlag.WatchingCutscene]) return true;
         if (config.HideInCombat && this.condition[ConditionFlag.InCombat]) return true;
@@ -106,26 +73,20 @@ public class HotbarManagerComponent : IDisposable {
         return false;
     }
 
-    private void RebuildCache() {
-        if (!this.playerStateProvider.IsPlayerValid) return;
-
-        var baseEmotes = this.emoteRepository.GetBaseEmotes().ToList();
-        var newCache = new List<EmoteDisplayData>();
-
-        foreach (var emote in baseEmotes) {
-            emote.IsUnlocked = !emote.IsUnlockable || this.playerStateProvider.IsEmoteUnlocked(emote.Id);
-            var modName = this.modStateProvider.GetModNameModifyingEmote(emote.Id);
-            emote.IsModded = !string.IsNullOrEmpty(modName);
-            emote.ModName = modName;
-            newCache.Add(emote);
-        }
-
-        this.sharedCache = newCache;
+    public void RefreshWindows() {
+        this.needsRefresh = true;
     }
 
-    public IReadOnlyList<EmoteDisplayData> GetEmoteCache() => this.sharedCache;
+    private void OnDraw() {
+        if (this.needsRefresh) {
+            this.PerformRefreshWindows();
+            this.needsRefresh = false;
+        }
 
-    public void RefreshWindows() {
+        this.windowSystem.Draw();
+    }
+
+    private void PerformRefreshWindows() {
         this.windowSystem.RemoveAllWindows();
         var context = this.contextService.GetCurrentContext();
 
@@ -138,7 +99,7 @@ public class HotbarManagerComponent : IDisposable {
                 this.executionService,
                 this.macroExecutionService,
                 this.textureProvider,
-                () => this.sharedCache,
+                () => this.emoteCache.GetCachedEmotes(),
                 () => this.EvaluateHotbarVisibility(hotbarConfig),
                 this.localization
             );
@@ -147,12 +108,11 @@ public class HotbarManagerComponent : IDisposable {
     }
 
     public void Dispose() {
-        this.pluginInterface.UiBuilder.Draw -= this.windowSystem.Draw;
-        this.modStateProvider.ModStateChanged -= this.RebuildCache;
-        this.configService.ProfileLoaded -= this.OnProfileLoaded;
-        this.contextService.ContextChanged -= this.OnContextChanged;
-        this.playerStateProvider.PlayerStateValid -= this.OnPlayerStateValid;
-        this.framework.Update -= this.OnFrameworkUpdate;
+        this.pluginInterface.UiBuilder.Draw -= this.OnDraw;
+        this.emoteCache.CacheUpdated -= this.RefreshWindows;
+        this.configService.ProfileLoaded -= this.RefreshWindows;
+        this.contextService.ContextChanged -= this.RefreshWindows;
+        this.contextService.HotbarsChanged -= this.RefreshWindows;
         this.windowSystem.RemoveAllWindows();
     }
 }

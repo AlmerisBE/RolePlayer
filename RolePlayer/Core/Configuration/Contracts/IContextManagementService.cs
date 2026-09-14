@@ -5,7 +5,9 @@ using System;
 using System.Collections.Generic;
 
 public interface IContextManagementService {
-    event Action ContextChanged;
+    event Action? ContextChanged;
+    event Action? HotbarsChanged;
+
     EmoteContext GetCurrentContext();
     IEnumerable<EmoteContext> GetAllContexts();
     void CreateContext(string name, Guid? cloneFromId);
@@ -13,4 +15,6 @@ public interface IContextManagementService {
     void SwitchContextByName(string name);
     void RenameContext(Guid contextId, string newName);
     void DeleteContext(Guid contextId);
+
+    void NotifyHotbarsChanged();
 }
