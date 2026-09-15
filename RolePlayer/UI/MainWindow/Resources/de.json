@@ -122,5 +122,7 @@
   "games_ctx_duplicate": "Spiel duplizieren",
   "games_ctx_delete": "Spiel löschen",
   "config_common_author": "Autor",
-  "config_common_unknown": "Unbekannt"
+  "config_common_unknown": "Unbekannt",
+  "help_context_explanation": "Kontexte ermöglichen es dir, völlig separate Profile für deinen Charakter zu erstellen. Jeder Kontext hat seine eigenen Aktionsleisten, Gruppen und Tags. Dies ist äußerst nützlich, wenn du verschiedene RP-Rollen oder Alter Egos mit demselben Charakter spielst.",
+  "help_group_explanation": "Gruppen fungieren als benutzerdefinierte Ordner für deine Emotes. Im Gegensatz zu Tags (die mehrfache Zuweisungen erlauben), kann ein Emote nur zu einer einzigen Gruppe gehören. Ideal, um Emotes nach Haltung oder Stimmung zu kategorisieren."
 }

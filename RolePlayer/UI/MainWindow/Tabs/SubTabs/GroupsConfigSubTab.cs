@@ -4,6 +4,7 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using RolePlayer.Core.MetaData.Contracts;
 using RolePlayer.Core.MetaData.Models;
+using RolePlayer.UI.Common.Contracts;
 using RolePlayer.UI.Localization.Contracts;
 using System.Linq;
 using System.Numerics;
@@ -11,6 +12,7 @@ using System.Numerics;
 public class GroupsConfigSubTab {
     private IGroupManagementService groupService;
     private ILocalizationService localization;
+    private IHelpMarkerComponent helpMarker;
 
     private string newGroupName = string.Empty;
     private string newGroupDesc = string.Empty;
@@ -22,13 +24,15 @@ public class GroupsConfigSubTab {
     private string groupToDelete = string.Empty;
     private bool isDeleteDialogOpen = false;
 
-    public GroupsConfigSubTab(IGroupManagementService groupService, ILocalizationService localization) {
+    public GroupsConfigSubTab(IGroupManagementService groupService, ILocalizationService localization, IHelpMarkerComponent helpMarker) {
         this.groupService = groupService;
         this.localization = localization;
+        this.helpMarker = helpMarker;
     }
 
     public void Draw() {
         ImGui.Text(this.localization.Translate("config_grp_create"));
+        this.helpMarker.Draw("help_group_explanation");
 
         float availableWidth = ImGui.GetContentRegionAvail().X;
         float buttonWidth = 32f;

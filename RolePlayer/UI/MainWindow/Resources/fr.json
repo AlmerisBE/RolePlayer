@@ -122,5 +122,7 @@
   "games_ctx_duplicate": "Dupliquer le Jeu",
   "games_ctx_delete": "Supprimer le Jeu",
   "config_common_author": "Auteur",
-  "config_common_unknown": "Inconnu"
+  "config_common_unknown": "Inconnu",
+  "help_context_explanation": "Les contextes vous permettent de créer des profils entièrement distincts pour votre personnage. Chaque contexte possède ses propres barres, groupes et tags. C'est idéal si vous jouez différents rôles RP ou alter egos avec le même personnage.",
+  "help_group_explanation": "Les groupes agissent comme des dossiers personnalisés pour vos emotes. Contrairement aux tags (qui s'additionnent), une emote ne peut appartenir qu'à un seul groupe à la fois. Idéal pour ranger vos emotes par posture ou humeur."
 }

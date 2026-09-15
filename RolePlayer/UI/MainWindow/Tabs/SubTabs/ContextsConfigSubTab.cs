@@ -3,6 +3,7 @@
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using RolePlayer.Core.Configuration.Contracts;
+using RolePlayer.UI.Common.Contracts;
 using RolePlayer.UI.Localization.Contracts;
 using System;
 using System.Linq;
@@ -11,6 +12,7 @@ using System.Numerics;
 public class ContextsConfigSubTab {
     private IContextManagementService contextService;
     private ILocalizationService localization;
+    private IHelpMarkerComponent helpMarker;
 
     private string newContextName = string.Empty;
     private Guid cloneSourceId = Guid.Empty;
@@ -19,13 +21,15 @@ public class ContextsConfigSubTab {
     private Guid contextToDelete = Guid.Empty;
     private bool isDeleteDialogOpen = false;
 
-    public ContextsConfigSubTab(IContextManagementService contextService, ILocalizationService localization) {
+    public ContextsConfigSubTab(IContextManagementService contextService, ILocalizationService localization, IHelpMarkerComponent helpMarker) {
         this.contextService = contextService;
         this.localization = localization;
+        this.helpMarker = helpMarker;
     }
 
     public void Draw() {
         ImGui.Text(this.localization.Translate("config_ctx_create"));
+        this.helpMarker.Draw("help_context_explanation");
 
         float availableWidth = ImGui.GetContentRegionAvail().X;
         float btnWidth = 32f;

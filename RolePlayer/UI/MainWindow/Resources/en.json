@@ -122,5 +122,7 @@
   "games_ctx_duplicate": "Duplicate Game",
   "games_ctx_delete": "Delete Game",
   "config_common_author": "Author",
-  "config_common_unknown": "Unknown"
+  "config_common_unknown": "Unknown",
+  "help_context_explanation": "Contexts allow you to create entirely separate profiles for your character. Each context has its own set of hotbars, groups, and tags. This is extremely useful if you play different RP roles or alter egos with the same character.",
+  "help_group_explanation": "Groups act as custom folders for your emotes. Unlike tags (which allow multiple assignments), an emote can only belong to a single group. This is ideal for categorizing emotes by stance or mood."
 }

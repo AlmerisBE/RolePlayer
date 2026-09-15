@@ -122,5 +122,7 @@
   "games_ctx_duplicate": "ゲームを複製",
   "games_ctx_delete": "ゲームを削除",
   "config_common_author": "作者",
-  "config_common_unknown": "不明"
+  "config_common_unknown": "不明",
+  "help_context_explanation": "コンテキストを使用すると、キャラクターの完全に独立したプロファイルを作成できます。各コンテキストには、独自のホットバー、グループ、およびタグのセットがあります。同じキャラクターで異なるRPロールや別人を演じる場合に非常に便利です。",
+  "help_group_explanation": "グループは、エモートのカスタムフォルダとして機能します。タグ（複数割り当て可能）とは異なり、エモートは1つのグループにのみ属することができます。スタンスや気分でエモートを分類するのに最適です。"
 }
