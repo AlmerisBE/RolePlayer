@@ -23,12 +23,13 @@ public class DiceRollParser : IDiceRollParser {
         int firstNum = int.Parse(matches[matches.Count - 2].Value);
         int secondNum = int.Parse(matches[matches.Count - 1].Value);
 
-        bool isFrenchFormat = messageText.Contains("dé", StringComparison.OrdinalIgnoreCase) ||
-                              messageText.Contains("obtenez", StringComparison.OrdinalIgnoreCase) ||
-                              messageText.Contains("obtient", StringComparison.OrdinalIgnoreCase) ||
-                              messageText.Contains("jetez", StringComparison.OrdinalIgnoreCase);
+        bool isReverseFormat = messageText.Contains("dé", StringComparison.OrdinalIgnoreCase) ||
+                               messageText.Contains("obtenez", StringComparison.OrdinalIgnoreCase) ||
+                               messageText.Contains("obtient", StringComparison.OrdinalIgnoreCase) ||
+                               messageText.Contains("jetez", StringComparison.OrdinalIgnoreCase) ||
+                               messageText.Contains("面ダイス", StringComparison.OrdinalIgnoreCase);
 
-        if (isFrenchFormat) {
+        if (isReverseFormat) {
             maxRoll = firstNum;
             roll = secondNum;
         }
