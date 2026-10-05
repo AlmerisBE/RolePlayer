@@ -74,4 +74,15 @@ public class GameActionExecutionServiceTests {
 
         Assert.True(advanceRequested);
     }
+
+    [Fact]
+    public void Execute_ClearParticipants_EmptiesList() {
+        var context = new GameSessionContext();
+        context.Participants.Add("Player1");
+
+        var action = new GameActionConfig { ActionType = "ClearParticipants" };
+        this.actionService.Execute(action, context);
+
+        Assert.Empty(context.Participants);
+    }
 }

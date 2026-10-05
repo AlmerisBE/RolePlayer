@@ -53,6 +53,7 @@ public class ConditionEvaluatorService : IConditionEvaluatorService {
     }
 
     private object? ResolveValue(string raw, GameSessionContext context) {
+        if (string.Equals(raw, "null", StringComparison.OrdinalIgnoreCase)) return null;
         if (long.TryParse(raw, out long longVal)) return longVal;
 
         if (raw.StartsWith("'") && raw.EndsWith("'")) return raw.Trim('\'');

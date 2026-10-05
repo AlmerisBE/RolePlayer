@@ -28,6 +28,9 @@ public class GameActionExecutionService : IGameActionExecutionService {
             case "REGISTERPLAYER":
                 this.ExecuteRegisterPlayer(context);
                 break;
+            case "CLEARPARTICIPANTS":
+                this.ExecuteClearParticipants(context);
+                break;
             case "SETVARIABLE":
                 this.ExecuteSetVariable(action, context);
                 break;
@@ -77,6 +80,10 @@ public class GameActionExecutionService : IGameActionExecutionService {
         if (!context.Participants.Contains(sender, StringComparer.OrdinalIgnoreCase)) {
             context.Participants.Add(sender);
         }
+    }
+
+    private void ExecuteClearParticipants(GameSessionContext context) {
+        context.Participants.Clear();
     }
 
     private void ExecuteAdvanceTurn(GameActionConfig action, GameSessionContext context) {

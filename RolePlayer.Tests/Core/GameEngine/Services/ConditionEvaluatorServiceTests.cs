@@ -66,4 +66,13 @@ public class ConditionEvaluatorServiceTests {
 
         Assert.True(result);
     }
+
+    [Fact]
+    public void Evaluate_NullComparison_ReturnsTrueWhenVariableMissing() {
+        var context = new GameSessionContext();
+
+        bool result = this.evaluator.Evaluate("Var.missing_variable == null", context);
+
+        Assert.True(result);
+    }
 }

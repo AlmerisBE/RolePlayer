@@ -38,6 +38,9 @@ public class NaughtyGamesTemplate : IDefaultGameTemplate {
                     Id = "idle",
                     Name = "Listening Loop",
                     GmDescription = "Waiting for chat commands (!actions, !tod, !naked, !emote).",
+                    OnEnterActions = new List<GameActionConfig> {
+                        new GameActionConfig { ActionType = "ClearParticipants" }
+                    },
                     ActiveModules = new List<GameModuleConfig> {
                         new GameModuleConfig {
                             ModuleType = "ChatListener", Parameters = new Dictionary<string, string> { { "Command", "!actions" } },
@@ -79,7 +82,10 @@ public class NaughtyGamesTemplate : IDefaultGameTemplate {
                     ActiveModules = new List<GameModuleConfig> {
                         new GameModuleConfig {
                             ModuleType = "DiceListener", ConditionExpressions = new List<string> { "Var.tod_score_{Event.Sender} == null" },
-                            OnTriggerActions = new List<GameActionConfig> { new GameActionConfig { ActionType = "SetVariable", Parameters = new Dictionary<string, string> { { "TargetVar", "tod_score_{Event.Sender}" }, { "Value", "{Event.Roll}" } } } }
+                            OnTriggerActions = new List<GameActionConfig> {
+                                new GameActionConfig { ActionType = "RegisterPlayer" },
+                                new GameActionConfig { ActionType = "SetVariable", Parameters = new Dictionary<string, string> { { "TargetVar", "tod_score_{Event.Sender}" }, { "Value", "{Event.Roll}" } } }
+                            }
                         },
                         new GameModuleConfig {
                             ModuleType = "DiceListener", ConditionExpressions = new List<string> { "Var.tod_score_{Event.Sender} != null" },
@@ -125,7 +131,10 @@ public class NaughtyGamesTemplate : IDefaultGameTemplate {
                     ActiveModules = new List<GameModuleConfig> {
                         new GameModuleConfig {
                             ModuleType = "DiceListener", ConditionExpressions = new List<string> { "Var.naked_score_{Event.Sender} == null" },
-                            OnTriggerActions = new List<GameActionConfig> { new GameActionConfig { ActionType = "SetVariable", Parameters = new Dictionary<string, string> { { "TargetVar", "naked_score_{Event.Sender}" }, { "Value", "{Event.Roll}" } } } }
+                            OnTriggerActions = new List<GameActionConfig> {
+                                new GameActionConfig { ActionType = "RegisterPlayer" },
+                                new GameActionConfig { ActionType = "SetVariable", Parameters = new Dictionary<string, string> { { "TargetVar", "naked_score_{Event.Sender}" }, { "Value", "{Event.Roll}" } } }
+                            }
                         },
                         new GameModuleConfig {
                             ModuleType = "DiceListener", ConditionExpressions = new List<string> { "Var.naked_score_{Event.Sender} != null" },
@@ -169,7 +178,10 @@ public class NaughtyGamesTemplate : IDefaultGameTemplate {
                     ActiveModules = new List<GameModuleConfig> {
                         new GameModuleConfig {
                             ModuleType = "DiceListener", ConditionExpressions = new List<string> { "Var.emote_score_{Event.Sender} == null" },
-                            OnTriggerActions = new List<GameActionConfig> { new GameActionConfig { ActionType = "SetVariable", Parameters = new Dictionary<string, string> { { "TargetVar", "emote_score_{Event.Sender}" }, { "Value", "{Event.Roll}" } } } }
+                            OnTriggerActions = new List<GameActionConfig> {
+                                new GameActionConfig { ActionType = "RegisterPlayer" },
+                                new GameActionConfig { ActionType = "SetVariable", Parameters = new Dictionary<string, string> { { "TargetVar", "emote_score_{Event.Sender}" }, { "Value", "{Event.Roll}" } } }
+                            }
                         },
                         new GameModuleConfig {
                             ModuleType = "DiceListener", ConditionExpressions = new List<string> { "Var.emote_score_{Event.Sender} != null" },
