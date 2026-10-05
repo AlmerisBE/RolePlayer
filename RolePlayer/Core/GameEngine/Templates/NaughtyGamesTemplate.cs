@@ -85,9 +85,13 @@ public class NaughtyGamesTemplate : IDefaultGameTemplate {
                             ModuleType = "DiceListener", ConditionExpressions = new List<string> { "Var.tod_score_{Event.Sender} != null" },
                             OnTriggerActions = new List<GameActionConfig> { new GameActionConfig { ActionType = "BroadcastMessage", Parameters = new Dictionary<string, string> { { "Message", "[!] You can only roll once per round, {Event.Sender}!" } } } }
                         },
-                        new GameModuleConfig { ModuleType = "TimerListener", Parameters = new Dictionary<string, string> { { "DurationSeconds", "60" } } }
+                        new GameModuleConfig {
+                            ModuleType = "TimerListener",
+                            Parameters = new Dictionary<string, string> { { "DurationSeconds", "60" } },
+                            OnTriggerActions = new List<GameActionConfig> { new GameActionConfig { ActionType = "AdvanceStage" } }
+                        }
                     },
-                    Transitions = new List<GameTransition> { new GameTransition { TargetStageId = "tod_eval", TriggerType = "Auto" } }
+                    Transitions = new List<GameTransition> { new GameTransition { TargetStageId = "tod_eval", TriggerType = "Manual" } }
                 },
                 new GameStage {
                     Id = "tod_eval", Name = "TOD: Evaluation", GmDescription = "Evaluates TOD scores and handles ties.",
@@ -127,9 +131,13 @@ public class NaughtyGamesTemplate : IDefaultGameTemplate {
                             ModuleType = "DiceListener", ConditionExpressions = new List<string> { "Var.naked_score_{Event.Sender} != null" },
                             OnTriggerActions = new List<GameActionConfig> { new GameActionConfig { ActionType = "BroadcastMessage", Parameters = new Dictionary<string, string> { { "Message", "[!] You can only roll once, {Event.Sender}!" } } } }
                         },
-                        new GameModuleConfig { ModuleType = "TimerListener", Parameters = new Dictionary<string, string> { { "DurationSeconds", "60" } } }
+                        new GameModuleConfig {
+                            ModuleType = "TimerListener",
+                            Parameters = new Dictionary<string, string> { { "DurationSeconds", "60" } },
+                            OnTriggerActions = new List<GameActionConfig> { new GameActionConfig { ActionType = "AdvanceStage" } }
+                        }
                     },
-                    Transitions = new List<GameTransition> { new GameTransition { TargetStageId = "naked_eval", TriggerType = "Auto" } }
+                    Transitions = new List<GameTransition> { new GameTransition { TargetStageId = "naked_eval", TriggerType = "Manual" } }
                 },
                 new GameStage {
                     Id = "naked_eval", Name = "Naked: Evaluation", GmDescription = "Broadcasts players who failed the naked threshold.",
@@ -167,9 +175,13 @@ public class NaughtyGamesTemplate : IDefaultGameTemplate {
                             ModuleType = "DiceListener", ConditionExpressions = new List<string> { "Var.emote_score_{Event.Sender} != null" },
                             OnTriggerActions = new List<GameActionConfig> { new GameActionConfig { ActionType = "BroadcastMessage", Parameters = new Dictionary<string, string> { { "Message", "[!] You can only roll once, {Event.Sender}!" } } } }
                         },
-                        new GameModuleConfig { ModuleType = "TimerListener", Parameters = new Dictionary<string, string> { { "DurationSeconds", "60" } } }
+                        new GameModuleConfig {
+                            ModuleType = "TimerListener",
+                            Parameters = new Dictionary<string, string> { { "DurationSeconds", "60" } },
+                            OnTriggerActions = new List<GameActionConfig> { new GameActionConfig { ActionType = "AdvanceStage" } }
+                        }
                     },
-                    Transitions = new List<GameTransition> { new GameTransition { TargetStageId = "emote_eval", TriggerType = "Auto" } }
+                    Transitions = new List<GameTransition> { new GameTransition { TargetStageId = "emote_eval", TriggerType = "Manual" } }
                 },
                 new GameStage {
                     Id = "emote_eval", Name = "Emote: Evaluation", GmDescription = "Broadcasts players who breached the emote threshold.",
