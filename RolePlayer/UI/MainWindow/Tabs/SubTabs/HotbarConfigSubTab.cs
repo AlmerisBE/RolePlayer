@@ -274,7 +274,8 @@ public class HotbarConfigSubTab {
 
             ImGui.Spacing();
             float scalePercent = this.selectedHotbar.Scale * 100f;
-            if (ImGui.SliderFloat(this.localization.Translate("config_hb_scale"), ref scalePercent, 75f, 125f, "%.0f%%")) {
+
+            if (ImGui.SliderFloat(this.localization.Translate("config_hb_scale"), ref scalePercent, 50f, 125f, "%.0f%%")) {
                 this.selectedHotbar.Scale = scalePercent / 100f;
                 configChanged = true;
             }
