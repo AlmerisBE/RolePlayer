@@ -86,7 +86,7 @@ public class EmoteContextMenuComponent {
 
                 if (hotbarChanged) {
                     this.configurationService.Save();
-                    this.hotbarManager.RefreshWindows();
+                    this.hotbarManager.RequestRefresh();
                 }
                 ImGui.EndMenu();
             }

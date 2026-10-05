@@ -201,7 +201,7 @@ public class EmoteDetailsPanel {
 
         if (hotbarChanged) {
             this.configurationService.Save();
-            this.hotbarManager.RefreshWindows();
+            this.hotbarManager.RequestRefresh();
         }
     }
 

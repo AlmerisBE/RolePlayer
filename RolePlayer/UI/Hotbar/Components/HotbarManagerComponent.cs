@@ -1,79 +1,48 @@
 ﻿namespace RolePlayer.UI.Hotbar.Components;
 
-using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
-using Dalamud.Plugin.Services;
 using RolePlayer.Core.Configuration.Contracts;
-using RolePlayer.Core.Configuration.Models;
 using RolePlayer.Core.Emotes.Contracts;
-using RolePlayer.Core.Macros.Contracts;
-using RolePlayer.UI.EmoteBrowser.Contracts;
 using RolePlayer.UI.Hotbar.Contracts;
 using RolePlayer.UI.Hotbar.Windows;
-using RolePlayer.UI.Localization.Contracts;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 public class HotbarManagerComponent : IDisposable {
     private IDalamudPluginInterface pluginInterface;
-    private IConfigurationService configService;
     private IContextManagementService contextService;
-    private IHotbarResolverService resolverService;
-    private IEmoteExecutionService executionService;
-    private IMacroExecutionService macroExecutionService;
-    private ITextureProvider textureProvider;
     private IEmoteCache emoteCache;
-    private ICondition condition;
-    private ILocalizationService localization;
+    private IHotbarWindowFactory windowFactory;
 
     private WindowSystem windowSystem;
+    private Dictionary<Guid, HotbarWindow> activeWindows = new();
     private bool needsRefresh = false;
 
     public HotbarManagerComponent(
         IDalamudPluginInterface pluginInterface,
-        IConfigurationService configService,
         IContextManagementService contextService,
-        IHotbarResolverService resolverService,
-        IEmoteExecutionService executionService,
-        IMacroExecutionService macroExecutionService,
-        ITextureProvider textureProvider,
         IEmoteCache emoteCache,
-        ICondition condition,
-        ILocalizationService localization) {
+        IHotbarWindowFactory windowFactory) {
 
         this.pluginInterface = pluginInterface;
-        this.configService = configService;
         this.contextService = contextService;
-        this.resolverService = resolverService;
-        this.executionService = executionService;
-        this.macroExecutionService = macroExecutionService;
-        this.textureProvider = textureProvider;
         this.emoteCache = emoteCache;
-        this.condition = condition;
-        this.localization = localization;
+        this.windowFactory = windowFactory;
 
         this.windowSystem = new WindowSystem("RolePlayer_Hotbars");
 
         this.pluginInterface.UiBuilder.Draw += this.OnDraw;
 
-        this.emoteCache.CacheUpdated += this.RefreshWindows;
-        this.configService.ProfileLoaded += this.RefreshWindows;
-        this.contextService.ContextChanged += this.RefreshWindows;
-        this.contextService.HotbarsChanged += this.RefreshWindows;
+        this.emoteCache.CacheUpdated += this.RequestRefresh;
+        this.contextService.ContextChanged += this.RequestRefresh;
+        this.contextService.HotbarsChanged += this.RequestRefresh;
 
-        this.RefreshWindows();
+        this.RequestRefresh();
     }
 
-    private bool EvaluateHotbarVisibility(HotbarConfig config) {
-        if (!this.configService.GetConfig().EnableHotbars) return true;
-        if (this.condition[ConditionFlag.WatchingCutscene]) return true;
-        if (config.HideInCombat && this.condition[ConditionFlag.InCombat]) return true;
-        if (config.HideInDuty && (this.condition[ConditionFlag.BoundByDuty] || this.condition[ConditionFlag.BoundByDuty56])) return true;
-
-        return false;
-    }
-
-    public void RefreshWindows() {
+    public void RequestRefresh() {
         this.needsRefresh = true;
     }
 
@@ -87,32 +56,40 @@ public class HotbarManagerComponent : IDisposable {
     }
 
     private void PerformRefreshWindows() {
-        this.windowSystem.RemoveAllWindows();
         var context = this.contextService.GetCurrentContext();
+        var validIds = new HashSet<Guid>();
 
         foreach (var hotbarConfig in context.Hotbars) {
-            if (!hotbarConfig.IsVisible) continue;
+            validIds.Add(hotbarConfig.Id);
 
-            var window = new HotbarWindow(
-                hotbarConfig,
-                this.resolverService,
-                this.executionService,
-                this.macroExecutionService,
-                this.textureProvider,
-                () => this.emoteCache.GetCachedEmotes(),
-                () => this.EvaluateHotbarVisibility(hotbarConfig),
-                this.localization
-            );
-            this.windowSystem.AddWindow(window);
+            if (this.activeWindows.TryGetValue(hotbarConfig.Id, out var existingWindow)) {
+                existingWindow.UpdateConfig(hotbarConfig);
+            }
+            else {
+                var window = this.windowFactory.Create(hotbarConfig);
+                this.windowSystem.AddWindow(window);
+                this.activeWindows[hotbarConfig.Id] = window;
+            }
+        }
+
+        var toRemove = this.activeWindows.Keys.Except(validIds).ToList();
+        foreach (var id in toRemove) {
+            var windowToRemove = this.activeWindows[id];
+            this.windowSystem.RemoveWindow(windowToRemove);
+            this.activeWindows.Remove(id);
         }
     }
 
     public void Dispose() {
         this.pluginInterface.UiBuilder.Draw -= this.OnDraw;
-        this.emoteCache.CacheUpdated -= this.RefreshWindows;
-        this.configService.ProfileLoaded -= this.RefreshWindows;
-        this.contextService.ContextChanged -= this.RefreshWindows;
-        this.contextService.HotbarsChanged -= this.RefreshWindows;
-        this.windowSystem.RemoveAllWindows();
+        this.emoteCache.CacheUpdated -= this.RequestRefresh;
+        this.contextService.ContextChanged -= this.RequestRefresh;
+        this.contextService.HotbarsChanged -= this.RequestRefresh;
+
+        foreach (var window in this.activeWindows.Values) {
+            this.windowSystem.RemoveWindow(window);
+        }
+
+        this.activeWindows.Clear();
     }
 }

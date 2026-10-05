@@ -1,14 +1,14 @@
 ﻿namespace RolePlayer.UI.Hotbar.Windows;
 
 using Dalamud.Bindings.ImGui;
+using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Interface;
 using Dalamud.Interface.Textures;
-using Dalamud.Interface.Textures.Internal;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin.Services;
+using RolePlayer.Core.Configuration.Contracts;
 using RolePlayer.Core.Configuration.Models;
 using RolePlayer.Core.Emotes.Contracts;
-using RolePlayer.Core.Emotes.Models;
 using RolePlayer.Core.Macros.Contracts;
 using RolePlayer.UI.Hotbar.Contracts;
 using RolePlayer.UI.Hotbar.Models;
@@ -24,11 +24,14 @@ public class HotbarWindow : Window {
     private IEmoteExecutionService emoteExecutionService;
     private IMacroExecutionService macroExecutionService;
     private ITextureProvider textureProvider;
-    private Func<IEnumerable<EnrichedEmote>> emoteCacheProvider;
-    private Func<bool> shouldHideHotbars;
+    private IEmoteCache emoteCache;
+    private IConfigurationService configService;
+    private ICondition condition;
     private ILocalizationService localization;
+
+    private List<ResolvedHotbarItem> cachedItems = new();
     private int currentPage = 0;
-    private const int MaxItemsPerPage = 16;
+
     private const float IconSize = 41f;
 
     public HotbarWindow(
@@ -37,8 +40,9 @@ public class HotbarWindow : Window {
         IEmoteExecutionService emoteExecutionService,
         IMacroExecutionService macroExecutionService,
         ITextureProvider textureProvider,
-        Func<IEnumerable<EnrichedEmote>> emoteCacheProvider,
-        Func<bool> shouldHideHotbars,
+        IEmoteCache emoteCache,
+        IConfigurationService configService,
+        ICondition condition,
         ILocalizationService localization)
         : base($"RolePlayer_Hotbar_{config.Id}", ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.AlwaysAutoResize) {
 
@@ -47,8 +51,9 @@ public class HotbarWindow : Window {
         this.emoteExecutionService = emoteExecutionService;
         this.macroExecutionService = macroExecutionService;
         this.textureProvider = textureProvider;
-        this.emoteCacheProvider = emoteCacheProvider;
-        this.shouldHideHotbars = shouldHideHotbars;
+        this.emoteCache = emoteCache;
+        this.configService = configService;
+        this.condition = condition;
         this.localization = localization;
 
         this.SizeConstraints = new WindowSizeConstraints {
@@ -58,11 +63,38 @@ public class HotbarWindow : Window {
 
         this.SizeCondition = ImGuiCond.Always;
         this.IsOpen = config.IsVisible;
+
+        this.RefreshContent();
+    }
+
+    public void UpdateConfig(HotbarConfig newConfig) {
+        this.config = newConfig;
+        this.RefreshContent();
+    }
+
+    public void RefreshContent() {
+        var allEmotes = this.emoteCache.GetCachedEmotes();
+        this.cachedItems = this.resolverService.ResolveItemsForHotbar(this.config, allEmotes).ToList();
+
+        int maxItemsPerPage = this.config.ButtonCount;
+        int totalPages = (int)Math.Ceiling(this.cachedItems.Count / (double)maxItemsPerPage);
+
+        if (this.currentPage >= totalPages && totalPages > 0) this.currentPage = totalPages - 1;
+        if (totalPages == 0) this.currentPage = 0;
+    }
+
+    private bool EvaluateHotbarVisibility() {
+        if (!this.configService.GetConfig().EnableHotbars) return true;
+        if (this.condition[ConditionFlag.WatchingCutscene]) return true;
+        if (this.config.HideInCombat && this.condition[ConditionFlag.InCombat]) return true;
+        if (this.config.HideInDuty && (this.condition[ConditionFlag.BoundByDuty] || this.condition[ConditionFlag.BoundByDuty56])) return true;
+
+        return false;
     }
 
     public override void Update() {
         try {
-            bool hide = this.shouldHideHotbars != null && this.shouldHideHotbars();
+            bool hide = this.EvaluateHotbarVisibility();
             this.IsOpen = this.config.IsVisible && !hide;
         }
         catch {
@@ -86,28 +118,21 @@ public class HotbarWindow : Window {
     }
 
     public override void Draw() {
-        var allEmotes = this.emoteCacheProvider();
-        var resolvedItems = this.resolverService.ResolveItemsForHotbar(this.config, allEmotes);
-
         int maxItemsPerPage = this.config.ButtonCount;
+        int totalPages = (int)Math.Ceiling(this.cachedItems.Count / (double)maxItemsPerPage);
 
-        if (resolvedItems.Count > 0) {
-            int totalPages = (int)Math.Ceiling(resolvedItems.Count / (double)maxItemsPerPage);
-            if (this.currentPage >= totalPages && totalPages > 0) this.currentPage = totalPages - 1;
-            if (totalPages == 0) this.currentPage = 0;
-
-            var displayedItems = resolvedItems.Skip(this.currentPage * maxItemsPerPage).Take(maxItemsPerPage).ToList();
+        if (this.cachedItems.Count > 0) {
+            var displayedItems = this.cachedItems.Skip(this.currentPage * maxItemsPerPage).Take(maxItemsPerPage).ToList();
 
             int maxColumns = this.GetColumnsForLayout(this.config.Layout);
             int actualColumns = Math.Max(1, Math.Min(maxColumns, displayedItems.Count));
-            float columnWidth = IconSize;
 
             ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, Vector2.Zero);
             ImGui.PushStyleVar(ImGuiStyleVar.CellPadding, new Vector2(2f, 2f));
             ImGui.PushStyleColor(ImGuiCol.Button, Vector4.Zero);
 
             if (ImGui.BeginTable($"HotbarGrid_{this.config.Id}", actualColumns, ImGuiTableFlags.SizingFixedFit)) {
-                for (int col = 0; col < actualColumns; col++) ImGui.TableSetupColumn($"col_{col}", ImGuiTableColumnFlags.WidthFixed, columnWidth);
+                for (int col = 0; col < actualColumns; col++) ImGui.TableSetupColumn($"col_{col}", ImGuiTableColumnFlags.WidthFixed, IconSize);
 
                 for (int i = 0; i < displayedItems.Count; i++) {
                     if (i % actualColumns == 0) ImGui.TableNextRow();
@@ -221,7 +246,7 @@ public class HotbarWindow : Window {
                 ImGui.Dummy(new Vector2(IconSize, IconSize));
             }
         }
-        catch (IconNotFoundException) {
+        catch (Exception) {
             ImGui.Dummy(new Vector2(IconSize, IconSize));
         }
     }
