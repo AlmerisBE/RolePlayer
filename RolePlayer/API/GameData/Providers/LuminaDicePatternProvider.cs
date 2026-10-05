@@ -25,52 +25,46 @@ public class LuminaDicePatternProvider : IDicePatternProvider {
         var enSheet = this.dataManager.GetExcelSheet<LogMessage>(ClientLanguage.English);
         var localSheet = this.dataManager.GetExcelSheet<LogMessage>();
 
-        if (localSheet == null) return patterns;
+        if (localSheet != null) {
+            var diceIds = new HashSet<uint> { 856, 1231, 3887, 5180 };
 
-        var diceIds = new HashSet<uint> { 856, 1231, 3887, 5180 };
+            if (enSheet != null) {
+                foreach (var row in enSheet) {
+                    string rawEn = row.Text.ExtractText().ToLowerInvariant();
+                    if ((rawEn.Contains("random!") || rawEn.Contains("dice!")) && rawEn.Contains("roll")) {
+                        diceIds.Add(row.RowId);
+                    }
+                }
+            }
 
-        if (enSheet != null) {
-            foreach (var row in enSheet) {
-                string rawEn = row.Text.ExtractText().ToLowerInvariant();
-                if ((rawEn.Contains("random!") || rawEn.Contains("dice!")) && rawEn.Contains("roll")) {
-                    diceIds.Add(row.RowId);
+            foreach (var id in diceIds) {
+                var row = localSheet.GetRowOrDefault(id);
+                if (!row.HasValue) continue;
+
+                string rawLocal = row.Value.Text.ToString();
+                if (string.IsNullOrWhiteSpace(rawLocal)) continue;
+
+                var parts = Regex.Split(rawLocal, @"[\x00-\x1F]+");
+                var escapedParts = parts.Where(p => !string.IsNullOrWhiteSpace(p)).Select(Regex.Escape);
+
+                if (!escapedParts.Any()) continue;
+
+                string patternStr = @"^\s*" + string.Join(".*?", escapedParts) + @"\s*$";
+
+                try {
+                    patterns.Add(new Regex(patternStr, RegexOptions.IgnoreCase | RegexOptions.Compiled));
+                    this.logger.Info($"[LuminaDicePattern] Compiled strict regex for ID {id}: {patternStr}");
+                }
+                catch (Exception ex) {
+                    this.logger.Error(ex, $"[LuminaDicePattern] Failed to compile regex for ID {id}");
                 }
             }
         }
 
-        foreach (var id in diceIds) {
-            var row = localSheet.GetRowOrDefault(id);
-            if (!row.HasValue) continue;
-
-            string rawLocal = row.Value.Text.ToString();
-            if (string.IsNullOrWhiteSpace(rawLocal)) continue;
-
-            // Split by control characters (payloads) to isolate pure textual parts
-            var parts = Regex.Split(rawLocal, @"[\x00-\x1F]+");
-            var escapedParts = parts
-                .Where(p => !string.IsNullOrWhiteSpace(p))
-                .Select(Regex.Escape);
-
-            if (!escapedParts.Any()) continue;
-
-            // Rebuild the strict regex: Match start/end, and replace missing payloads with a lazy wildcard
-            string patternStr = @"^\s*" + string.Join(".*?", escapedParts) + @"\s*$";
-
-            try {
-                var regex = new Regex(patternStr, RegexOptions.IgnoreCase | RegexOptions.Compiled);
-                patterns.Add(regex);
-                this.logger.Info($"[LuminaDicePattern] Compiled strict regex for ID {id}: {patternStr}");
-            }
-            catch (Exception ex) {
-                this.logger.Error(ex, $"[LuminaDicePattern] Failed to compile regex for ID {id}");
-            }
-        }
-
-        if (patterns.Count == 0) {
-            this.logger.Warning("[LuminaDicePattern] Dynamic discovery yielded no results. Using hardcoded fallbacks.");
-            patterns.Add(new Regex(@"^you roll a \d+.*$", RegexOptions.IgnoreCase | RegexOptions.Compiled));
-            patterns.Add(new Regex(@"^vous jetez les dés et obtenez \d+.*$", RegexOptions.IgnoreCase | RegexOptions.Compiled));
-        }
+        // Always add robust fallbacks for /dice AutoTranslate payloads and universal /random forms
+        patterns.Add(new Regex(@"^(?:lancer de dé\s*!|random\s*!|dice\s*!|würfel|ダイス).*?\d+.*$", RegexOptions.IgnoreCase | RegexOptions.Compiled));
+        patterns.Add(new Regex(@"^vous jetez les dés et obtenez \d+.*$", RegexOptions.IgnoreCase | RegexOptions.Compiled));
+        patterns.Add(new Regex(@"^you roll a \d+.*$", RegexOptions.IgnoreCase | RegexOptions.Compiled));
 
         return patterns;
     }
