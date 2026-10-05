@@ -10,7 +10,6 @@ using RolePlayer.UI.Hotbar.Components;
 using RolePlayer.UI.Hotbar.Contracts;
 using RolePlayer.UI.Hotbar.Models;
 using RolePlayer.UI.Localization.Contracts;
-using System;
 using System.Collections.Generic;
 using System.Numerics;
 
@@ -22,7 +21,10 @@ public class HotbarPreviewComponent {
     private ILocalizationService localization;
 
     private int draggedItemIndex = -1;
-    private const float IconSize = 41f;
+    private const float IconSize = 24f;
+    private const string PayloadId = "RP_HOTBAR_DRAG";
+
+    private byte[] dummyPayload = new byte[1] { 1 };
 
     public HotbarPreviewComponent(
         IConfigurationService configService,
@@ -68,25 +70,29 @@ public class HotbarPreviewComponent {
             var lookup = new GameIconLookup { IconId = item.IconId, HiRes = false };
             var iconWrap = this.textureProvider.GetFromGameIcon(lookup).GetWrapOrDefault();
 
-            if (iconWrap != null) ImGui.Image(iconWrap.Handle, new Vector2(IconSize, IconSize));
-            else ImGui.Dummy(new Vector2(IconSize, IconSize));
+            ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, Vector2.Zero);
+            ImGui.PushStyleColor(ImGuiCol.Button, Vector4.Zero);
 
-            string payloadId = $"HOTBAR_DRAG_{config.Id}";
+            if (iconWrap != null) ImGui.ImageButton(iconWrap.Handle, new Vector2(IconSize, IconSize));
+            else ImGui.Button($"##fallback_{index}", new Vector2(IconSize, IconSize));
+
+            ImGui.PopStyleColor();
+            ImGui.PopStyleVar();
 
             if (ImGui.BeginDragDropSource(ImGuiDragDropFlags.None)) {
                 this.draggedItemIndex = index;
-                ImGui.SetDragDropPayload(payloadId, ReadOnlySpan<byte>.Empty);
+
+                ImGui.SetDragDropPayload(PayloadId, this.dummyPayload);
 
                 ImGui.Text(item.Name);
-                if (iconWrap != null) ImGui.Image(iconWrap.Handle, new Vector2(IconSize / 2, IconSize / 2));
+                if (iconWrap != null) ImGui.Image(iconWrap.Handle, new Vector2(IconSize, IconSize));
 
                 ImGui.EndDragDropSource();
             }
 
             if (ImGui.BeginDragDropTarget()) {
-                ImGui.AcceptDragDropPayload(payloadId);
+                ImGui.AcceptDragDropPayload(PayloadId);
 
-                // Evaluates to true only on the exact frame the user releases the drag over this target
                 if (ImGui.IsMouseReleased(ImGuiMouseButton.Left) && this.draggedItemIndex != -1) {
                     this.resolverService.UpdateCustomOrder(config, items, this.draggedItemIndex, index);
 
@@ -99,7 +105,7 @@ public class HotbarPreviewComponent {
             }
         }
         catch (IconNotFoundException) {
-            ImGui.Dummy(new Vector2(IconSize, IconSize));
+            ImGui.Button($"##broken_{index}", new Vector2(IconSize, IconSize));
         }
 
         if (ImGui.IsItemHovered()) ImGui.SetTooltip(item.Name);

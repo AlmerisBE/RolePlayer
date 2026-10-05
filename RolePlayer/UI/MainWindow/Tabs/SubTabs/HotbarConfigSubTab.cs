@@ -332,10 +332,29 @@ public class HotbarConfigSubTab {
             ImGui.Spacing();
 
             var resolvedItems = this.hotbarResolver.ResolveItemsForHotbar(this.selectedHotbar, this.emoteCache.GetCachedEmotes());
+
             ImGui.TextColored(new Vector4(0.7f, 0.7f, 0.7f, 1.0f), this.localization.Translate("config_hb_preview", resolvedItems.Count));
+
+            if (this.selectedHotbar.CustomOrder.Count > 0) {
+                ImGui.SameLine();
+                ImGui.SetCursorPosX(ImGui.GetWindowContentRegionMax().X - ImGui.CalcTextSize(FontAwesomeIcon.Undo.ToIconString()).X - (ImGui.GetStyle().FramePadding.X * 2));
+
+                ImGui.PushFont(UiBuilder.IconFont);
+                if (ImGui.Button($"{FontAwesomeIcon.Undo.ToIconString()}##ResetOrder")) {
+                    this.selectedHotbar.CustomOrder.Clear();
+                    configChanged = true;
+                }
+                ImGui.PopFont();
+                if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_hb_reset_order"));
+            }
+
+            // Apply disabled text color and force text wrapping based on available panel width
+            ImGui.PushStyleColor(ImGuiCol.Text, ImGui.GetStyle().Colors[(int)ImGuiCol.TextDisabled]);
+            ImGui.TextWrapped(this.localization.Translate("config_hb_drag_drop_hint"));
+            ImGui.PopStyleColor();
+
             ImGui.Spacing();
 
-            // Appel au nouveau composant de Drag & Drop
             this.previewComponent.Draw(this.selectedHotbar, resolvedItems);
         }
         ImGui.EndChild();
