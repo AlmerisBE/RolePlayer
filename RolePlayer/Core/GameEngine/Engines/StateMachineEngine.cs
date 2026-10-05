@@ -161,15 +161,23 @@ public class StateMachineEngine : IGameEngine {
 
         this.context.CurrentEvent = gameEvent;
 
+        var triggeredModules = new List<GameModuleConfig>();
+
+        // Étape 1 : Évaluer TOUTES les conditions avec l'état actuel avant toute mutation
         foreach (var module in this.currentStage.ActiveModules) {
             if (!this.IsModuleTriggeredByEvent(module, gameEvent)) continue;
 
             if (this.conditionEvaluator.EvaluateAll(module.ConditionExpressions, this.context)) {
-                this.actionExecutionService.ExecuteAll(module.OnTriggerActions, this.context);
+                triggeredModules.Add(module);
+            }
+        }
 
-                if (module.OnTriggerActions.Any(a => a.ActionType.Equals("RegisterPlayer", StringComparison.OrdinalIgnoreCase))) {
-                    this.ParticipantsChanged?.Invoke();
-                }
+        // Étape 2 : Exécuter toutes les actions des modules déclenchés
+        foreach (var module in triggeredModules) {
+            this.actionExecutionService.ExecuteAll(module.OnTriggerActions, this.context);
+
+            if (module.OnTriggerActions.Any(a => a.ActionType.Equals("RegisterPlayer", StringComparison.OrdinalIgnoreCase))) {
+                this.ParticipantsChanged?.Invoke();
             }
         }
 

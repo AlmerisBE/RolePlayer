@@ -99,7 +99,11 @@ public class ConditionEvaluatorService : IConditionEvaluatorService {
             return !listNot.Contains(strRightNot, StringComparer.OrdinalIgnoreCase);
         }
 
-        if (left == null || right == null) return left == right && (op == "==" || op == "=");
+        if (left == null || right == null) {
+            if (op == "==" || op == "=") return left == right;
+            if (op == "!=") return left != right;
+            return false;
+        }
 
         if (long.TryParse(left.ToString(), out long lVal) && long.TryParse(right.ToString(), out long rVal)) {
             return op switch {

@@ -14,6 +14,9 @@ public class NaughtyGamesTemplate : IDefaultGameTemplate {
             Author = "Almeris",
             Description = "An endless listening loop for social games. Available commands: !actions, !tod, !naked, !emote. Supports smart tie-breakers.",
             AllowChatRegistration = true,
+            Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+                { "TrackScores", "true" }
+            },
             InitialVariables = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase) {
                 { "next_game", "" }
             },
@@ -70,7 +73,7 @@ public class NaughtyGamesTemplate : IDefaultGameTemplate {
                 new GameStage {
                     Id = "tod_start", Name = "TOD: Initialization", GmDescription = "Starts the Truth or Dare setup.",
                     OnEnterActions = new List<GameActionConfig> {
-                        new GameActionConfig { ActionType = "ClearVariables", Parameters = new Dictionary<string, string> { { "Prefix", "tod_score_" } } },
+                        new GameActionConfig { ActionType = "ClearVariables", Parameters = new Dictionary<string, string> { { "Prefix", "score_" } } },
                         new GameActionConfig { ActionType = "SetVariable", Parameters = new Dictionary<string, string> { { "TargetVar", "next_game" }, { "Value", "" } } },
                         new GameActionConfig { ActionType = "SetVariable", Parameters = new Dictionary<string, string> { { "TargetVar", "tod_resolving" }, { "Value", "normal" } } },
                         new GameActionConfig { ActionType = "BroadcastMessage", Parameters = new Dictionary<string, string> { { "Message", "[Truth or Dare] Starting! Roll your /random to participate. The highest score will impose a truth or dare to the lowest score. You have 60 seconds!" } } }
@@ -81,14 +84,14 @@ public class NaughtyGamesTemplate : IDefaultGameTemplate {
                     Id = "tod_listen", Name = "TOD: Listening", GmDescription = "Listening for /random rolls for 60 seconds.",
                     ActiveModules = new List<GameModuleConfig> {
                         new GameModuleConfig {
-                            ModuleType = "DiceListener", ConditionExpressions = new List<string> { "Var.tod_score_{Event.Sender} == null" },
+                            ModuleType = "DiceListener", ConditionExpressions = new List<string> { "Var.score_{Event.Sender} == null" },
                             OnTriggerActions = new List<GameActionConfig> {
                                 new GameActionConfig { ActionType = "RegisterPlayer" },
-                                new GameActionConfig { ActionType = "SetVariable", Parameters = new Dictionary<string, string> { { "TargetVar", "tod_score_{Event.Sender}" }, { "Value", "{Event.Roll}" } } }
+                                new GameActionConfig { ActionType = "SetVariable", Parameters = new Dictionary<string, string> { { "TargetVar", "score_{Event.Sender}" }, { "Value", "{Event.Roll}" } } }
                             }
                         },
                         new GameModuleConfig {
-                            ModuleType = "DiceListener", ConditionExpressions = new List<string> { "Var.tod_score_{Event.Sender} != null" },
+                            ModuleType = "DiceListener", ConditionExpressions = new List<string> { "Var.score_{Event.Sender} != null" },
                             OnTriggerActions = new List<GameActionConfig> { new GameActionConfig { ActionType = "BroadcastMessage", Parameters = new Dictionary<string, string> { { "Message", "[!] You can only roll once per round, {Event.Sender}!" } } } }
                         },
                         new GameModuleConfig {
@@ -105,7 +108,7 @@ public class NaughtyGamesTemplate : IDefaultGameTemplate {
                         new GameActionConfig {
                             ActionType = "EvaluateMinMax",
                             Parameters = new Dictionary<string, string> {
-                                { "Prefix", "tod_score_" },
+                                { "Prefix", "score_" },
                                 { "FilterVar", "tod_expected_players" },
                                 { "MinParticipants", "2" },
                                 { "NotEnoughParticipants", "[Truth or Dare] Time is up! Not enough participants (minimum 2 required). Game cancelled." }
@@ -121,14 +124,14 @@ public class NaughtyGamesTemplate : IDefaultGameTemplate {
                 new GameStage {
                     Id = "tod_tie_start", Name = "TOD: Tie Initialization", GmDescription = "Clears previous scores to prepare for a tie breaker.",
                     OnEnterActions = new List<GameActionConfig> {
-                        new GameActionConfig { ActionType = "ClearVariables", Parameters = new Dictionary<string, string> { { "Prefix", "tod_score_" } } }
+                        new GameActionConfig { ActionType = "ClearVariables", Parameters = new Dictionary<string, string> { { "Prefix", "score_" } } }
                     },
                     Transitions = new List<GameTransition> { new GameTransition { TargetStageId = "tod_listen", TriggerType = "Auto" } }
                 },
                 new GameStage {
                     Id = "naked_start", Name = "Naked: Initialization", GmDescription = "Starts the Naked game setup.",
                     OnEnterActions = new List<GameActionConfig> {
-                        new GameActionConfig { ActionType = "ClearVariables", Parameters = new Dictionary<string, string> { { "Prefix", "naked_score_" } } },
+                        new GameActionConfig { ActionType = "ClearVariables", Parameters = new Dictionary<string, string> { { "Prefix", "score_" } } },
                         new GameActionConfig { ActionType = "SetVariable", Parameters = new Dictionary<string, string> { { "TargetVar", "next_game" }, { "Value", "" } } },
                         new GameActionConfig { ActionType = "BroadcastMessage", Parameters = new Dictionary<string, string> { { "Message", "[Naked Game] Roll your /random! If you score 250 or less, you must strip for 15 minutes! You have 60 seconds." } } }
                     },
@@ -138,14 +141,14 @@ public class NaughtyGamesTemplate : IDefaultGameTemplate {
                     Id = "naked_listen", Name = "Naked: Listening", GmDescription = "Listening for /random rolls for 60 seconds.",
                     ActiveModules = new List<GameModuleConfig> {
                         new GameModuleConfig {
-                            ModuleType = "DiceListener", ConditionExpressions = new List<string> { "Var.naked_score_{Event.Sender} == null" },
+                            ModuleType = "DiceListener", ConditionExpressions = new List<string> { "Var.score_{Event.Sender} == null" },
                             OnTriggerActions = new List<GameActionConfig> {
                                 new GameActionConfig { ActionType = "RegisterPlayer" },
-                                new GameActionConfig { ActionType = "SetVariable", Parameters = new Dictionary<string, string> { { "TargetVar", "naked_score_{Event.Sender}" }, { "Value", "{Event.Roll}" } } }
+                                new GameActionConfig { ActionType = "SetVariable", Parameters = new Dictionary<string, string> { { "TargetVar", "score_{Event.Sender}" }, { "Value", "{Event.Roll}" } } }
                             }
                         },
                         new GameModuleConfig {
-                            ModuleType = "DiceListener", ConditionExpressions = new List<string> { "Var.naked_score_{Event.Sender} != null" },
+                            ModuleType = "DiceListener", ConditionExpressions = new List<string> { "Var.score_{Event.Sender} != null" },
                             OnTriggerActions = new List<GameActionConfig> { new GameActionConfig { ActionType = "BroadcastMessage", Parameters = new Dictionary<string, string> { { "Message", "[!] You can only roll once, {Event.Sender}!" } } } }
                         },
                         new GameModuleConfig {
@@ -162,7 +165,7 @@ public class NaughtyGamesTemplate : IDefaultGameTemplate {
                         new GameActionConfig {
                             ActionType = "EvaluateThreshold",
                             Parameters = new Dictionary<string, string> {
-                                { "Prefix", "naked_score_" },
+                                { "Prefix", "score_" },
                                 { "Operator", "<=" },
                                 { "Threshold", "250" },
                                 { "PassMessage", "[Naked Game] {Players}, you scored 250 or less! Strip for 15 minutes!" },
@@ -176,7 +179,7 @@ public class NaughtyGamesTemplate : IDefaultGameTemplate {
                 new GameStage {
                     Id = "emote_start", Name = "Emote: Initialization", GmDescription = "Starts the Sexy Emote game setup.",
                     OnEnterActions = new List<GameActionConfig> {
-                        new GameActionConfig { ActionType = "ClearVariables", Parameters = new Dictionary<string, string> { { "Prefix", "emote_score_" } } },
+                        new GameActionConfig { ActionType = "ClearVariables", Parameters = new Dictionary<string, string> { { "Prefix", "score_" } } },
                         new GameActionConfig { ActionType = "SetVariable", Parameters = new Dictionary<string, string> { { "TargetVar", "next_game" }, { "Value", "" } } },
                         new GameActionConfig { ActionType = "BroadcastMessage", Parameters = new Dictionary<string, string> { { "Message", "[Sexy Emote Game] Roll your /random! You commit to a sexy emote for 15 minutes if your score is strictly above 800! You have 60 seconds." } } }
                     },
@@ -186,14 +189,14 @@ public class NaughtyGamesTemplate : IDefaultGameTemplate {
                     Id = "emote_listen", Name = "Emote: Listening", GmDescription = "Listening for /random rolls for 60 seconds.",
                     ActiveModules = new List<GameModuleConfig> {
                         new GameModuleConfig {
-                            ModuleType = "DiceListener", ConditionExpressions = new List<string> { "Var.emote_score_{Event.Sender} == null" },
+                            ModuleType = "DiceListener", ConditionExpressions = new List<string> { "Var.score_{Event.Sender} == null" },
                             OnTriggerActions = new List<GameActionConfig> {
                                 new GameActionConfig { ActionType = "RegisterPlayer" },
-                                new GameActionConfig { ActionType = "SetVariable", Parameters = new Dictionary<string, string> { { "TargetVar", "emote_score_{Event.Sender}" }, { "Value", "{Event.Roll}" } } }
+                                new GameActionConfig { ActionType = "SetVariable", Parameters = new Dictionary<string, string> { { "TargetVar", "score_{Event.Sender}" }, { "Value", "{Event.Roll}" } } }
                             }
                         },
                         new GameModuleConfig {
-                            ModuleType = "DiceListener", ConditionExpressions = new List<string> { "Var.emote_score_{Event.Sender} != null" },
+                            ModuleType = "DiceListener", ConditionExpressions = new List<string> { "Var.score_{Event.Sender} != null" },
                             OnTriggerActions = new List<GameActionConfig> { new GameActionConfig { ActionType = "BroadcastMessage", Parameters = new Dictionary<string, string> { { "Message", "[!] You can only roll once, {Event.Sender}!" } } } }
                         },
                         new GameModuleConfig {
@@ -210,7 +213,7 @@ public class NaughtyGamesTemplate : IDefaultGameTemplate {
                         new GameActionConfig {
                             ActionType = "EvaluateThreshold",
                             Parameters = new Dictionary<string, string> {
-                                { "Prefix", "emote_score_" },
+                                { "Prefix", "score_" },
                                 { "Operator", ">" },
                                 { "Threshold", "800" },
                                 { "PassMessage", "[Sexy Emote Game] {Players}, you scored over 800! Do a sexy emote for 15 minutes!" },
