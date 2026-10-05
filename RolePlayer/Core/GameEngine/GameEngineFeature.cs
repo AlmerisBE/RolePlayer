@@ -25,10 +25,22 @@ public class GameEngineFeature : IFeatureModule {
         services.AddSingleton<IGameEngineFactory, GameEngineFactory>();
         services.AddSingleton<IConditionEvaluatorService, ConditionEvaluatorService>();
 
-        // Register Action Handlers
+        // Action Handlers (Strategy Pattern)
+        services.AddTransient<IGameActionHandler, RegisterPlayerHandler>();
         services.AddTransient<IGameActionHandler, ClearParticipantsHandler>();
-        services.AddTransient<IGameActionHandler, BroadcastMessageHandler>();
+        services.AddTransient<IGameActionHandler, SetVariableHandler>();
+        services.AddTransient<IGameActionHandler, IncrementVariableHandler>();
+        services.AddTransient<IGameActionHandler, ClearVariablesHandler>();
+        services.AddTransient<IGameActionHandler, BroadcastScoresHandler>();
+        services.AddTransient<IGameActionHandler, EndGameIfScoreReachedHandler>();
+        services.AddTransient<IGameActionHandler, ResolveBlackjackWinnerHandler>();
         services.AddTransient<IGameActionHandler, EvaluateMinMaxHandler>();
+        services.AddTransient<IGameActionHandler, EvaluateEqualityHandler>();
+        services.AddTransient<IGameActionHandler, EvaluateThresholdHandler>();
+        services.AddTransient<IGameActionHandler, AdvanceTurnHandler>();
+        services.AddTransient<IGameActionHandler, BroadcastMessageHandler>();
+        services.AddTransient<IGameActionHandler, AdvanceStageHandler>();
+        services.AddTransient<IGameActionHandler, StopGameHandler>();
 
         services.AddTransient<IGameActionExecutionService, GameActionExecutionService>();
         services.AddTransient<StateMachineEngine>();
