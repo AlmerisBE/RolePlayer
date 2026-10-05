@@ -247,6 +247,16 @@ public class HotbarConfigSubTab {
                 ImGui.EndCombo();
             }
 
+            if (ImGui.BeginCombo(this.localization.Translate("config_hb_fill_dir"), this.localization.Translate($"config_hb_fill_{this.selectedHotbar.FillDirection.ToString().ToLowerInvariant()}"))) {
+                foreach (HotbarFillDirection direction in Enum.GetValues(typeof(HotbarFillDirection))) {
+                    if (ImGui.Selectable(this.localization.Translate($"config_hb_fill_{direction.ToString().ToLowerInvariant()}"), this.selectedHotbar.FillDirection == direction)) {
+                        this.selectedHotbar.FillDirection = direction;
+                        configChanged = true;
+                    }
+                }
+                ImGui.EndCombo();
+            }
+
             if (ImGui.BeginCombo(this.localization.Translate("config_hb_anchor"), this.selectedHotbar.Anchor.ToString())) {
                 foreach (HotbarAnchor anchor in Enum.GetValues(typeof(HotbarAnchor))) {
                     if (ImGui.Selectable(anchor.ToString(), this.selectedHotbar.Anchor == anchor)) {

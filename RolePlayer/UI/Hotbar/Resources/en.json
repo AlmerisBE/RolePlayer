@@ -5,5 +5,10 @@
   "config_hb_target_macros": "Macros",
   "config_hb_target_mixed": "Mixed",
   "config_common_empty": "Empty",
-  "config_hb_button_count": "Button Count"
+  "config_hb_button_count": "Button Count",
+  "config_hb_fill_dir": "Fill Direction",
+  "config_hb_fill_lefttoright": "Left to Right",
+  "config_hb_fill_righttoleft": "Right to Left",
+  "config_hb_fill_toptobottom": "Top to Bottom",
+  "config_hb_fill_bottomtotop": "Bottom to Top"
 }

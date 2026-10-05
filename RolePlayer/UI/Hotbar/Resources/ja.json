@@ -5,5 +5,10 @@
   "config_hb_target_macros": "マクロ",
   "config_hb_target_mixed": "混合",
   "config_common_empty": "空",
-  "config_hb_button_count": "ボタンの数"
+  "config_hb_button_count": "ボタンの数",
+  "config_hb_fill_dir": "配置方向",
+  "config_hb_fill_lefttoright": "左から右へ",
+  "config_hb_fill_righttoleft": "右から左へ",
+  "config_hb_fill_toptobottom": "上から下へ",
+  "config_hb_fill_bottomtotop": "下から上へ"
 }

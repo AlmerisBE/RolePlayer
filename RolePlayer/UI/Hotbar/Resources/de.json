@@ -5,5 +5,10 @@
   "config_hb_target_macros": "Makros",
   "config_hb_target_mixed": "Gemischt",
   "config_common_empty": "Leer",
-  "config_hb_button_count": "Anzahl der Schaltflächen"
+  "config_hb_button_count": "Anzahl der Schaltflächen",
+  "config_hb_fill_dir": "Füllrichtung",
+  "config_hb_fill_lefttoright": "Von links nach rechts",
+  "config_hb_fill_righttoleft": "Von rechts nach links",
+  "config_hb_fill_toptobottom": "Von oben nach unten",
+  "config_hb_fill_bottomtotop": "Von unten nach oben"
 }

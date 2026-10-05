@@ -116,10 +116,7 @@ public class HotbarWindow : Window {
                 var gridSize = this.GetGridSize();
                 var pivot = this.GetPivot(this.config.Anchor);
 
-                // On calcule manuellement l'origine TopLeft pour s'isoler de la taille globale de la fenêtre
                 var topLeft = this.config.AnchorPosition - new Vector2(gridSize.X * pivot.X, gridSize.Y * pivot.Y);
-
-                // Le pivot est forcé à (0,0) pour que la pagination s'étende toujours vers le bas sans décaler la grille
                 ImGui.SetNextWindowPos(topLeft, ImGuiCond.Always, new Vector2(0, 0));
             }
         }
@@ -141,20 +138,29 @@ public class HotbarWindow : Window {
             var displayedItems = this.cachedItems.Skip(this.currentPage * maxItemsPerPage).Take(maxItemsPerPage).ToList();
 
             int maxColumns = this.GetColumnsForLayout(this.config.Layout);
-            int actualColumns = Math.Max(1, Math.Min(maxColumns, displayedItems.Count));
+            int maxRows = (int)Math.Ceiling(this.config.ButtonCount / (double)maxColumns);
 
             ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, Vector2.Zero);
             ImGui.PushStyleVar(ImGuiStyleVar.CellPadding, new Vector2(2f, 2f));
             ImGui.PushStyleColor(ImGuiCol.Button, Vector4.Zero);
 
-            if (ImGui.BeginTable($"HotbarGrid_{this.config.Id}", actualColumns, ImGuiTableFlags.SizingFixedFit)) {
-                for (int col = 0; col < actualColumns; col++) ImGui.TableSetupColumn($"col_{col}", ImGuiTableColumnFlags.WidthFixed, this.CurrentIconSize);
+            if (ImGui.BeginTable($"HotbarGrid_{this.config.Id}", maxColumns, ImGuiTableFlags.SizingFixedFit)) {
+                for (int col = 0; col < maxColumns; col++) ImGui.TableSetupColumn($"col_{col}", ImGuiTableColumnFlags.WidthFixed, this.CurrentIconSize);
 
-                for (int i = 0; i < displayedItems.Count; i++) {
-                    if (i % actualColumns == 0) ImGui.TableNextRow();
+                for (int row = 0; row < maxRows; row++) {
+                    ImGui.TableNextRow();
+                    for (int col = 0; col < maxColumns; col++) {
+                        ImGui.TableNextColumn();
 
-                    ImGui.TableNextColumn();
-                    this.DrawHotbarItemIcon(displayedItems[i]);
+                        int logicalIndex = this.GetLogicalIndex(row, col, maxRows, maxColumns, this.config.FillDirection);
+
+                        if (logicalIndex < displayedItems.Count) {
+                            this.DrawHotbarItemIcon(displayedItems[logicalIndex]);
+                        }
+                        else {
+                            ImGui.Dummy(new Vector2(this.CurrentIconSize, this.CurrentIconSize));
+                        }
+                    }
                 }
                 ImGui.EndTable();
             }
@@ -186,21 +192,24 @@ public class HotbarWindow : Window {
         ImGui.PopStyleVar(2);
     }
 
+    private int GetLogicalIndex(int row, int col, int maxRows, int maxColumns, HotbarFillDirection direction) {
+        return direction switch {
+            HotbarFillDirection.LeftToRight => row * maxColumns + col,
+            HotbarFillDirection.RightToLeft => row * maxColumns + (maxColumns - 1 - col),
+            HotbarFillDirection.TopToBottom => col * maxRows + row,
+            HotbarFillDirection.BottomToTop => col * maxRows + (maxRows - 1 - row),
+            _ => row * maxColumns + col
+        };
+    }
+
     private Vector2 GetGridSize() {
         if (this.cachedItems.Count == 0) return new Vector2(this.CurrentIconSize + 16f, this.CurrentIconSize + 16f);
 
-        int maxItemsPerPage = this.config.ButtonCount;
-        var displayedItems = this.cachedItems.Skip(this.currentPage * maxItemsPerPage).Take(maxItemsPerPage).ToList();
-
-        if (displayedItems.Count == 0) return new Vector2(this.CurrentIconSize + 16f, this.CurrentIconSize + 16f);
-
         int maxColumns = this.GetColumnsForLayout(this.config.Layout);
-        int actualColumns = Math.Max(1, Math.Min(maxColumns, displayedItems.Count));
-        int actualRows = (int)Math.Ceiling(displayedItems.Count / (double)actualColumns);
+        int maxRows = (int)Math.Ceiling(this.config.ButtonCount / (double)maxColumns);
 
-        // 16f = WindowPadding.X/Y * 2, 4f = CellPadding.X/Y * 2
-        float width = 16f + (actualColumns * (this.CurrentIconSize + 4f));
-        float height = 16f + (actualRows * (this.CurrentIconSize + 4f));
+        float width = 16f + (maxColumns * (this.CurrentIconSize + 4f));
+        float height = 16f + (maxRows * (this.CurrentIconSize + 4f));
 
         return new Vector2(width, height);
     }

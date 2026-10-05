@@ -34,4 +34,6 @@ public class HotbarConfig {
     public HashSet<string> SelectedGroups { get; set; } = new();
     public HashSet<string> SelectedTags { get; set; } = new();
     public bool ShowModdedOnly { get; set; } = false;
+
+    public HotbarFillDirection FillDirection { get; set; } = HotbarFillDirection.LeftToRight;
 }
