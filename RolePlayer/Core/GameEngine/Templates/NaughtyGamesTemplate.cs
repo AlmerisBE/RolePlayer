@@ -19,6 +19,22 @@ public class NaughtyGamesTemplate : IDefaultGameTemplate {
             },
             Stages = new List<GameStage> {
                 new GameStage {
+                    Id = "startup",
+                    Name = "Startup Initialization",
+                    GmDescription = "Broadcasts the welcome message and automatically moves to the idle listening loop.",
+                    OnEnterActions = new List<GameActionConfig> {
+                        new GameActionConfig {
+                            ActionType = "BroadcastMessage",
+                            Parameters = new Dictionary<string, string> {
+                                { "Message", "[Naughty Games] The game session begins! Use !tod, !naked, or !emote to play (!actions for the command list)." }
+                            }
+                        }
+                    },
+                    Transitions = new List<GameTransition> {
+                        new GameTransition { TargetStageId = "idle", TriggerType = "Auto" }
+                    }
+                },
+                new GameStage {
                     Id = "idle",
                     Name = "Listening Loop",
                     GmDescription = "Waiting for chat commands (!actions, !tod, !naked, !emote).",
