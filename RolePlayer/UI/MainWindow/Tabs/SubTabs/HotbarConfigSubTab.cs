@@ -223,6 +223,12 @@ public class HotbarConfigSubTab {
             ImGui.TextDisabled(this.localization.Translate("config_hb_button_count"));
             int currentCount = this.selectedHotbar.ButtonCount;
 
+            if (ImGui.RadioButton("12", currentCount == 12)) {
+                this.selectedHotbar.ButtonCount = 12;
+                if (!this.IsLayoutValidForCount(this.selectedHotbar.Layout, 12)) this.selectedHotbar.Layout = HotbarLayout.Grid12x1;
+                configChanged = true;
+            }
+            ImGui.SameLine();
             if (ImGui.RadioButton("16", currentCount == 16)) {
                 this.selectedHotbar.ButtonCount = 16;
                 if (!this.IsLayoutValidForCount(this.selectedHotbar.Layout, 16)) this.selectedHotbar.Layout = HotbarLayout.Grid16x1;
@@ -379,7 +385,10 @@ public class HotbarConfigSubTab {
     }
 
     private bool IsLayoutValidForCount(HotbarLayout layout, int count) {
-        if (count == 16) {
+        if (count == 12) {
+            return layout == HotbarLayout.Grid12x1 || layout == HotbarLayout.Grid6x2 || layout == HotbarLayout.Grid4x3 || layout == HotbarLayout.Grid3x4 || layout == HotbarLayout.Grid2x6 || layout == HotbarLayout.Grid1x12;
+        }
+        else if (count == 16) {
             return layout == HotbarLayout.Grid16x1 || layout == HotbarLayout.Grid8x2 || layout == HotbarLayout.Grid4x4 || layout == HotbarLayout.Grid2x8 || layout == HotbarLayout.Grid1x16;
         }
         else if (count == 36) {

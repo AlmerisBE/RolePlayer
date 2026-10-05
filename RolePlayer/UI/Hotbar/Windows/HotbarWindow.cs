@@ -236,11 +236,19 @@ public class HotbarWindow : Window {
 
     private int GetColumnsForLayout(HotbarLayout layout) {
         return layout switch {
+            HotbarLayout.Grid12x1 => 12,
+            HotbarLayout.Grid6x2 => 6,
+            HotbarLayout.Grid4x3 => 4,
+            HotbarLayout.Grid3x4 => 3,
+            HotbarLayout.Grid2x6 => 2,
+            HotbarLayout.Grid1x12 => 1,
+
             HotbarLayout.Grid16x1 => 16,
             HotbarLayout.Grid8x2 => 8,
             HotbarLayout.Grid4x4 => 4,
             HotbarLayout.Grid2x8 => 2,
             HotbarLayout.Grid1x16 => 1,
+
             HotbarLayout.Grid18x2 => 18,
             HotbarLayout.Grid12x3 => 12,
             HotbarLayout.Grid9x4 => 9,
@@ -248,7 +256,8 @@ public class HotbarWindow : Window {
             HotbarLayout.Grid4x9 => 4,
             HotbarLayout.Grid3x12 => 3,
             HotbarLayout.Grid2x18 => 2,
-            _ => 16
+
+            _ => 12
         };
     }
 
