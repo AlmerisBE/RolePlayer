@@ -11,4 +11,10 @@ public interface IGameActionExecutionService {
 
     void ExecuteAll(IEnumerable<GameActionConfig> actions, GameSessionContext context);
     void Execute(GameActionConfig action, GameSessionContext context);
+
+    // Callbacks for handlers
+    void RequestBroadcast(string message);
+    void RequestStageAdvance();
+    void RequestGameStop();
+    string FormatString(string input, GameSessionContext context);
 }

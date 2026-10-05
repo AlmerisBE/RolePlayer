@@ -12,12 +12,18 @@ public class DiceRollParser : IDiceRollParser {
         if (string.IsNullOrWhiteSpace(messageText)) return false;
 
         var matches = Regex.Matches(messageText, @"\d+");
-        if (matches.Count < 2) return false;
+        if (matches.Count == 0) return false;
+
+        if (matches.Count == 1) {
+            roll = int.Parse(matches[0].Value);
+            maxRoll = 999;
+            return true;
+        }
 
         int firstNum = int.Parse(matches[matches.Count - 2].Value);
         int secondNum = int.Parse(matches[matches.Count - 1].Value);
 
-        bool isFrenchFormat = messageText.Contains("dé ", StringComparison.OrdinalIgnoreCase) ||
+        bool isFrenchFormat = messageText.Contains("dé", StringComparison.OrdinalIgnoreCase) ||
                               messageText.Contains("obtenez", StringComparison.OrdinalIgnoreCase) ||
                               messageText.Contains("obtient", StringComparison.OrdinalIgnoreCase) ||
                               messageText.Contains("jetez", StringComparison.OrdinalIgnoreCase);

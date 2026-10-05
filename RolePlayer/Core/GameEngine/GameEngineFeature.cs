@@ -5,6 +5,7 @@ using RolePlayer.Core.Framework;
 using RolePlayer.Core.GameEngine.Contracts;
 using RolePlayer.Core.GameEngine.Engines;
 using RolePlayer.Core.GameEngine.Services;
+using RolePlayer.Core.GameEngine.Services.Handlers;
 using RolePlayer.Core.GameEngine.Templates;
 
 public class GameEngineFeature : IFeatureModule {
@@ -23,6 +24,11 @@ public class GameEngineFeature : IFeatureModule {
         services.AddSingleton<IChatBroadcaster, ChatBroadcaster>();
         services.AddSingleton<IGameEngineFactory, GameEngineFactory>();
         services.AddSingleton<IConditionEvaluatorService, ConditionEvaluatorService>();
+
+        // Register Action Handlers
+        services.AddTransient<IGameActionHandler, ClearParticipantsHandler>();
+        services.AddTransient<IGameActionHandler, BroadcastMessageHandler>();
+        services.AddTransient<IGameActionHandler, EvaluateMinMaxHandler>();
 
         services.AddTransient<IGameActionExecutionService, GameActionExecutionService>();
         services.AddTransient<StateMachineEngine>();

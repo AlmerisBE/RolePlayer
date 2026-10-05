@@ -102,7 +102,15 @@ public class NaughtyGamesTemplate : IDefaultGameTemplate {
                 new GameStage {
                     Id = "tod_eval", Name = "TOD: Evaluation", GmDescription = "Evaluates TOD scores and handles ties.",
                     OnEnterActions = new List<GameActionConfig> {
-                        new GameActionConfig { ActionType = "EvaluateMinMax", Parameters = new Dictionary<string, string> { { "Prefix", "tod_score_" }, { "FilterVar", "tod_expected_players" } } },
+                        new GameActionConfig {
+                            ActionType = "EvaluateMinMax",
+                            Parameters = new Dictionary<string, string> {
+                                { "Prefix", "tod_score_" },
+                                { "FilterVar", "tod_expected_players" },
+                                { "MinParticipants", "2" },
+                                { "NotEnoughParticipants", "[Truth or Dare] Time is up! Not enough participants (minimum 2 required). Game cancelled." }
+                            }
+                        },
                         new GameActionConfig { ActionType = "EvaluateEquality" }
                     },
                     Transitions = new List<GameTransition> {
@@ -158,7 +166,8 @@ public class NaughtyGamesTemplate : IDefaultGameTemplate {
                                 { "Operator", "<=" },
                                 { "Threshold", "250" },
                                 { "PassMessage", "[Naked Game] {Players}, you scored 250 or less! Strip for 15 minutes!" },
-                                { "FailMessage", "[Naked Game] Everyone scored above 250. You are all safe!" }
+                                { "FailMessage", "[Naked Game] Everyone scored above 250. You are all safe!" },
+                                { "NotEnoughParticipants", "[Naked Game] Time is up! Not enough participants rolled the dice. Game cancelled." }
                             }
                         }
                     },
@@ -205,7 +214,8 @@ public class NaughtyGamesTemplate : IDefaultGameTemplate {
                                 { "Operator", ">" },
                                 { "Threshold", "800" },
                                 { "PassMessage", "[Sexy Emote Game] {Players}, you scored over 800! Do a sexy emote for 15 minutes!" },
-                                { "FailMessage", "[Sexy Emote Game] Everyone scored 800 or below. You are all safe!" }
+                                { "FailMessage", "[Sexy Emote Game] Everyone scored 800 or below. You are all safe!" },
+                                { "NotEnoughParticipants", "[Sexy Emote Game] Time is up! Not enough participants rolled the dice. Game cancelled." }
                             }
                         }
                     },
