@@ -21,10 +21,11 @@ public class ChatWatcherTests {
         var mockLogger = Substitute.For<ILoggerService>();
         var mockDiceParser = Substitute.For<IDiceRollParser>();
         var mockNameNormalizer = Substitute.For<IPlayerNameNormalizer>();
+        var mockDicePattern = Substitute.For<IDicePatternProvider>();
 
         mockNameNormalizer.Normalize(Arg.Any<string>()).Returns(callInfo => callInfo.Arg<string>());
 
-        using var watcher = new ChatWatcher(mockChatGui, mockObjectTable, mockLogger, mockDiceParser, mockNameNormalizer);
+        using var watcher = new ChatWatcher(mockChatGui, mockObjectTable, mockLogger, mockDiceParser, mockNameNormalizer, mockDicePattern);
 
         watcher.SetParticipants(new List<string> { "John Doe" });
         watcher.Start();
@@ -54,6 +55,7 @@ public class ChatWatcherTests {
         var mockLogger = Substitute.For<ILoggerService>();
         var mockDiceParser = Substitute.For<IDiceRollParser>();
         var mockNameNormalizer = Substitute.For<IPlayerNameNormalizer>();
+        var mockDicePattern = Substitute.For<IDicePatternProvider>();
 
         mockNameNormalizer.Normalize(Arg.Any<string>()).Returns(callInfo => callInfo.Arg<string>());
 
@@ -64,7 +66,7 @@ public class ChatWatcherTests {
                 return true;
             });
 
-        using var watcher = new ChatWatcher(mockChatGui, mockObjectTable, mockLogger, mockDiceParser, mockNameNormalizer);
+        using var watcher = new ChatWatcher(mockChatGui, mockObjectTable, mockLogger, mockDiceParser, mockNameNormalizer, mockDicePattern);
         watcher.Start();
 
         GameEvent? capturedEvent = null;

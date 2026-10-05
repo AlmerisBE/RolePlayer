@@ -66,6 +66,7 @@ public class StateMachineEngine : IGameEngine {
         this.actionExecutionService.BroadcastRequested += msg => this.BroadcastRequested?.Invoke(msg);
         this.actionExecutionService.StageAdvanceRequested += this.AdvanceStage;
         this.actionExecutionService.GameStopRequested += this.Stop;
+        this.actionExecutionService.ParticipantsChangedRequested += () => this.ParticipantsChanged?.Invoke();
     }
 
     public void Initialize(GameSessionConfig config) {
@@ -163,7 +164,6 @@ public class StateMachineEngine : IGameEngine {
 
         var triggeredModules = new List<GameModuleConfig>();
 
-        // Étape 1 : Évaluer TOUTES les conditions avec l'état actuel avant toute mutation
         foreach (var module in this.currentStage.ActiveModules) {
             if (!this.IsModuleTriggeredByEvent(module, gameEvent)) continue;
 
@@ -172,13 +172,8 @@ public class StateMachineEngine : IGameEngine {
             }
         }
 
-        // Étape 2 : Exécuter toutes les actions des modules déclenchés
         foreach (var module in triggeredModules) {
             this.actionExecutionService.ExecuteAll(module.OnTriggerActions, this.context);
-
-            if (module.OnTriggerActions.Any(a => a.ActionType.Equals("RegisterPlayer", StringComparison.OrdinalIgnoreCase))) {
-                this.ParticipantsChanged?.Invoke();
-            }
         }
 
         this.EvaluateTransitions("OnEvent");

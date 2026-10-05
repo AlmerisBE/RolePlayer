@@ -3,6 +3,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using RolePlayer.API.GameData.Commands;
 using RolePlayer.API.GameData.Providers;
+using RolePlayer.API.GameEvents.Contracts;
 using RolePlayer.API.Penumbra.Contracts;
 using RolePlayer.Core.Emotes.Contracts;
 using RolePlayer.Core.Framework;
@@ -22,7 +23,9 @@ public class GameDataFeature : IFeatureModule {
         services.AddSingleton<IEmoteDebugService, LuminaEmoteDebugService>();
         services.AddSingleton<IEmoteExecutionService, EmoteExecutionProvider>();
         services.AddSingleton<IAutoTranslateService, AutoTranslateProvider>();
+        services.AddSingleton<IDicePatternProvider, LuminaDicePatternProvider>();
 
         services.AddSingleton<ICommand, DumpCommand>();
+        services.AddSingleton<ICommand, LogMessageCommand>();
     }
 }

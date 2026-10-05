@@ -42,7 +42,11 @@ public class NaughtyGamesTemplate : IDefaultGameTemplate {
                     Name = "Listening Loop",
                     GmDescription = "Waiting for chat commands (!actions, !tod, !naked, !emote).",
                     OnEnterActions = new List<GameActionConfig> {
-                        new GameActionConfig { ActionType = "ClearParticipants" }
+                        new GameActionConfig { ActionType = "ClearParticipants" },
+                        new GameActionConfig { ActionType = "ClearVariables", Parameters = new Dictionary<string, string> { { "Prefix", "score_" } } },
+                        new GameActionConfig { ActionType = "ClearVariables", Parameters = new Dictionary<string, string> { { "Prefix", "tod_" } } },
+                        new GameActionConfig { ActionType = "ClearVariables", Parameters = new Dictionary<string, string> { { "Prefix", "max_" } } },
+                        new GameActionConfig { ActionType = "ClearVariables", Parameters = new Dictionary<string, string> { { "Prefix", "min_" } } }
                     },
                     ActiveModules = new List<GameModuleConfig> {
                         new GameModuleConfig {

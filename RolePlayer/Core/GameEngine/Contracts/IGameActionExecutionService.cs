@@ -8,13 +8,14 @@ public interface IGameActionExecutionService {
     event Action<string>? BroadcastRequested;
     event Action? StageAdvanceRequested;
     event Action? GameStopRequested;
+    event Action? ParticipantsChangedRequested;
 
     void ExecuteAll(IEnumerable<GameActionConfig> actions, GameSessionContext context);
     void Execute(GameActionConfig action, GameSessionContext context);
 
-    // Callbacks for handlers
     void RequestBroadcast(string message);
     void RequestStageAdvance();
     void RequestGameStop();
+    void RequestParticipantsChange();
     string FormatString(string input, GameSessionContext context);
 }

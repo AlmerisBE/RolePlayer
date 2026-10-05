@@ -7,6 +7,9 @@ public class ClearParticipantsHandler : IGameActionHandler {
     public string ActionType => "ClearParticipants";
 
     public void Execute(GameActionConfig action, GameSessionContext context, IGameActionExecutionService executionService) {
-        context.Participants.Clear();
+        if (context.Participants.Count > 0) {
+            context.Participants.Clear();
+            executionService.RequestParticipantsChange();
+        }
     }
 }

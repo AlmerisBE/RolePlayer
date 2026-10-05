@@ -10,6 +10,7 @@ using RolePlayer.Core.GameEngine.Models;
 using RolePlayer.Core.Logging.Contracts;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 public class ChatWatcher : IGameEventWatcher {
     private IChatGui chatGui;
@@ -17,7 +18,9 @@ public class ChatWatcher : IGameEventWatcher {
     private ILoggerService logger;
     private IDiceRollParser diceParser;
     private IPlayerNameNormalizer nameNormalizer;
+    private IDicePatternProvider dicePatternProvider;
     private HashSet<string> participants = new(StringComparer.OrdinalIgnoreCase);
+    private IReadOnlyList<string> dynamicDiceKeywords;
     private bool isWatching;
 
     public event Action<GameEvent>? EventFired;
@@ -28,13 +31,17 @@ public class ChatWatcher : IGameEventWatcher {
         IObjectTable objectTable,
         ILoggerService logger,
         IDiceRollParser diceParser,
-        IPlayerNameNormalizer nameNormalizer) {
+        IPlayerNameNormalizer nameNormalizer,
+        IDicePatternProvider dicePatternProvider) {
 
         this.chatGui = chatGui;
         this.objectTable = objectTable;
         this.logger = logger;
         this.diceParser = diceParser;
         this.nameNormalizer = nameNormalizer;
+        this.dicePatternProvider = dicePatternProvider;
+
+        this.dynamicDiceKeywords = this.dicePatternProvider.GetLocalizedDiceKeywords();
     }
 
     public void Start() {
@@ -58,16 +65,15 @@ public class ChatWatcher : IGameEventWatcher {
     }
 
     private bool IsFallbackDiceRoll(string textLower) {
-        return textLower.Contains("random!") ||
-               textLower.Contains("you roll a") ||
-               textLower.Contains("lancer d'un dé") || textLower.Contains("vous obtenez") || textLower.Contains("obtient un") || textLower.Contains("vous jetez") ||
-               textLower.Contains("du würfelst") ||
-               textLower.Contains("ダイスを振り") || textLower.Contains("を出した");
+        if (this.dynamicDiceKeywords == null || this.dynamicDiceKeywords.Count == 0) return textLower.Contains("you roll") || textLower.Contains("obtenez") || textLower.Contains("würfelst");
+
+        return this.dynamicDiceKeywords.Any(keyword => textLower.Contains(keyword));
     }
 
     private bool IsLocalPlayerRoll(string textLower) {
         return textLower.Contains("you roll") ||
-               textLower.Contains("vous obtenez") || textLower.Contains("vous jetez") ||
+               textLower.Contains("vous obtenez") ||
+               textLower.Contains("vous jetez") ||
                textLower.Contains("du würfelst") ||
                textLower.Contains("を出した");
     }
@@ -77,10 +83,14 @@ public class ChatWatcher : IGameEventWatcher {
 
         string messageText = message.Message.TextValue;
         string textLower = messageText.ToLowerInvariant();
+
+        if (messageText.TrimStart().StartsWith("[")) return;
+
         bool isDiceRollLogKind = false;
 
         try {
-            isDiceRollLogKind = (int)message.LogKind == 73;
+            int logKind = (int)message.LogKind;
+            isDiceRollLogKind = logKind == 73 || logKind == 74 || logKind == 2122 || logKind == 2123;
         }
         catch { }
 

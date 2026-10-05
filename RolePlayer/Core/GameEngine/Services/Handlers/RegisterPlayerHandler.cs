@@ -14,6 +14,7 @@ public class RegisterPlayerHandler : IGameActionHandler {
         string sender = context.CurrentEvent.Sender;
         if (!context.Participants.Contains(sender, StringComparer.OrdinalIgnoreCase)) {
             context.Participants.Add(sender);
+            executionService.RequestParticipantsChange();
         }
     }
 }

@@ -10,6 +10,7 @@ public class GameActionExecutionService : IGameActionExecutionService {
     public event Action<string>? BroadcastRequested;
     public event Action? StageAdvanceRequested;
     public event Action? GameStopRequested;
+    public event Action? ParticipantsChangedRequested;
 
     private Dictionary<string, IGameActionHandler> handlers;
 
@@ -36,6 +37,7 @@ public class GameActionExecutionService : IGameActionExecutionService {
     public void RequestBroadcast(string message) => this.BroadcastRequested?.Invoke(message);
     public void RequestStageAdvance() => this.StageAdvanceRequested?.Invoke();
     public void RequestGameStop() => this.GameStopRequested?.Invoke();
+    public void RequestParticipantsChange() => this.ParticipantsChangedRequested?.Invoke();
 
     public string FormatString(string input, GameSessionContext context) {
         if (string.IsNullOrWhiteSpace(input)) return input;
