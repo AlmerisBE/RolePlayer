@@ -13,6 +13,7 @@ public class GameEngineFeature : IFeatureModule {
         services.AddSingleton<IDefaultGameTemplate, RiddlesTemplate>();
         services.AddSingleton<IDefaultGameTemplate, TruthOrDareTemplate>();
         services.AddSingleton<IDefaultGameTemplate, BlackjackTemplate>();
+        services.AddSingleton<IDefaultGameTemplate, NaughtyGamesTemplate>();
 
         services.AddSingleton<IGameTemplateProvider, DefaultGameTemplateProvider>();
 
