@@ -7,4 +7,5 @@ using System.Collections.Generic;
 
 public interface IHotbarResolverService {
     List<ResolvedHotbarItem> ResolveItemsForHotbar(HotbarConfig config, IEnumerable<EnrichedEmote> allCachedEmotes);
+    void UpdateCustomOrder(HotbarConfig config, IReadOnlyList<ResolvedHotbarItem> currentItems, int sourceIndex, int targetIndex);
 }

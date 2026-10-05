@@ -2,6 +2,7 @@
 
 using Dalamud.Plugin;
 using Dalamud.Plugin.Ipc;
+using Dalamud.Plugin.Services;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using RolePlayer.API.Penumbra.Contracts;
@@ -18,6 +19,8 @@ public class PenumbraIpcProviderTests {
         var mockSubscriber = Substitute.For<ICallGateSubscriber<string, string>>();
         var mockEmotePathProvider = Substitute.For<IEmotePathProvider>();
         var mockLogger = Substitute.For<ILoggerService>();
+        var mockFramework = Substitute.For<IFramework>();
+        var mockObjectTable = Substitute.For<IObjectTable>();
 
         mockPluginInterface.GetIpcSubscriber<string, string>("Penumbra.ResolvePlayerPath").Returns(mockSubscriber);
         mockSubscriber.InvokeFunc(Arg.Any<string>()).Throws(new Exception("IPC not registered"));
@@ -28,7 +31,9 @@ public class PenumbraIpcProviderTests {
         var provider = new PenumbraIpcProvider(
             mockPluginInterface,
             mockEmotePathProvider,
-            mockLogger);
+            mockLogger,
+            mockFramework,
+            mockObjectTable);
 
         var result = provider.GetModNameModifyingEmote(1);
 

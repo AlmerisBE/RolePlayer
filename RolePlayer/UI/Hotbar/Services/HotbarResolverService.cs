@@ -7,6 +7,7 @@ using RolePlayer.Core.Macros.Contracts;
 using RolePlayer.Core.MetaData.Contracts;
 using RolePlayer.UI.Hotbar.Contracts;
 using RolePlayer.UI.Hotbar.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -56,7 +57,7 @@ public class HotbarResolverService : IHotbarResolverService {
                 });
             }
 
-            return results;
+            return this.ApplyCustomOrder(results, config.CustomOrder);
         }
 
         var query = config.SearchQuery.Trim().ToLowerInvariant();
@@ -123,6 +124,37 @@ public class HotbarResolverService : IHotbarResolverService {
             }
         }
 
-        return results;
+        return this.ApplyCustomOrder(results, config.CustomOrder);
+    }
+
+    private List<ResolvedHotbarItem> ApplyCustomOrder(List<ResolvedHotbarItem> items, List<string> customOrder) {
+        if (items.Count == 0 || customOrder == null || customOrder.Count == 0) return items;
+
+        var orderMap = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        for (int i = 0; i < customOrder.Count; i++) {
+            orderMap[customOrder[i]] = i;
+        }
+
+        return items.OrderBy(item => {
+            string idKey = item.EmoteId.HasValue
+                ? $"E:{item.EmoteId.Value}"
+                : $"M:{item.MacroId?.ToString() ?? string.Empty}";
+
+            return orderMap.TryGetValue(idKey, out int index) ? index : int.MaxValue;
+        }).ThenBy(item => item.Name).ToList();
+    }
+
+    public void UpdateCustomOrder(HotbarConfig config, IReadOnlyList<ResolvedHotbarItem> currentItems, int sourceIndex, int targetIndex) {
+        if (sourceIndex == targetIndex) return;
+        if (sourceIndex < 0 || targetIndex < 0 || sourceIndex >= currentItems.Count || targetIndex >= currentItems.Count) return;
+
+        // Freeze the current visual representation into the persistent list
+        config.CustomOrder = currentItems.Select(item => item.EmoteId.HasValue
+            ? $"E:{item.EmoteId.Value}"
+            : $"M:{item.MacroId?.ToString() ?? string.Empty}").ToList();
+
+        var itemToMove = config.CustomOrder[sourceIndex];
+        config.CustomOrder.RemoveAt(sourceIndex);
+        config.CustomOrder.Insert(targetIndex, itemToMove);
     }
 }

@@ -2,14 +2,13 @@
 
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
-using Dalamud.Interface.Textures;
-using Dalamud.Interface.Textures.Internal;
 using Dalamud.Plugin.Services;
 using RolePlayer.Core.Configuration.Contracts;
 using RolePlayer.Core.Configuration.Models;
 using RolePlayer.Core.Emotes.Contracts;
 using RolePlayer.UI.Hotbar.Contracts;
 using RolePlayer.UI.Localization.Contracts;
+using RolePlayer.UI.MainWindow.Components;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,6 +21,7 @@ public class HotbarConfigSubTab {
     private IHotbarResolverService hotbarResolver;
     private ITextureProvider textureProvider;
     private ILocalizationService localization;
+    private HotbarPreviewComponent previewComponent;
 
     private HotbarConfig? selectedHotbar;
     private HotbarConfig? hotbarToDelete;
@@ -35,7 +35,8 @@ public class HotbarConfigSubTab {
         IEmoteCache emoteCache,
         IHotbarResolverService hotbarResolver,
         ITextureProvider textureProvider,
-        ILocalizationService localization) {
+        ILocalizationService localization,
+        HotbarPreviewComponent previewComponent) {
 
         this.configService = configService;
         this.contextService = contextService;
@@ -43,6 +44,7 @@ public class HotbarConfigSubTab {
         this.hotbarResolver = hotbarResolver;
         this.textureProvider = textureProvider;
         this.localization = localization;
+        this.previewComponent = previewComponent;
     }
 
     public void Draw() {
@@ -148,7 +150,6 @@ public class HotbarConfigSubTab {
 
         ImGui.Separator();
 
-        // Zone de défilement isolée pour le contenu
         if (ImGui.BeginChild("HotbarSettingsScrollArea")) {
             ImGui.Spacing();
 
@@ -327,8 +328,15 @@ public class HotbarConfigSubTab {
             }
 
             ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
 
-            this.DrawPreview();
+            var resolvedItems = this.hotbarResolver.ResolveItemsForHotbar(this.selectedHotbar, this.emoteCache.GetCachedEmotes());
+            ImGui.TextColored(new Vector4(0.7f, 0.7f, 0.7f, 1.0f), this.localization.Translate("config_hb_preview", resolvedItems.Count));
+            ImGui.Spacing();
+
+            // Appel au nouveau composant de Drag & Drop
+            this.previewComponent.Draw(this.selectedHotbar, resolvedItems);
         }
         ImGui.EndChild();
 
@@ -378,45 +386,6 @@ public class HotbarConfigSubTab {
             if (ImGui.Button(this.localization.Translate("config_common_cancel"), new Vector2(120, 0))) ImGui.CloseCurrentPopup();
 
             ImGui.EndPopup();
-        }
-    }
-
-    private void DrawPreview() {
-        var resolvedItems = this.hotbarResolver.ResolveItemsForHotbar(this.selectedHotbar!, this.emoteCache.GetCachedEmotes());
-
-        ImGui.Separator();
-        ImGui.Spacing();
-        ImGui.TextColored(new Vector4(0.7f, 0.7f, 0.7f, 1.0f), this.localization.Translate("config_hb_preview", resolvedItems.Count));
-        ImGui.Spacing();
-
-        int totalItems = resolvedItems.Count;
-        if (totalItems == 0) return;
-
-        float availWidth = ImGui.GetContentRegionAvail().X;
-        int cols = (int)(availWidth / 36f);
-        if (cols < 1) cols = 1;
-
-        if (ImGui.BeginTable("PreviewGrid", cols, ImGuiTableFlags.SizingFixedFit)) {
-            for (int i = 0; i < totalItems; i++) {
-                if (i % cols == 0) ImGui.TableNextRow();
-
-                ImGui.TableNextColumn();
-
-                var item = resolvedItems[i];
-                if (item.IconId > 0) {
-                    try {
-                        var lookup = new GameIconLookup { IconId = item.IconId, HiRes = false };
-                        var iconWrap = this.textureProvider.GetFromGameIcon(lookup).GetWrapOrDefault();
-
-                        if (iconWrap != null) {
-                            ImGui.Image(iconWrap.Handle, new Vector2(32, 32));
-                            if (ImGui.IsItemHovered()) ImGui.SetTooltip(item.Name);
-                        }
-                    }
-                    catch (IconNotFoundException) { }
-                }
-            }
-            ImGui.EndTable();
         }
     }
 

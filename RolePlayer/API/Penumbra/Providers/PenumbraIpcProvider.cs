@@ -2,6 +2,7 @@
 
 using Dalamud.Plugin;
 using Dalamud.Plugin.Ipc;
+using Dalamud.Plugin.Services;
 using global::Penumbra.Api.Enums;
 using global::Penumbra.Api.IpcSubscribers;
 using RolePlayer.API.Penumbra.Contracts;
@@ -15,6 +16,8 @@ public class PenumbraIpcProvider : IEmoteModState, IDisposable {
     private IDalamudPluginInterface pluginInterface;
     private IEmotePathProvider emotePathProvider;
     private ILoggerService logger;
+    private IFramework framework;
+    private IObjectTable objectTable;
 
     private ICallGateSubscriber<string, string> resolvePlayerPathSubscriber;
     private ApiVersion apiVersionSubscriber;
@@ -31,16 +34,25 @@ public class PenumbraIpcProvider : IEmoteModState, IDisposable {
     private IReadOnlyDictionary<string, string> modNamesCache = new Dictionary<string, string>();
     private string penumbraRootPath = string.Empty;
 
+    private List<uint> trackedEmotes = new();
+    private Dictionary<uint, string> trackedModStates = new();
+    private int frameCounter = 0;
+    private int pollIndex = 0;
+
     public event Action? ModStateChanged;
 
     public PenumbraIpcProvider(
         IDalamudPluginInterface pluginInterface,
         IEmotePathProvider emotePathProvider,
-        ILoggerService logger) {
+        ILoggerService logger,
+        IFramework framework,
+        IObjectTable objectTable) {
 
         this.pluginInterface = pluginInterface;
         this.emotePathProvider = emotePathProvider;
         this.logger = logger;
+        this.framework = framework;
+        this.objectTable = objectTable;
 
         this.resolvePlayerPathSubscriber = pluginInterface.GetIpcSubscriber<string, string>("Penumbra.ResolvePlayerPath");
         this.apiVersionSubscriber = new ApiVersion(pluginInterface);
@@ -50,18 +62,16 @@ public class PenumbraIpcProvider : IEmoteModState, IDisposable {
         this.onPenumbraLifecycleChanged = () => {
             this.logger.Debug("[PenumbraIpcProvider] Penumbra lifecycle event detected. Updating cache and triggering UI refresh.");
             this.UpdateModCache();
-            this.ModStateChanged?.Invoke();
+            this.TriggerRefresh();
         };
 
         this.onModSettingChanged = (type, collectionId, modDirectory, inherited) => {
             this.logger.Debug($"[PenumbraIpcProvider] ModSettingChanged event detected (Type: {type}, Mod: {modDirectory}). Updating cache and triggering UI refresh.");
             this.UpdateModCache();
-            this.ModStateChanged?.Invoke();
+            this.TriggerRefresh();
         };
 
         try {
-            this.logger.Debug("[PenumbraIpcProvider] Initializing Penumbra API static event subscribers...");
-
             this.initializedSubscriber = Initialized.Subscriber(this.pluginInterface, this.onPenumbraLifecycleChanged);
             this.disposedSubscriber = Disposed.Subscriber(this.pluginInterface, this.onPenumbraLifecycleChanged);
             this.modSettingChangedSubscriber = ModSettingChanged.Subscriber(this.pluginInterface, this.onModSettingChanged);
@@ -71,6 +81,36 @@ public class PenumbraIpcProvider : IEmoteModState, IDisposable {
         }
 
         this.UpdateModCache();
+        this.framework.Update += this.OnFrameworkUpdate;
+    }
+
+    private void TriggerRefresh() {
+        this.trackedEmotes.Clear();
+        this.trackedModStates.Clear();
+        this.ModStateChanged?.Invoke();
+    }
+
+    private void OnFrameworkUpdate(IFramework fw) {
+        if (this.trackedEmotes.Count == 0 || this.objectTable.LocalPlayer == null) return;
+
+        this.frameCounter++;
+        if (this.frameCounter < 30) return;
+        this.frameCounter = 0;
+
+        if (this.pollIndex >= this.trackedEmotes.Count) this.pollIndex = 0;
+
+        uint emoteId = this.trackedEmotes[this.pollIndex];
+        string cachedModName = this.trackedModStates[emoteId];
+        string currentModName = this.ResolveEffectiveModName(emoteId);
+
+        if (!string.Equals(cachedModName, currentModName, StringComparison.OrdinalIgnoreCase)) {
+            this.logger.Debug($"[PenumbraIpcProvider] Smart polling detected effective mod change for emote {emoteId} (e.g. Hierarchy/Inheritance). Triggering refresh.");
+            this.TriggerRefresh();
+            this.pollIndex = 0;
+            return;
+        }
+
+        this.pollIndex++;
     }
 
     private void UpdateModCache() {
@@ -109,16 +149,23 @@ public class PenumbraIpcProvider : IEmoteModState, IDisposable {
     }
 
     public string GetModNameModifyingEmote(uint emoteId) {
-        if (!this.IsEnabled()) {
-            return string.Empty;
+        string modName = this.ResolveEffectiveModName(emoteId);
+
+        if (!this.trackedModStates.ContainsKey(emoteId)) {
+            this.trackedEmotes.Add(emoteId);
         }
+
+        this.trackedModStates[emoteId] = modName;
+        return modName;
+    }
+
+    private string ResolveEffectiveModName(uint emoteId) {
+        if (!this.IsEnabled()) return string.Empty;
 
         var gamePaths = this.emotePathProvider.GetEmoteGamePaths(emoteId);
 
         foreach (var gamePath in gamePaths) {
-            if (string.IsNullOrEmpty(gamePath)) {
-                continue;
-            }
+            if (string.IsNullOrEmpty(gamePath)) continue;
 
             try {
                 var resolvedPath = this.resolvePlayerPathSubscriber.InvokeFunc(gamePath);
@@ -143,10 +190,7 @@ public class PenumbraIpcProvider : IEmoteModState, IDisposable {
 
                 if (parts.Length > 0) {
                     var modDirectory = parts[0];
-                    if (this.modNamesCache.TryGetValue(modDirectory, out var realModName)) {
-                        return realModName;
-                    }
-
+                    if (this.modNamesCache.TryGetValue(modDirectory, out var realModName)) return realModName;
                     return modDirectory;
                 }
             }
@@ -163,10 +207,7 @@ public class PenumbraIpcProvider : IEmoteModState, IDisposable {
 
             if (pivotIndex > 0) {
                 var modDirectory = fallbackParts[pivotIndex - 1];
-                if (this.modNamesCache.TryGetValue(modDirectory, out var realModName)) {
-                    return realModName;
-                }
-
+                if (this.modNamesCache.TryGetValue(modDirectory, out var realModName)) return realModName;
                 return modDirectory;
             }
 
@@ -178,19 +219,12 @@ public class PenumbraIpcProvider : IEmoteModState, IDisposable {
     }
 
     public void Dispose() {
-        this.logger.Debug("[PenumbraIpcProvider] Disposing IPC static subscriptions.");
+        this.framework.Update -= this.OnFrameworkUpdate;
+
         try {
-            if (this.initializedSubscriber != null) {
-                this.initializedSubscriber.Dispose();
-            }
-
-            if (this.disposedSubscriber != null) {
-                this.disposedSubscriber.Dispose();
-            }
-
-            if (this.modSettingChangedSubscriber != null) {
-                this.modSettingChangedSubscriber.Dispose();
-            }
+            if (this.initializedSubscriber != null) this.initializedSubscriber.Dispose();
+            if (this.disposedSubscriber != null) this.disposedSubscriber.Dispose();
+            if (this.modSettingChangedSubscriber != null) this.modSettingChangedSubscriber.Dispose();
         }
         catch (Exception ex) {
             this.logger.Error(ex, "[PenumbraIpcProvider] Error during IPC unsubscription.");

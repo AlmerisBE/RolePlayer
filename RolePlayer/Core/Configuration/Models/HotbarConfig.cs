@@ -27,6 +27,7 @@ public class HotbarConfig {
 
     public List<uint> ManualEmoteIds { get; set; } = new();
     public List<Guid> ManualMacroIds { get; set; } = new();
+    public List<string> CustomOrder { get; set; } = new();
 
     public string SearchQuery { get; set; } = string.Empty;
     public HashSet<string> SelectedCategories { get; set; } = new();
