@@ -8,6 +8,7 @@ using RolePlayer.Core.Logging.Contracts;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 public class LuminaDicePatternProvider : IDicePatternProvider {
     private IDataManager dataManager;
@@ -18,21 +19,19 @@ public class LuminaDicePatternProvider : IDicePatternProvider {
         this.logger = logger;
     }
 
-    public IReadOnlyList<string> GetLocalizedDiceKeywords() {
-        var keywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    public IReadOnlyList<Regex> GetLocalizedDicePatterns() {
+        var patterns = new List<Regex>();
 
         var enSheet = this.dataManager.GetExcelSheet<LogMessage>(ClientLanguage.English);
         var localSheet = this.dataManager.GetExcelSheet<LogMessage>();
 
-        if (localSheet == null) return new List<string>();
+        if (localSheet == null) return patterns;
 
         var diceIds = new HashSet<uint> { 856, 1231, 3887, 5180 };
 
         if (enSheet != null) {
             foreach (var row in enSheet) {
                 string rawEn = row.Text.ExtractText().ToLowerInvariant();
-
-                // English FFXIV dice rolls explicitly contain "random!" or "dice!" followed by "roll"
                 if ((rawEn.Contains("random!") || rawEn.Contains("dice!")) && rawEn.Contains("roll")) {
                     diceIds.Add(row.RowId);
                 }
@@ -43,27 +42,36 @@ public class LuminaDicePatternProvider : IDicePatternProvider {
             var row = localSheet.GetRowOrDefault(id);
             if (!row.HasValue) continue;
 
-            // ExtractText() strips all dynamic payloads natively, leaving pure text templates
-            string cleanLocal = row.Value.Text.ExtractText();
-            var parts = cleanLocal.Split(new[] { '!', '.', '(', ')', ':' }, StringSplitOptions.RemoveEmptyEntries);
+            string rawLocal = row.Value.Text.ToString();
+            if (string.IsNullOrWhiteSpace(rawLocal)) continue;
 
-            foreach (var part in parts) {
-                string trimmed = part.Trim();
+            // Split by control characters (payloads) to isolate pure textual parts
+            var parts = Regex.Split(rawLocal, @"[\x00-\x1F]+");
+            var escapedParts = parts
+                .Where(p => !string.IsNullOrWhiteSpace(p))
+                .Select(Regex.Escape);
 
-                // Keep only substantial phrase fragments to prevent generic false positives
-                if (trimmed.Length > 5) {
-                    this.logger.Info($"[LuminaDicePattern] Extracted secure pattern from ID {id}: '{trimmed}'");
-                    keywords.Add(trimmed.ToLowerInvariant());
-                }
+            if (!escapedParts.Any()) continue;
+
+            // Rebuild the strict regex: Match start/end, and replace missing payloads with a lazy wildcard
+            string patternStr = @"^\s*" + string.Join(".*?", escapedParts) + @"\s*$";
+
+            try {
+                var regex = new Regex(patternStr, RegexOptions.IgnoreCase | RegexOptions.Compiled);
+                patterns.Add(regex);
+                this.logger.Info($"[LuminaDicePattern] Compiled strict regex for ID {id}: {patternStr}");
+            }
+            catch (Exception ex) {
+                this.logger.Error(ex, $"[LuminaDicePattern] Failed to compile regex for ID {id}");
             }
         }
 
-        if (keywords.Count == 0) {
+        if (patterns.Count == 0) {
             this.logger.Warning("[LuminaDicePattern] Dynamic discovery yielded no results. Using hardcoded fallbacks.");
-            string[] fallbacks = { "jetez les dés", "jette les dés", "lancer de dé", "lancer d'un dé", "obtenez", "obtient", "würfelst", "würfelt", "you roll a", "rolls a", "ダイスを振った" };
-            foreach (var fb in fallbacks) keywords.Add(fb);
+            patterns.Add(new Regex(@"^you roll a \d+.*$", RegexOptions.IgnoreCase | RegexOptions.Compiled));
+            patterns.Add(new Regex(@"^vous jetez les dés et obtenez \d+.*$", RegexOptions.IgnoreCase | RegexOptions.Compiled));
         }
 
-        return keywords.ToList();
+        return patterns;
     }
 }

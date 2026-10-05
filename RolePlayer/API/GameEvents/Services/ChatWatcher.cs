@@ -10,7 +10,7 @@ using RolePlayer.Core.GameEngine.Models;
 using RolePlayer.Core.Logging.Contracts;
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Text.RegularExpressions;
 
 public class ChatWatcher : IGameEventWatcher {
     private IChatGui chatGui;
@@ -20,7 +20,7 @@ public class ChatWatcher : IGameEventWatcher {
     private IPlayerNameNormalizer nameNormalizer;
     private IDicePatternProvider dicePatternProvider;
     private HashSet<string> participants = new(StringComparer.OrdinalIgnoreCase);
-    private IReadOnlyList<string> dynamicDiceKeywords;
+    private IReadOnlyList<Regex> dynamicDicePatterns;
     private bool isWatching;
 
     public event Action<GameEvent>? EventFired;
@@ -41,7 +41,7 @@ public class ChatWatcher : IGameEventWatcher {
         this.nameNormalizer = nameNormalizer;
         this.dicePatternProvider = dicePatternProvider;
 
-        this.dynamicDiceKeywords = this.dicePatternProvider.GetLocalizedDiceKeywords();
+        this.dynamicDicePatterns = this.dicePatternProvider.GetLocalizedDicePatterns();
     }
 
     public void Start() {
@@ -64,10 +64,17 @@ public class ChatWatcher : IGameEventWatcher {
         this.participants.Clear();
     }
 
-    private bool IsFallbackDiceRoll(string textLower) {
-        if (this.dynamicDiceKeywords == null || this.dynamicDiceKeywords.Count == 0) return textLower.Contains("you roll") || textLower.Contains("obtenez") || textLower.Contains("würfelst");
+    private bool IsFallbackDiceRoll(string messageText) {
+        if (this.dynamicDicePatterns == null || this.dynamicDicePatterns.Count == 0) {
+            string lowerText = messageText.ToLowerInvariant();
+            return lowerText.Contains("you roll") || lowerText.Contains("obtenez") || lowerText.Contains("würfelst");
+        }
 
-        return this.dynamicDiceKeywords.Any(keyword => textLower.Contains(keyword));
+        foreach (var regex in this.dynamicDicePatterns) {
+            if (regex.IsMatch(messageText)) return true;
+        }
+
+        return false;
     }
 
     private bool IsLocalPlayerRoll(string textLower) {
@@ -86,6 +93,27 @@ public class ChatWatcher : IGameEventWatcher {
 
         if (messageText.TrimStart().StartsWith("[")) return;
 
+        var channel = message.LogKind.ToGameChatChannel();
+
+        // If the message is from a standard player channel (Say, Party, etc.), it cannot be a system dice roll.
+        // This completely prevents spoofing where a player types the exact system string in chat.
+        if (channel.HasValue) {
+            string senderName = this.nameNormalizer.Normalize(message.Sender?.TextValue ?? string.Empty);
+            if (string.IsNullOrEmpty(senderName)) return;
+
+            if (this.RestrictToParticipants && !this.participants.Contains(senderName)) return;
+
+            this.EventFired?.Invoke(new ChatGameEvent {
+                Sender = senderName,
+                Message = messageText,
+                Channel = channel.Value
+            });
+
+            return;
+        }
+
+        // If we reach this point, it is a system message (channel == null).
+        // It is now safe to evaluate it against dice roll patterns.
         bool isDiceRollLogKind = false;
 
         try {
@@ -94,23 +122,8 @@ public class ChatWatcher : IGameEventWatcher {
         }
         catch { }
 
-        if (isDiceRollLogKind || this.IsFallbackDiceRoll(textLower)) {
+        if (isDiceRollLogKind || this.IsFallbackDiceRoll(messageText)) {
             this.HandleDiceRoll(message, messageText, textLower);
-            return;
-        }
-
-        string senderName = this.nameNormalizer.Normalize(message.Sender?.TextValue ?? string.Empty);
-        if (string.IsNullOrEmpty(senderName)) return;
-
-        if (this.RestrictToParticipants && !this.participants.Contains(senderName)) return;
-
-        var channel = message.LogKind.ToGameChatChannel();
-        if (channel.HasValue) {
-            this.EventFired?.Invoke(new ChatGameEvent {
-                Sender = senderName,
-                Message = messageText,
-                Channel = channel.Value
-            });
         }
     }
 
