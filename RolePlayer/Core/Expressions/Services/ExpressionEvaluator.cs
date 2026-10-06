@@ -78,4 +78,34 @@ public class ExpressionEvaluator : IExpressionEvaluator {
             _ => false
         };
     }
+
+    public bool Validate(string expression, out string errorMessage) {
+        errorMessage = string.Empty;
+        if (string.IsNullOrWhiteSpace(expression)) {
+            errorMessage = "Condition expression is empty.";
+            return false;
+        }
+
+        string[] knownOperators = { "==", "!=", ">=", "<=", " CONTAINS ", " NOT_CONTAINS ", ">", "<", "=" };
+        bool hasOperator = false;
+
+        foreach (var knownOp in knownOperators) {
+            if (expression.IndexOf(knownOp, StringComparison.OrdinalIgnoreCase) != -1) {
+                hasOperator = true;
+                break;
+            }
+        }
+
+        if (!hasOperator) {
+            errorMessage = "Expression is missing a valid operator (e.g., ==, !=, >, <).";
+            return false;
+        }
+
+        if (!expression.Contains("{") || !expression.Contains("}")) {
+            errorMessage = "Expression must contain at least one variable enclosed in curly braces { } (e.g., {Player.Job}).";
+            return false;
+        }
+
+        return true;
+    }
 }

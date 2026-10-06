@@ -65,7 +65,7 @@ public class MacroEngine : IMacroEngine, IDisposable {
         this.currentContext = null;
     }
 
-    private void OnFrameworkUpdate(IFramework fw) {
+    private void OnFrameworkUpdate(Dalamud.Plugin.Services.IFramework fw) {
         if (this.currentContext == null || this.currentContext.State == MacroExecutionState.Finished || this.currentContext.State == MacroExecutionState.Error) {
             this.Stop();
             return;
@@ -103,6 +103,12 @@ public class MacroEngine : IMacroEngine, IDisposable {
             }
 
             executed++;
+
+            // Interrompt la boucle synchrone pour cette frame, permettant au jeu de traiter l'action
+            if (this.currentContext.YieldFrame) {
+                this.currentContext.YieldFrame = false;
+                break;
+            }
         }
     }
 

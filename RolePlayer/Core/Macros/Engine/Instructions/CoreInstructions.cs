@@ -19,14 +19,22 @@ public class NativeCommandInstruction : IMacroInstruction {
         foreach (var kvp in context.Variables) {
             formatted = formatted.Replace($"{{{kvp.Key}}}", kvp.Value?.ToString() ?? string.Empty, StringComparison.OrdinalIgnoreCase);
         }
+
         this.nativeExecution.Execute(formatted);
+
+        // Force le moteur à laisser FFXIV respirer pour traiter la commande dans son buffer
+        context.YieldFrame = true;
     }
 }
 
 public class WaitInstruction : IMacroInstruction {
     private float delaySeconds;
     public WaitInstruction(float delaySeconds) => this.delaySeconds = delaySeconds;
-    public void Execute(MacroExecutionContext context) => context.ResumeTime = DateTime.Now.AddSeconds(this.delaySeconds);
+
+    public void Execute(MacroExecutionContext context) {
+        context.ResumeTime = DateTime.Now.AddSeconds(this.delaySeconds);
+        context.YieldFrame = true;
+    }
 }
 
 public class LabelInstruction : IMacroInstruction {
