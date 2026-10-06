@@ -11,20 +11,23 @@ public class CommandDispatcher : IDisposable {
     private ICommandManager commandManager;
     private IEnumerable<ICommand> commands;
     private string mainCommand = "/roleplayer";
+    private string aliasCommand = "/rp";
 
     public CommandDispatcher(ICommandManager commandManager, IEnumerable<ICommand> commands) {
         this.commandManager = commandManager;
         this.commands = commands;
 
-        this.commandManager.AddHandler(this.mainCommand, new CommandInfo(this.OnCommand) {
-            HelpMessage = "Type '/roleplayer help' for more information."
-        });
+        var commandInfo = new CommandInfo(this.OnCommand) {
+            HelpMessage = "Type '/roleplayer help' or '/rp help' for more information."
+        };
+
+        this.commandManager.AddHandler(this.mainCommand, commandInfo);
+        this.commandManager.AddHandler(this.aliasCommand, commandInfo);
     }
 
     private void OnCommand(string command, string arguments) {
         var args = arguments.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
 
-        // Si aucun argument n'est fourni, on cible "emotes" par défaut
         var subCommand = args.Length > 0 ? args[0].ToLowerInvariant() : "emotes";
         var subArguments = args.Length > 1 ? args[1] : string.Empty;
 
@@ -37,5 +40,6 @@ public class CommandDispatcher : IDisposable {
 
     public void Dispose() {
         this.commandManager.RemoveHandler(this.mainCommand);
+        this.commandManager.RemoveHandler(this.aliasCommand);
     }
 }

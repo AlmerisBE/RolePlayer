@@ -138,7 +138,6 @@ public class MacroEditorPanelComponent {
 
         ImGui.Separator();
 
-        // Zone de défilement isolée pour le contenu
         if (ImGui.BeginChild("MacroEditorScrollArea")) {
             ImGui.Spacing();
 
@@ -181,6 +180,20 @@ public class MacroEditorPanelComponent {
             if (openIconPicker) ImGui.OpenPopup("IconPickerPopup");
 
             this.DrawIconPickerPopup(macro, ref changed);
+
+            ImGui.Spacing();
+
+            // --- NOUVELLE SECTION POUR LA COMMANDE CHAT DE LA MACRO ---
+            ImGui.TextDisabled(this.localization.Translate("macro_command_hint"));
+            ImGui.PushStyleColor(ImGuiCol.FrameBg, new Vector4(0.1f, 0.1f, 0.1f, 1.0f));
+
+            string commandText = $"/rp macro {macro.CommandId}";
+            ImGui.SetNextItemWidth(-1f);
+            ImGui.InputText("##MacroCommandInput", ref commandText, 64, ImGuiInputTextFlags.ReadOnly);
+
+            ImGui.PopStyleColor();
+            if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("macro_command_tooltip"));
+            // ------------------------------------------------------------
 
             ImGui.EndDisabled();
 

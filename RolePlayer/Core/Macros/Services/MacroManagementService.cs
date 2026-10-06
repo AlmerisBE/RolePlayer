@@ -7,11 +7,36 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-public class MacroManagementService : IMacroManagementService {
+public class MacroManagementService : IMacroManagementService, IDisposable {
     private IConfigurationService configService;
 
     public MacroManagementService(IConfigurationService configService) {
         this.configService = configService;
+        this.configService.ProfileLoaded += this.EnsureCommandIdsAreAssigned;
+        this.EnsureCommandIdsAreAssigned();
+    }
+
+    public void EnsureCommandIdsAreAssigned() {
+        var profile = this.configService.GetCurrentProfile();
+        if (profile == null) return;
+
+        bool changed = false;
+        var allMacros = profile.Macros;
+
+        int nextId = allMacros.Any() ? allMacros.Max(m => m.CommandId) + 1 : 1;
+
+        foreach (var macro in allMacros) {
+            if (macro.CommandId == 0) {
+                macro.CommandId = nextId++;
+                changed = true;
+            }
+        }
+
+        if (changed) this.configService.Save();
+    }
+
+    public RoleplayMacro? GetMacroByCommandId(int commandId) {
+        return this.GetMacros().FirstOrDefault(m => m.CommandId == commandId);
     }
 
     public IEnumerable<RoleplayMacro> GetMacros() {
@@ -21,7 +46,10 @@ public class MacroManagementService : IMacroManagementService {
     public void CreateMacro(RoleplayMacro macro) {
         if (macro == null || string.IsNullOrWhiteSpace(macro.Name)) return;
 
-        this.configService.GetCurrentProfile().Macros.Add(macro);
+        var macros = this.configService.GetCurrentProfile().Macros;
+        macro.CommandId = macros.Any() ? macros.Max(m => m.CommandId) + 1 : 1;
+
+        macros.Add(macro);
         this.configService.Save();
     }
 
@@ -51,5 +79,9 @@ public class MacroManagementService : IMacroManagementService {
         macro.Content += $"{prefix}{command.Trim()}";
 
         this.configService.Save();
+    }
+
+    public void Dispose() {
+        this.configService.ProfileLoaded -= this.EnsureCommandIdsAreAssigned;
     }
 }
