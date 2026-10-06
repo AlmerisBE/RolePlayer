@@ -9,6 +9,7 @@ using RolePlayer.Core.Configuration.Contracts;
 using RolePlayer.Core.Configuration.Models;
 using RolePlayer.Core.Emotes.Contracts;
 using RolePlayer.Core.Macros.Contracts;
+using RolePlayer.Core.Macros.Engine.Contracts;
 using RolePlayer.Core.Macros.Models;
 using RolePlayer.Core.MetaData.Contracts;
 using RolePlayer.UI.Localization.Contracts;
@@ -30,9 +31,12 @@ public class MacroEditorPanelComponent {
     private IConfigurationService configurationService;
     private IContextManagementService contextService;
     private IMacroSelectionState selectionState;
+    private IMacroCompiler macroCompiler;
 
     private string autoTranslateSearch = string.Empty;
     private List<AutoTranslateResult> autoTranslateResults = new();
+    private string currentCompilationError = string.Empty;
+    private Guid lastValidatedMacroId = Guid.Empty;
 
     public MacroEditorPanelComponent(
         IMacroManagementService macroService,
@@ -45,7 +49,8 @@ public class MacroEditorPanelComponent {
         ITagManagementService tagService,
         IConfigurationService configurationService,
         IContextManagementService contextService,
-        IMacroSelectionState selectionState) {
+        IMacroSelectionState selectionState,
+        IMacroCompiler macroCompiler) {
 
         this.macroService = macroService;
         this.macroExecutionService = macroExecutionService;
@@ -58,6 +63,7 @@ public class MacroEditorPanelComponent {
         this.configurationService = configurationService;
         this.contextService = contextService;
         this.selectionState = selectionState;
+        this.macroCompiler = macroCompiler;
     }
 
     public void Draw() {
@@ -65,6 +71,12 @@ public class MacroEditorPanelComponent {
         if (macro == null) return;
 
         bool changed = false;
+
+        // Force la recompilation à la sélection d'une nouvelle macro
+        if (this.lastValidatedMacroId != macro.Id) {
+            this.macroCompiler.TryCompile(macro, out _, out this.currentCompilationError);
+            this.lastValidatedMacroId = macro.Id;
+        }
 
         string copyIcon = FontAwesomeIcon.Copy.ToIconString();
         string lockIcon = macro.IsLocked ? FontAwesomeIcon.Lock.ToIconString() : FontAwesomeIcon.Unlock.ToIconString();
@@ -183,7 +195,6 @@ public class MacroEditorPanelComponent {
 
             ImGui.Spacing();
 
-            // --- NOUVELLE SECTION POUR LA COMMANDE CHAT DE LA MACRO ---
             ImGui.TextDisabled(this.localization.Translate("macro_command_hint"));
             ImGui.PushStyleColor(ImGuiCol.FrameBg, new Vector4(0.1f, 0.1f, 0.1f, 1.0f));
 
@@ -193,7 +204,6 @@ public class MacroEditorPanelComponent {
 
             ImGui.PopStyleColor();
             if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("macro_command_tooltip"));
-            // ------------------------------------------------------------
 
             ImGui.EndDisabled();
 
@@ -307,6 +317,18 @@ public class MacroEditorPanelComponent {
 
             if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_macro_lines_hint"));
 
+            // Affichage de l'erreur de compilation en temps réel
+            if (!string.IsNullOrEmpty(this.currentCompilationError)) {
+                ImGui.Spacing();
+                ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(1.0f, 0.3f, 0.3f, 1.0f));
+                ImGui.PushFont(UiBuilder.IconFont);
+                ImGui.TextUnformatted(FontAwesomeIcon.ExclamationTriangle.ToIconString());
+                ImGui.PopFont();
+                ImGui.SameLine();
+                ImGui.TextWrapped(this.currentCompilationError);
+                ImGui.PopStyleColor();
+            }
+
             ImGui.Spacing();
             ImGui.Separator();
             ImGui.Spacing();
@@ -345,6 +367,7 @@ public class MacroEditorPanelComponent {
 
         if (changed) {
             this.macroService.UpdateMacro(macro.Id, macro.Name, macro.Content, macro.IconId, macro.IsLocked);
+            this.macroCompiler.TryCompile(macro, out _, out this.currentCompilationError);
         }
     }
 

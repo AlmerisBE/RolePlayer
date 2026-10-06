@@ -16,4 +16,6 @@ public class EnrichedEmote {
     public string ModName { get; set; } = string.Empty;
     public bool HasVariations { get; set; }
     public HashSet<string> CustomTags { get; set; } = new();
+    public string CommandAlias { get; set; } = string.Empty;
+    public uint UnlockLink { get; set; }
 }

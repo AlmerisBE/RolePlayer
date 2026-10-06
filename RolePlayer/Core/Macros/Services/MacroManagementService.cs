@@ -70,13 +70,12 @@ public class MacroManagementService : IMacroManagementService, IDisposable {
     }
 
     public void AppendToMacro(Guid id, string command) {
-        if (string.IsNullOrWhiteSpace(command)) return;
-
         var macro = this.configService.GetCurrentProfile().Macros.FirstOrDefault(m => m.Id == id);
+
         if (macro == null || macro.IsLocked) return;
 
-        string prefix = string.IsNullOrEmpty(macro.Content) ? string.Empty : "\n";
-        macro.Content += $"{prefix}{command.Trim()}";
+        if (string.IsNullOrEmpty(macro.Content)) macro.Content = command;
+        else macro.Content += $"\n{command}";
 
         this.configService.Save();
     }

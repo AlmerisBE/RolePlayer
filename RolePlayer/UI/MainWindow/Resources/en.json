@@ -126,5 +126,7 @@
   "help_context_explanation": "Contexts allow you to create entirely separate profiles for your character. Each context has its own set of hotbars, groups, and tags. This is extremely useful if you play different RP roles or alter egos with the same character.",
   "help_group_explanation": "Groups act as custom folders for your emotes. Unlike tags (which allow multiple assignments), an emote can only belong to a single group. This is ideal for categorizing emotes by stance or mood.",
   "config_hb_drag_drop_hint": "You can drag and drop icons to change their order.",
-  "config_hb_reset_order": "Reset custom order"
+  "config_hb_reset_order": "Reset custom order",
+  "macro_command_hint": "Chat Command:",
+  "macro_command_tooltip": "Copy this command to trigger this macro from the game or another native macro."
 }

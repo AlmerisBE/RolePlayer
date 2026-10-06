@@ -1,19 +1,17 @@
 ﻿namespace RolePlayer.Core.Macros.Services;
 
-using RolePlayer.API.Interop.Contracts;
 using RolePlayer.Core.Macros.Contracts;
+using RolePlayer.Core.Macros.Engine.Contracts;
 using RolePlayer.Core.Macros.Models;
 
 public class MacroExecutionService : IMacroExecutionService {
-    private INativeExecutionService nativeExecution;
+    private IMacroEngine engine;
 
-    public MacroExecutionService(INativeExecutionService nativeExecution) {
-        this.nativeExecution = nativeExecution;
+    public MacroExecutionService(IMacroEngine engine) {
+        this.engine = engine;
     }
 
     public void Execute(RoleplayMacro macro) {
-        if (macro != null && !string.IsNullOrWhiteSpace(macro.Content)) {
-            this.nativeExecution.Execute(macro.Content);
-        }
+        if (macro != null) this.engine.Play(macro);
     }
 }

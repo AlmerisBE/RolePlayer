@@ -12,7 +12,7 @@ public class MacroManagementServiceTests {
     public void AppendToMacro_AddsCommandWithNewline_WhenContentIsNotEmpty() {
         var mockConfigService = Substitute.For<IConfigurationService>();
         var profile = new CharacterProfile();
-        var macro = new RoleplayMacro { Content = "/bow" };
+        var macro = new RoleplayMacro { Content = "/bow", CommandId = 1 };
 
         profile.Macros.Add(macro);
         mockConfigService.GetCurrentProfile().Returns(profile);
@@ -28,7 +28,7 @@ public class MacroManagementServiceTests {
     public void AppendToMacro_DoesNotAddNewline_WhenContentIsEmpty() {
         var mockConfigService = Substitute.For<IConfigurationService>();
         var profile = new CharacterProfile();
-        var macro = new RoleplayMacro { Content = string.Empty };
+        var macro = new RoleplayMacro { Content = string.Empty, CommandId = 1 };
 
         profile.Macros.Add(macro);
         mockConfigService.GetCurrentProfile().Returns(profile);
@@ -44,7 +44,7 @@ public class MacroManagementServiceTests {
     public void AppendToMacro_DoesNothing_WhenMacroIsLocked() {
         var mockConfigService = Substitute.For<IConfigurationService>();
         var profile = new CharacterProfile();
-        var macro = new RoleplayMacro { Content = "/bow", IsLocked = true };
+        var macro = new RoleplayMacro { Content = "/bow", IsLocked = true, CommandId = 1 };
 
         profile.Macros.Add(macro);
         mockConfigService.GetCurrentProfile().Returns(profile);
