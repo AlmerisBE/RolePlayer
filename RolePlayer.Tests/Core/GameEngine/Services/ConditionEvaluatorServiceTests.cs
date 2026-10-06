@@ -1,11 +1,17 @@
 ﻿namespace RolePlayer.Tests.Core.GameEngine.Services;
 
+using RolePlayer.Core.Expressions.Services;
 using RolePlayer.Core.GameEngine.Models;
 using RolePlayer.Core.GameEngine.Services;
 using Xunit;
 
 public class ConditionEvaluatorServiceTests {
-    private ConditionEvaluatorService evaluator = new();
+    private ConditionEvaluatorService service;
+
+    public ConditionEvaluatorServiceTests() {
+        var evaluator = new ExpressionEvaluator();
+        this.service = new ConditionEvaluatorService(evaluator);
+    }
 
     [Fact]
     public void Evaluate_ParticipantCount_ReturnsTrueWhenConditionMet() {
@@ -13,7 +19,7 @@ public class ConditionEvaluatorServiceTests {
         context.Participants.Add("Player1");
         context.Participants.Add("Player2");
 
-        bool result = this.evaluator.Evaluate("Participants.Count >= 2", context);
+        bool result = this.service.Evaluate("Participants.Count >= 2", context);
 
         Assert.True(result);
     }
@@ -24,7 +30,7 @@ public class ConditionEvaluatorServiceTests {
         context.Participants.Add("Player1");
         context.CurrentEvent = new ChatGameEvent { Sender = "Player2", Message = "!join" };
 
-        bool result = this.evaluator.Evaluate("Participants NOT_CONTAINS Event.Sender", context);
+        bool result = this.service.Evaluate("Participants NOT_CONTAINS Event.Sender", context);
 
         Assert.True(result);
     }
@@ -35,7 +41,7 @@ public class ConditionEvaluatorServiceTests {
         context.Variables["current_max_roll"] = 999;
         context.CurrentEvent = new DiceRollGameEvent { Sender = "Player1", Roll = 50, MaxRoll = 999 };
 
-        bool result = this.evaluator.Evaluate("Event.MaxRoll == Var.current_max_roll", context);
+        bool result = this.service.Evaluate("Event.MaxRoll == Var.current_max_roll", context);
 
         Assert.True(result);
     }
@@ -45,7 +51,7 @@ public class ConditionEvaluatorServiceTests {
         var context = new GameSessionContext();
         context.CurrentEvent = new DiceRollGameEvent { Sender = "Player1", Roll = 1, MaxRoll = 50 };
 
-        bool result = this.evaluator.Evaluate("Event.Roll == 1", context);
+        bool result = this.service.Evaluate("Event.Roll == 1", context);
 
         Assert.True(result);
     }
@@ -62,7 +68,7 @@ public class ConditionEvaluatorServiceTests {
             "Var.is_active == 1"
         };
 
-        bool result = this.evaluator.EvaluateAll(conditions, context);
+        bool result = this.service.EvaluateAll(conditions, context);
 
         Assert.True(result);
     }
@@ -71,7 +77,7 @@ public class ConditionEvaluatorServiceTests {
     public void Evaluate_NullComparison_ReturnsTrueWhenVariableMissing() {
         var context = new GameSessionContext();
 
-        bool result = this.evaluator.Evaluate("Var.missing_variable == null", context);
+        bool result = this.service.Evaluate("Var.missing_variable == null", context);
 
         Assert.True(result);
     }
