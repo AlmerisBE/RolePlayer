@@ -1,6 +1,7 @@
 ﻿namespace RolePlayer.Core.Macros.Engine.Instructions;
 
 using RolePlayer.Core.Emotes.Contracts;
+using RolePlayer.Core.Emotes.Models;
 using RolePlayer.Core.Expressions.Contracts;
 using RolePlayer.Core.Macros.Engine.Contracts;
 using RolePlayer.Core.Macros.Engine.Models;
@@ -26,21 +27,24 @@ public class IfInstruction : IMacroInstruction {
 
             if (varName.StartsWith("Emote.Unlocked.", StringComparison.OrdinalIgnoreCase)) {
                 string identifier = varName.Substring(15).Trim();
-                uint? emoteId = this.ResolveEmoteId(identifier);
-                if (emoteId.HasValue) return this.playerState.IsEmoteUnlocked(emoteId.Value);
+                var cached = this.ResolveCachedEmote(identifier);
+
+                if (cached != null) {
+                    if (cached.UnlockLink == 0) return true;
+                    return this.playerState.IsEmoteUnlocked(cached.Id);
+                }
+
                 return false;
             }
 
             if (varName.StartsWith("Emote.Active.", StringComparison.OrdinalIgnoreCase)) {
                 string identifier = varName.Substring(13).Trim();
-                uint? emoteId = this.ResolveEmoteId(identifier);
-                if (emoteId.HasValue) return this.playerState.IsEmoteActive(emoteId.Value);
+                var cached = this.ResolveCachedEmote(identifier);
+                if (cached != null) return this.playerState.IsEmoteActive(cached.Id);
                 return false;
             }
 
-            if (varName.Equals("Emote.Active", StringComparison.OrdinalIgnoreCase)) {
-                return this.playerState.GetActiveEmoteId();
-            }
+            if (varName.Equals("Emote.Active", StringComparison.OrdinalIgnoreCase)) return this.playerState.GetActiveEmoteId();
 
             return null;
         });
@@ -53,13 +57,12 @@ public class IfInstruction : IMacroInstruction {
         }
     }
 
-    private uint? ResolveEmoteId(string identifier) {
-        if (uint.TryParse(identifier, out uint numericId)) return numericId;
+    private EnrichedEmote? ResolveCachedEmote(string identifier) {
+        if (uint.TryParse(identifier, out uint numericId)) return this.emoteCache.GetCachedEmotes().FirstOrDefault(e => e.Id == numericId);
 
-        string commandTarget = identifier.StartsWith("/") ? identifier : $"/{identifier}";
-        var cached = this.emoteCache.GetCachedEmotes().FirstOrDefault(e => string.Equals(e.CommandAlias, commandTarget, StringComparison.OrdinalIgnoreCase));
+        string withSlash = identifier.StartsWith("/") ? identifier : $"/{identifier}";
 
-        return cached?.Id;
+        return this.emoteCache.GetCachedEmotes().FirstOrDefault(e => string.Equals(e.EnglishCommand, withSlash, StringComparison.OrdinalIgnoreCase));
     }
 }
 
@@ -72,9 +75,7 @@ public class ElseInstruction : IMacroInstruction {
 
         if (previousResult) {
             var frame = context.CallStack.Peek();
-            if (frame.ProgramCounter < frame.Instructions.Count) {
-                frame.ProgramCounter++;
-            }
+            if (frame.ProgramCounter < frame.Instructions.Count) frame.ProgramCounter++;
         }
     }
 }
