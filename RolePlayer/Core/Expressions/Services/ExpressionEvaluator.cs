@@ -6,12 +6,40 @@ using System.Collections.Generic;
 using System.Linq;
 
 public class ExpressionEvaluator : IExpressionEvaluator {
+    public bool Validate(string expression, out string errorMessage) {
+        errorMessage = string.Empty;
+        if (string.IsNullOrWhiteSpace(expression)) {
+            errorMessage = "Condition expression is empty.";
+            return false;
+        }
+
+        string[] knownOperators = { "==", "!=", ">=", "<=", " CONTAINS ", " NOT_CONTAINS ", ">", "<", "=" };
+        bool hasOperator = knownOperators.Any(op => expression.IndexOf(op, StringComparison.OrdinalIgnoreCase) != -1);
+
+        if (!hasOperator) {
+            string trimmed = expression.Trim();
+            string core = trimmed.StartsWith("!") ? trimmed.Substring(1).Trim() : trimmed;
+
+            if (core.StartsWith("{") && core.EndsWith("}")) return true;
+
+            errorMessage = "Expression is missing an operator, or is not a valid boolean variable (e.g., {Emote.Unlocked./dance}).";
+            return false;
+        }
+
+        if (!expression.Contains("{") || !expression.Contains("}")) {
+            errorMessage = "Expression must contain at least one variable enclosed in curly braces { }.";
+            return false;
+        }
+
+        return true;
+    }
+
     public bool Evaluate(string expression, Func<string, object?> variableResolver) {
         if (string.IsNullOrWhiteSpace(expression)) return true;
 
         string[] knownOperators = { "==", "!=", ">=", "<=", " CONTAINS ", " NOT_CONTAINS ", ">", "<", "=" };
-        string leftRaw = string.Empty;
         string op = string.Empty;
+        string leftRaw = expression;
         string rightRaw = string.Empty;
 
         foreach (var knownOp in knownOperators) {
@@ -24,7 +52,19 @@ public class ExpressionEvaluator : IExpressionEvaluator {
             }
         }
 
-        if (string.IsNullOrEmpty(op)) return false;
+        if (string.IsNullOrEmpty(op)) {
+            string trimmed = expression.Trim();
+            bool invert = trimmed.StartsWith("!");
+            string core = invert ? trimmed.Substring(1).Trim() : trimmed;
+
+            object? val = this.ResolveValue(core, variableResolver);
+
+            bool isTrue = false;
+            if (val is bool b) isTrue = b;
+            else if (val?.ToString()?.Equals("true", StringComparison.OrdinalIgnoreCase) == true) isTrue = true;
+
+            return invert ? !isTrue : isTrue;
+        }
 
         object? leftValue = this.ResolveValue(leftRaw, variableResolver);
         object? rightValue = this.ResolveValue(rightRaw, variableResolver);
@@ -38,13 +78,16 @@ public class ExpressionEvaluator : IExpressionEvaluator {
         if (raw.StartsWith("'") && raw.EndsWith("'")) return raw.Trim('\'');
         if (raw.StartsWith("\"") && raw.EndsWith("\"")) return raw.Trim('"');
 
-        string cleanVarName = raw;
-        if (cleanVarName.StartsWith("{") && cleanVarName.EndsWith("}")) {
-            cleanVarName = cleanVarName.Substring(1, cleanVarName.Length - 2);
-        }
+        bool hasBraces = raw.StartsWith("{") && raw.EndsWith("}");
+        string cleanVarName = hasBraces ? raw.Substring(1, raw.Length - 2) : raw;
 
         object? resolved = variableResolver(cleanVarName);
-        return resolved ?? raw;
+        if (resolved != null) return resolved;
+
+        // Si le texte ressemble formellement à une variable mais n'est pas trouvé, on retourne strictement null.
+        if (hasBraces || cleanVarName.StartsWith("Var.", StringComparison.OrdinalIgnoreCase) || cleanVarName.StartsWith("Event.", StringComparison.OrdinalIgnoreCase)) return null;
+
+        return raw;
     }
 
     private bool Compare(object? left, string op, object? right) {
@@ -77,35 +120,5 @@ public class ExpressionEvaluator : IExpressionEvaluator {
             "!=" => !leftStr.Equals(rightStr, StringComparison.OrdinalIgnoreCase),
             _ => false
         };
-    }
-
-    public bool Validate(string expression, out string errorMessage) {
-        errorMessage = string.Empty;
-        if (string.IsNullOrWhiteSpace(expression)) {
-            errorMessage = "Condition expression is empty.";
-            return false;
-        }
-
-        string[] knownOperators = { "==", "!=", ">=", "<=", " CONTAINS ", " NOT_CONTAINS ", ">", "<", "=" };
-        bool hasOperator = false;
-
-        foreach (var knownOp in knownOperators) {
-            if (expression.IndexOf(knownOp, StringComparison.OrdinalIgnoreCase) != -1) {
-                hasOperator = true;
-                break;
-            }
-        }
-
-        if (!hasOperator) {
-            errorMessage = "Expression is missing a valid operator (e.g., ==, !=, >, <).";
-            return false;
-        }
-
-        if (!expression.Contains("{") || !expression.Contains("}")) {
-            errorMessage = "Expression must contain at least one variable enclosed in curly braces { } (e.g., {Player.Job}).";
-            return false;
-        }
-
-        return true;
     }
 }
