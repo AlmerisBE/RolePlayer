@@ -45,6 +45,9 @@ public class MainWindowFeature : IFeatureModule {
         services.AddSingleton<IMainWindow>(provider => provider.GetRequiredService<MainWindow>());
         services.AddSingleton<Window>(provider => provider.GetRequiredService<MainWindow>());
 
+        services.AddSingleton<MacroGuideWindow>();
+        services.AddSingleton<Window>(provider => provider.GetRequiredService<MacroGuideWindow>());
+
         services.AddSingleton<ICommand, OpenMainWindowCommand>();
         services.AddSingleton<ICommand, ConfigCommand>();
 

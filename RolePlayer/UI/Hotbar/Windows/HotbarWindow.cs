@@ -32,8 +32,17 @@ public class HotbarWindow : Window {
     private List<ResolvedHotbarItem> cachedItems = new();
     private int currentPage = 0;
 
-    private const float BaseIconSize = 41f;
+    // Dimensions Constants
+    private const float BaseIconSize = 43f;
+    private const float WindowPaddingX = 4f;
+    private const float WindowPaddingY = 4f;
+    private const float CellPadding = 1f;
+    private const float ItemSpacing = 1f;
+
     private float CurrentIconSize => BaseIconSize * this.config.Scale;
+    private float CurrentWindowPaddingX => WindowPaddingX * this.config.Scale;
+    private float CurrentWindowPaddingY => WindowPaddingY * this.config.Scale;
+    private float CurrentCellPadding => CellPadding * this.config.Scale;
 
     public HotbarWindow(
         HotbarConfig config,
@@ -71,8 +80,11 @@ public class HotbarWindow : Window {
     }
 
     private void UpdateSizeConstraints() {
+        float minWidth = this.CurrentIconSize + (this.CurrentWindowPaddingX * 2);
+        float minHeight = this.CurrentIconSize + (this.CurrentWindowPaddingY * 2);
+
         this.SizeConstraints = new WindowSizeConstraints {
-            MinimumSize = new Vector2(this.CurrentIconSize + 16f, this.CurrentIconSize + 16f),
+            MinimumSize = new Vector2(minWidth, minHeight),
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
         };
     }
@@ -124,8 +136,8 @@ public class HotbarWindow : Window {
             this.Flags &= ~ImGuiWindowFlags.NoMove;
         }
 
-        ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(8f, 8f));
-        ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(2f, 2f));
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(WindowPaddingX, WindowPaddingY));
+        ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(ItemSpacing, ItemSpacing));
     }
 
     public override void Draw() {
@@ -141,7 +153,7 @@ public class HotbarWindow : Window {
             int maxRows = (int)Math.Ceiling(this.config.ButtonCount / (double)maxColumns);
 
             ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, Vector2.Zero);
-            ImGui.PushStyleVar(ImGuiStyleVar.CellPadding, new Vector2(2f, 2f));
+            ImGui.PushStyleVar(ImGuiStyleVar.CellPadding, new Vector2(CellPadding, CellPadding));
             ImGui.PushStyleColor(ImGuiCol.Button, Vector4.Zero);
 
             if (ImGui.BeginTable($"HotbarGrid_{this.config.Id}", maxColumns, ImGuiTableFlags.SizingFixedFit)) {
@@ -154,12 +166,8 @@ public class HotbarWindow : Window {
 
                         int logicalIndex = this.GetLogicalIndex(row, col, maxRows, maxColumns, this.config.FillDirection);
 
-                        if (logicalIndex < displayedItems.Count) {
-                            this.DrawHotbarItemIcon(displayedItems[logicalIndex]);
-                        }
-                        else {
-                            ImGui.Dummy(new Vector2(this.CurrentIconSize, this.CurrentIconSize));
-                        }
+                        if (logicalIndex < displayedItems.Count) this.DrawHotbarItemIcon(displayedItems[logicalIndex]);
+                        else ImGui.Dummy(new Vector2(this.CurrentIconSize, this.CurrentIconSize));
                     }
                 }
                 ImGui.EndTable();
@@ -203,13 +211,13 @@ public class HotbarWindow : Window {
     }
 
     private Vector2 GetGridSize() {
-        if (this.cachedItems.Count == 0) return new Vector2(this.CurrentIconSize + 16f, this.CurrentIconSize + 16f);
+        if (this.cachedItems.Count == 0) return new Vector2(this.CurrentIconSize + (this.CurrentWindowPaddingX * 2), this.CurrentIconSize + (this.CurrentWindowPaddingY * 2));
 
         int maxColumns = this.GetColumnsForLayout(this.config.Layout);
         int maxRows = (int)Math.Ceiling(this.config.ButtonCount / (double)maxColumns);
 
-        float width = 16f + (maxColumns * (this.CurrentIconSize + 4f));
-        float height = 16f + (maxRows * (this.CurrentIconSize + 4f));
+        float width = (this.CurrentWindowPaddingX * 2) + (maxColumns * (this.CurrentIconSize + (this.CurrentCellPadding * 2)));
+        float height = (this.CurrentWindowPaddingY * 2) + (maxRows * (this.CurrentIconSize + (this.CurrentCellPadding * 2)));
 
         return new Vector2(width, height);
     }
@@ -262,40 +270,62 @@ public class HotbarWindow : Window {
     }
 
     private void DrawHotbarItemIcon(ResolvedHotbarItem item) {
+        bool idPushed = false;
         try {
-            var lookup = new GameIconLookup { IconId = item.IconId, HiRes = false };
-            var iconWrap = this.textureProvider.GetFromGameIcon(lookup).GetWrapOrDefault();
+            var iconLookup = new GameIconLookup { IconId = item.IconId, HiRes = false };
+            var iconWrap = this.textureProvider.GetFromGameIcon(iconLookup).GetWrapOrDefault();
 
             if (iconWrap != null) {
                 ImGui.PushID($"item_{(item.EmoteId.HasValue ? item.EmoteId.ToString() : item.MacroId.ToString())}");
+                idPushed = true;
+
+                var size = new Vector2(this.CurrentIconSize, this.CurrentIconSize);
                 var cursorPos = ImGui.GetCursorScreenPos();
 
-                if (ImGui.ImageButton(iconWrap.Handle, new Vector2(this.CurrentIconSize, this.CurrentIconSize))) {
+                bool isClicked = ImGui.InvisibleButton("btn", size);
+                bool isHovered = ImGui.IsItemHovered();
+                bool isActive = ImGui.IsItemActive();
+
+                var drawList = ImGui.GetWindowDrawList();
+
+                Vector2 drawPos = cursorPos;
+                if (isActive) {
+                    drawPos.X += 1f;
+                    drawPos.Y += 1f;
+                }
+
+                drawList.AddRectFilled(drawPos, drawPos + size, ImGui.GetColorU32(new Vector4(0f, 0f, 0f, 1f)), 4f);
+                drawList.AddImage(iconWrap.Handle, drawPos, drawPos + size);
+
+                drawList.AddRect(drawPos, drawPos + size, ImGui.GetColorU32(new Vector4(0.1f, 0.1f, 0.1f, 1f)), 4f, ImDrawFlags.None, 2f);
+                drawList.AddRect(drawPos + new Vector2(1f, 1f), drawPos + size - new Vector2(1f, 1f), ImGui.GetColorU32(new Vector4(0.6f, 0.6f, 0.6f, 1f)), 3f, ImDrawFlags.None, 1f);
+
+                if (isHovered && !isActive) drawList.AddRectFilled(drawPos, drawPos + size, ImGui.GetColorU32(new Vector4(1f, 1f, 1f, 0.2f)), 4f);
+                if (isActive) drawList.AddRectFilled(drawPos, drawPos + size, ImGui.GetColorU32(new Vector4(0f, 0f, 0f, 0.3f)), 4f);
+
+                if (isClicked) {
                     if (item.EmoteId.HasValue) this.emoteExecutionService.ExecuteEmote(item.EmoteId.Value);
                     else if (item.MacroId.HasValue && item.MacroReference != null) this.macroExecutionService.Execute(item.MacroReference);
                 }
 
                 if (item.HasVariations) {
-                    var drawList = ImGui.GetWindowDrawList();
                     ImGui.PushFont(UiBuilder.IconFont);
                     var indicatorText = FontAwesomeIcon.Sync.ToIconString();
                     var textSize = ImGui.CalcTextSize(indicatorText);
                     ImGui.PopFont();
 
-                    var indicatorPos = new Vector2(cursorPos.X + this.CurrentIconSize - textSize.X - 2f, cursorPos.Y + this.CurrentIconSize - textSize.Y - 2f);
+                    var indicatorPos = new Vector2(drawPos.X + this.CurrentIconSize - textSize.X - 2f, drawPos.Y + this.CurrentIconSize - textSize.Y - 2f);
 
-                    drawList.AddText(UiBuilder.IconFont, ImGui.GetFontSize(), new Vector2(indicatorPos.X + 1, indicatorPos.Y + 1), 0xFF000000, indicatorText);
-                    drawList.AddText(UiBuilder.IconFont, ImGui.GetFontSize(), indicatorPos, 0xFF40DD40, indicatorText);
+                    drawList.AddText(UiBuilder.IconFont, ImGui.GetFontSize(), new Vector2(indicatorPos.X + 1, indicatorPos.Y + 1), ImGui.GetColorU32(new Vector4(0f, 0f, 0f, 1f)), indicatorText);
+                    drawList.AddText(UiBuilder.IconFont, ImGui.GetFontSize(), indicatorPos, ImGui.GetColorU32(new Vector4(0.25f, 0.86f, 0.25f, 1f)), indicatorText);
                 }
 
-                if (ImGui.IsItemHovered()) {
+                if (isHovered) {
                     string tooltipText = item.IsModded ? $"★ {item.Name}\n{this.localization.Translate("hotbar_tooltip_mod")} {item.ModName}\n{item.CommandText}" : $"{item.Name}\n{item.CommandText}";
                     if (item.HasVariations) tooltipText += $"\n{this.localization.Translate("hotbar_tooltip_variation")}";
 
                     ImGui.SetTooltip(tooltipText);
                 }
-
-                ImGui.PopID();
             }
             else {
                 ImGui.Dummy(new Vector2(this.CurrentIconSize, this.CurrentIconSize));
@@ -303,6 +333,9 @@ public class HotbarWindow : Window {
         }
         catch (Exception) {
             ImGui.Dummy(new Vector2(this.CurrentIconSize, this.CurrentIconSize));
+        }
+        finally {
+            if (idPushed) ImGui.PopID();
         }
     }
 

@@ -14,6 +14,7 @@ using RolePlayer.Core.Macros.Models;
 using RolePlayer.Core.MetaData.Contracts;
 using RolePlayer.UI.Localization.Contracts;
 using RolePlayer.UI.MainWindow.Contracts;
+using RolePlayer.UI.MainWindow.Windows;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,6 +33,7 @@ public class MacroEditorPanelComponent {
     private IContextManagementService contextService;
     private IMacroSelectionState selectionState;
     private IMacroCompiler macroCompiler;
+    private MacroGuideWindow macroGuideWindow;
 
     private string autoTranslateSearch = string.Empty;
     private List<AutoTranslateResult> autoTranslateResults = new();
@@ -50,7 +52,8 @@ public class MacroEditorPanelComponent {
         IConfigurationService configurationService,
         IContextManagementService contextService,
         IMacroSelectionState selectionState,
-        IMacroCompiler macroCompiler) {
+        IMacroCompiler macroCompiler,
+        MacroGuideWindow macroGuideWindow) {
 
         this.macroService = macroService;
         this.macroExecutionService = macroExecutionService;
@@ -64,6 +67,7 @@ public class MacroEditorPanelComponent {
         this.contextService = contextService;
         this.selectionState = selectionState;
         this.macroCompiler = macroCompiler;
+        this.macroGuideWindow = macroGuideWindow;
     }
 
     public void Draw() {
@@ -72,7 +76,6 @@ public class MacroEditorPanelComponent {
 
         bool changed = false;
 
-        // Force la recompilation à la sélection d'une nouvelle macro
         if (this.lastValidatedMacroId != macro.Id) {
             this.macroCompiler.TryCompile(macro, out _, out this.currentCompilationError);
             this.lastValidatedMacroId = macro.Id;
@@ -80,76 +83,73 @@ public class MacroEditorPanelComponent {
 
         string copyIcon = FontAwesomeIcon.Copy.ToIconString();
         string lockIcon = macro.IsLocked ? FontAwesomeIcon.Lock.ToIconString() : FontAwesomeIcon.Unlock.ToIconString();
+        string guideIcon = FontAwesomeIcon.QuestionCircle.ToIconString();
         string playIcon = FontAwesomeIcon.Play.ToIconString();
         string closeIcon = FontAwesomeIcon.Times.ToIconString();
 
         ImGui.PushFont(UiBuilder.IconFont);
-        var copyBtnWidth = ImGui.CalcTextSize(copyIcon).X + ImGui.GetStyle().FramePadding.X * 2;
-        var lockBtnWidth = ImGui.CalcTextSize(lockIcon).X + ImGui.GetStyle().FramePadding.X * 2;
-        var playBtnWidth = ImGui.CalcTextSize(playIcon).X + ImGui.GetStyle().FramePadding.X * 2;
-        var closeBtnWidth = ImGui.CalcTextSize(closeIcon).X + ImGui.GetStyle().FramePadding.X * 2;
+        var closeBtnWidth = ImGui.CalcTextSize(closeIcon).X + (ImGui.GetStyle().FramePadding.X * 2);
         ImGui.PopFont();
 
-        if (ImGui.BeginTable("MacroSettingsHeaderTable", 5)) {
-            ImGui.TableSetupColumn("Title", ImGuiTableColumnFlags.WidthStretch);
-            ImGui.TableSetupColumn("CopyBtn", ImGuiTableColumnFlags.WidthFixed, copyBtnWidth);
-            ImGui.TableSetupColumn("LockBtn", ImGuiTableColumnFlags.WidthFixed, lockBtnWidth);
-            ImGui.TableSetupColumn("PlayBtn", ImGuiTableColumnFlags.WidthFixed, playBtnWidth);
-            ImGui.TableSetupColumn("CloseBtn", ImGuiTableColumnFlags.WidthFixed, closeBtnWidth);
+        // 1. Titre de la macro et bouton de fermeture aligné à droite
+        ImGui.AlignTextToFramePadding();
+        ImGui.SetWindowFontScale(1.3f);
+        string title = string.IsNullOrWhiteSpace(macro.Name) ? this.localization.Translate("config_macro_settings") : macro.Name;
+        ImGui.TextUnformatted(title);
+        ImGui.SetWindowFontScale(1.0f);
 
-            ImGui.TableNextRow();
-            ImGui.TableNextColumn();
-            ImGui.AlignTextToFramePadding();
-            ImGui.SetWindowFontScale(1.3f);
-
-            string title = string.IsNullOrWhiteSpace(macro.Name) ? this.localization.Translate("config_macro_settings") : macro.Name;
-            ImGui.TextUnformatted(title);
-            ImGui.SetWindowFontScale(1.0f);
-
-            ImGui.TableNextColumn();
-            ImGui.PushFont(UiBuilder.IconFont);
-            if (ImGui.Button($"{copyIcon}##CopyMacroDetails")) ImGui.SetClipboardText(macro.Content);
+        ImGui.SameLine(ImGui.GetContentRegionMax().X - closeBtnWidth);
+        ImGui.PushFont(UiBuilder.IconFont);
+        if (ImGui.Button($"{closeIcon}##CloseMacroDetails")) {
+            this.selectionState.SelectedMacro = null;
             ImGui.PopFont();
-            if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_macro_copy"));
+            return;
+        }
+        ImGui.PopFont();
 
-            ImGui.TableNextColumn();
-            ImGui.PushFont(UiBuilder.IconFont);
+        ImGui.Spacing();
 
-            bool wasLocked = macro.IsLocked;
-            if (wasLocked) ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
+        // 2. Ligne des boutons d'actions secondaires
+        ImGui.PushFont(UiBuilder.IconFont);
+        if (ImGui.Button($"{copyIcon}##CopyMacroDetails")) ImGui.SetClipboardText(macro.Content);
+        ImGui.PopFont();
+        if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_macro_copy"));
 
-            if (ImGui.Button($"{lockIcon}##LockMacroDetails")) {
-                macro.IsLocked = !macro.IsLocked;
-                changed = true;
-            }
+        ImGui.SameLine();
 
-            if (wasLocked) ImGui.PopStyleColor();
-            ImGui.PopFont();
-            if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_macro_toggle_lock"));
+        ImGui.PushFont(UiBuilder.IconFont);
+        bool wasLocked = macro.IsLocked;
+        if (wasLocked) ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
 
-            ImGui.TableNextColumn();
-            ImGui.PushFont(UiBuilder.IconFont);
-            ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.2f, 0.6f, 0.2f, 1.0f));
-            if (ImGui.Button($"{playIcon}##PlayMacroDetails")) this.macroExecutionService.Execute(macro);
-            ImGui.PopStyleColor();
-            ImGui.PopFont();
-            if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_macro_execute"));
-
-            ImGui.TableNextColumn();
-            ImGui.PushFont(UiBuilder.IconFont);
-            if (ImGui.Button($"{closeIcon}##CloseMacroDetails")) {
-                this.selectionState.SelectedMacro = null;
-                ImGui.PopFont();
-                ImGui.EndTable();
-                return;
-            }
-            ImGui.PopFont();
-
-            ImGui.EndTable();
+        if (ImGui.Button($"{lockIcon}##LockMacroDetails")) {
+            macro.IsLocked = !macro.IsLocked;
+            changed = true;
         }
 
+        if (wasLocked) ImGui.PopStyleColor();
+        ImGui.PopFont();
+        if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_macro_toggle_lock"));
+
+        ImGui.SameLine();
+
+        ImGui.PushFont(UiBuilder.IconFont);
+        if (ImGui.Button($"{guideIcon}##OpenMacroGuide")) this.macroGuideWindow.IsOpen = true;
+        ImGui.PopFont();
+        if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_macro_guide_tooltip"));
+
+        ImGui.SameLine();
+
+        ImGui.PushFont(UiBuilder.IconFont);
+        ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.2f, 0.6f, 0.2f, 1.0f));
+        if (ImGui.Button($"{playIcon}##PlayMacroDetails")) this.macroExecutionService.Execute(macro);
+        ImGui.PopStyleColor();
+        ImGui.PopFont();
+        if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_macro_execute"));
+
+        ImGui.Spacing();
         ImGui.Separator();
 
+        // 3. Zone déroulante du contenu
         if (ImGui.BeginChild("MacroEditorScrollArea")) {
             ImGui.Spacing();
 
@@ -317,7 +317,6 @@ public class MacroEditorPanelComponent {
 
             if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_macro_lines_hint"));
 
-            // Affichage de l'erreur de compilation en temps réel
             if (!string.IsNullOrEmpty(this.currentCompilationError)) {
                 ImGui.Spacing();
                 ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(1.0f, 0.3f, 0.3f, 1.0f));
@@ -386,8 +385,12 @@ public class MacroEditorPanelComponent {
         foreach (var hotbar in manualHotbars) {
             bool isInHotbar = hotbar.ManualMacroIds.Contains(macroId);
             if (ImGui.Checkbox($"{hotbar.Name}##hb_{hotbar.Id}", ref isInHotbar)) {
-                if (isInHotbar) hotbar.ManualMacroIds.Add(macroId);
-                else hotbar.ManualMacroIds.Remove(macroId);
+                if (isInHotbar) {
+                    hotbar.ManualMacroIds.Add(macroId);
+                }
+                else {
+                    hotbar.ManualMacroIds.Remove(macroId);
+                }
 
                 hotbarChanged = true;
             }
