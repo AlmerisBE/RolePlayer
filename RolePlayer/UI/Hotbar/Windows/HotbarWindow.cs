@@ -18,7 +18,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 
-public class HotbarWindow : Window {
+public class HotbarWindow : Window, IDisposable {
     private HotbarConfig config;
     private IHotbarResolverService resolverService;
     private IEmoteExecutionService emoteExecutionService;
@@ -31,6 +31,7 @@ public class HotbarWindow : Window {
 
     private List<ResolvedHotbarItem> cachedItems = new();
     private int currentPage = 0;
+    private bool wasOpen = false;
 
     // Dimensions Constants
     private const float BaseIconSize = 43f;
@@ -70,7 +71,13 @@ public class HotbarWindow : Window {
         this.SizeCondition = ImGuiCond.Always;
         this.IsOpen = config.IsVisible;
 
+        this.emoteCache.CacheUpdated += this.RefreshContent;
         this.RefreshContent();
+    }
+
+    public void Dispose() {
+        this.emoteCache.CacheUpdated -= this.RefreshContent;
+        GC.SuppressFinalize(this);
     }
 
     public void UpdateConfig(HotbarConfig newConfig) {
@@ -102,11 +109,9 @@ public class HotbarWindow : Window {
 
     private bool EvaluateHotbarVisibility() {
         if (!this.configService.GetConfig().EnableHotbars) return true;
-
         if (this.condition[ConditionFlag.WatchingCutscene]) return true;
         if (this.condition[ConditionFlag.BetweenAreas] || this.condition[ConditionFlag.BetweenAreas51]) return true;
         if (this.condition[ConditionFlag.LoggingOut]) return true;
-
         if (this.config.HideInCombat && this.condition[ConditionFlag.InCombat]) return true;
         if (this.config.HideInDuty && (this.condition[ConditionFlag.BoundByDuty] || this.condition[ConditionFlag.BoundByDuty56])) return true;
 
@@ -117,9 +122,13 @@ public class HotbarWindow : Window {
         try {
             bool hide = this.EvaluateHotbarVisibility();
             this.IsOpen = this.config.IsVisible && !hide;
+
+            if (this.IsOpen && !this.wasOpen) this.RefreshContent();
+
+            this.wasOpen = this.IsOpen;
         }
         catch {
-            this.IsOpen = false;
+            this.IsOpen = this.config.IsVisible;
         }
 
         this.BgAlpha = this.config.IsLocked ? 0.0f : 0.7f;
@@ -128,9 +137,9 @@ public class HotbarWindow : Window {
     public override void PreDraw() {
         if (this.config.IsLocked) {
             this.Flags |= ImGuiWindowFlags.NoMove;
-
             if (this.config.PositionInitialized) {
-                if (float.IsNaN(this.config.AnchorPosition.X) || float.IsNaN(this.config.AnchorPosition.Y)) {
+                if (float.IsNaN(this.config.AnchorPosition.X) || float.IsNaN(this.config.AnchorPosition.Y) ||
+                    float.IsInfinity(this.config.AnchorPosition.X) || float.IsInfinity(this.config.AnchorPosition.Y)) {
                     this.config.PositionInitialized = false;
                 }
                 else {
@@ -138,14 +147,6 @@ public class HotbarWindow : Window {
                     var pivot = this.GetPivot(this.config.Anchor);
 
                     var topLeft = this.config.AnchorPosition - new Vector2(gridSize.X * pivot.X, gridSize.Y * pivot.Y);
-
-                    var viewport = ImGui.GetMainViewport();
-                    float maxX = Math.Max(viewport.WorkPos.X, viewport.WorkPos.X + viewport.WorkSize.X - gridSize.X);
-                    float maxY = Math.Max(viewport.WorkPos.Y, viewport.WorkPos.Y + viewport.WorkSize.Y - gridSize.Y);
-
-                    topLeft.X = Math.Clamp(topLeft.X, viewport.WorkPos.X, maxX);
-                    topLeft.Y = Math.Clamp(topLeft.Y, viewport.WorkPos.Y, maxY);
-
                     ImGui.SetNextWindowPos(topLeft, ImGuiCond.Always, new Vector2(0, 0));
                 }
             }
@@ -171,7 +172,7 @@ public class HotbarWindow : Window {
             int maxRows = (int)Math.Ceiling(this.config.ButtonCount / (double)maxColumns);
 
             ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, Vector2.Zero);
-            ImGui.PushStyleVar(ImGuiStyleVar.CellPadding, new Vector2(CellPadding, CellPadding));
+            ImGui.PushStyleVar(ImGuiStyleVar.CellPadding, new Vector2(CurrentCellPadding, CurrentCellPadding));
             ImGui.PushStyleColor(ImGuiCol.Button, Vector4.Zero);
 
             if (ImGui.BeginTable($"HotbarGrid_{this.config.Id}", maxColumns, ImGuiTableFlags.SizingFixedFit)) {
@@ -293,60 +294,60 @@ public class HotbarWindow : Window {
             var iconLookup = new GameIconLookup { IconId = item.IconId, HiRes = false };
             var iconWrap = this.textureProvider.GetFromGameIcon(iconLookup).GetWrapOrDefault();
 
-            if (iconWrap != null) {
-                ImGui.PushID($"item_{(item.EmoteId.HasValue ? item.EmoteId.ToString() : item.MacroId.ToString())}");
-                idPushed = true;
-
-                var size = new Vector2(this.CurrentIconSize, this.CurrentIconSize);
-                var cursorPos = ImGui.GetCursorScreenPos();
-
-                bool isClicked = ImGui.InvisibleButton("btn", size);
-                bool isHovered = ImGui.IsItemHovered();
-                bool isActive = ImGui.IsItemActive();
-
-                var drawList = ImGui.GetWindowDrawList();
-
-                Vector2 drawPos = cursorPos;
-                if (isActive) {
-                    drawPos.X += 1f;
-                    drawPos.Y += 1f;
-                }
-
-                drawList.AddRectFilled(drawPos, drawPos + size, ImGui.GetColorU32(new Vector4(0f, 0f, 0f, 1f)), 4f);
-                drawList.AddImage(iconWrap.Handle, drawPos, drawPos + size);
-
-                drawList.AddRect(drawPos, drawPos + size, ImGui.GetColorU32(new Vector4(0.1f, 0.1f, 0.1f, 1f)), 4f, ImDrawFlags.None, 2f);
-                drawList.AddRect(drawPos + new Vector2(1f, 1f), drawPos + size - new Vector2(1f, 1f), ImGui.GetColorU32(new Vector4(0.6f, 0.6f, 0.6f, 1f)), 3f, ImDrawFlags.None, 1f);
-
-                if (isHovered && !isActive) drawList.AddRectFilled(drawPos, drawPos + size, ImGui.GetColorU32(new Vector4(1f, 1f, 1f, 0.2f)), 4f);
-                if (isActive) drawList.AddRectFilled(drawPos, drawPos + size, ImGui.GetColorU32(new Vector4(0f, 0f, 0f, 0.3f)), 4f);
-
-                if (isClicked) {
-                    if (item.EmoteId.HasValue) this.emoteExecutionService.ExecuteEmote(item.EmoteId.Value);
-                    else if (item.MacroId.HasValue && item.MacroReference != null) this.macroExecutionService.Execute(item.MacroReference);
-                }
-
-                if (item.HasVariations) {
-                    ImGui.PushFont(UiBuilder.IconFont);
-                    var indicatorText = FontAwesomeIcon.Sync.ToIconString();
-                    var textSize = ImGui.CalcTextSize(indicatorText);
-                    ImGui.PopFont();
-
-                    var indicatorPos = new Vector2(drawPos.X + this.CurrentIconSize - textSize.X - 2f, drawPos.Y + this.CurrentIconSize - textSize.Y - 2f);
-
-                    drawList.AddText(UiBuilder.IconFont, ImGui.GetFontSize(), new Vector2(indicatorPos.X + 1, indicatorPos.Y + 1), ImGui.GetColorU32(new Vector4(0f, 0f, 0f, 1f)), indicatorText);
-                    drawList.AddText(UiBuilder.IconFont, ImGui.GetFontSize(), indicatorPos, ImGui.GetColorU32(new Vector4(0.25f, 0.86f, 0.25f, 1f)), indicatorText);
-                }
-
-                if (isHovered) {
-                    string tooltipText = item.IsModded ? $"★ {item.Name}\n{this.localization.Translate("hotbar_tooltip_mod")} {item.ModName}\n{item.CommandText}" : $"{item.Name}\n{item.CommandText}";
-                    if (item.HasVariations) tooltipText += $"\n{this.localization.Translate("hotbar_tooltip_variation")}";
-
-                    ImGui.SetTooltip(tooltipText);
-                }
-            }
-            else {
+            if (iconWrap == null) {
                 ImGui.Dummy(new Vector2(this.CurrentIconSize, this.CurrentIconSize));
+                return;
+            }
+
+            ImGui.PushID($"item_{(item.EmoteId.HasValue ? item.EmoteId.ToString() : item.MacroId.ToString())}");
+            idPushed = true;
+
+            var size = new Vector2(this.CurrentIconSize, this.CurrentIconSize);
+            var cursorPos = ImGui.GetCursorScreenPos();
+
+            bool isClicked = ImGui.InvisibleButton("btn", size);
+            bool isHovered = ImGui.IsItemHovered();
+            bool isActive = ImGui.IsItemActive();
+
+            var drawList = ImGui.GetWindowDrawList();
+
+            Vector2 drawPos = cursorPos;
+            if (isActive) {
+                drawPos.X += 1f;
+                drawPos.Y += 1f;
+            }
+
+            drawList.AddRectFilled(drawPos, drawPos + size, ImGui.GetColorU32(new Vector4(0f, 0f, 0f, 1f)), 4f);
+            drawList.AddImage(iconWrap.Handle, drawPos, drawPos + size);
+
+            drawList.AddRect(drawPos, drawPos + size, ImGui.GetColorU32(new Vector4(0.1f, 0.1f, 0.1f, 1f)), 4f, ImDrawFlags.None, 2f);
+            drawList.AddRect(drawPos + new Vector2(1f, 1f), drawPos + size - new Vector2(1f, 1f), ImGui.GetColorU32(new Vector4(0.6f, 0.6f, 0.6f, 1f)), 3f, ImDrawFlags.None, 1f);
+
+            if (isHovered && !isActive) drawList.AddRectFilled(drawPos, drawPos + size, ImGui.GetColorU32(new Vector4(1f, 1f, 1f, 0.2f)), 4f);
+            if (isActive) drawList.AddRectFilled(drawPos, drawPos + size, ImGui.GetColorU32(new Vector4(0f, 0f, 0f, 0.3f)), 4f);
+
+            if (isClicked) {
+                if (item.EmoteId.HasValue) this.emoteExecutionService.ExecuteEmote(item.EmoteId.Value);
+                if (item.MacroId.HasValue && item.MacroReference != null) this.macroExecutionService.Execute(item.MacroReference);
+            }
+
+            if (item.HasVariations) {
+                ImGui.PushFont(UiBuilder.IconFont);
+                var indicatorText = FontAwesomeIcon.Sync.ToIconString();
+                var textSize = ImGui.CalcTextSize(indicatorText);
+                ImGui.PopFont();
+
+                var indicatorPos = new Vector2(drawPos.X + this.CurrentIconSize - textSize.X - 2f, drawPos.Y + this.CurrentIconSize - textSize.Y - 2f);
+
+                drawList.AddText(UiBuilder.IconFont, ImGui.GetFontSize(), new Vector2(indicatorPos.X + 1, indicatorPos.Y + 1), ImGui.GetColorU32(new Vector4(0f, 0f, 0f, 1f)), indicatorText);
+                drawList.AddText(UiBuilder.IconFont, ImGui.GetFontSize(), indicatorPos, ImGui.GetColorU32(new Vector4(0.25f, 0.86f, 0.25f, 1f)), indicatorText);
+            }
+
+            if (isHovered) {
+                string tooltipText = item.IsModded ? $"★ {item.Name}\n{this.localization.Translate("hotbar_tooltip_mod")} {item.ModName}\n{item.CommandText}" : $"{item.Name}\n{item.CommandText}";
+                if (item.HasVariations) tooltipText += $"\n{this.localization.Translate("hotbar_tooltip_variation")}";
+
+                ImGui.SetTooltip(tooltipText);
             }
         }
         catch (Exception) {

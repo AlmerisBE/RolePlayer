@@ -52,6 +52,11 @@ public class HotbarManagerComponent : IDisposable {
             this.needsRefresh = false;
         }
 
+        // Force l'évaluation de l'état pour contourner l'optimisation de Dalamud qui ignore les fenêtres cachées
+        foreach (var window in this.activeWindows.Values) {
+            window.Update();
+        }
+
         this.windowSystem.Draw();
     }
 
