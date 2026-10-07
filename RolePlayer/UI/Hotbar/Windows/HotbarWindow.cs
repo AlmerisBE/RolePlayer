@@ -102,7 +102,11 @@ public class HotbarWindow : Window {
 
     private bool EvaluateHotbarVisibility() {
         if (!this.configService.GetConfig().EnableHotbars) return true;
+
         if (this.condition[ConditionFlag.WatchingCutscene]) return true;
+        if (this.condition[ConditionFlag.BetweenAreas] || this.condition[ConditionFlag.BetweenAreas51]) return true;
+        if (this.condition[ConditionFlag.LoggingOut]) return true;
+
         if (this.config.HideInCombat && this.condition[ConditionFlag.InCombat]) return true;
         if (this.config.HideInDuty && (this.condition[ConditionFlag.BoundByDuty] || this.condition[ConditionFlag.BoundByDuty56])) return true;
 
@@ -115,7 +119,7 @@ public class HotbarWindow : Window {
             this.IsOpen = this.config.IsVisible && !hide;
         }
         catch {
-            this.IsOpen = this.config.IsVisible;
+            this.IsOpen = false;
         }
 
         this.BgAlpha = this.config.IsLocked ? 0.0f : 0.7f;
@@ -124,12 +128,26 @@ public class HotbarWindow : Window {
     public override void PreDraw() {
         if (this.config.IsLocked) {
             this.Flags |= ImGuiWindowFlags.NoMove;
-            if (this.config.PositionInitialized) {
-                var gridSize = this.GetGridSize();
-                var pivot = this.GetPivot(this.config.Anchor);
 
-                var topLeft = this.config.AnchorPosition - new Vector2(gridSize.X * pivot.X, gridSize.Y * pivot.Y);
-                ImGui.SetNextWindowPos(topLeft, ImGuiCond.Always, new Vector2(0, 0));
+            if (this.config.PositionInitialized) {
+                if (float.IsNaN(this.config.AnchorPosition.X) || float.IsNaN(this.config.AnchorPosition.Y)) {
+                    this.config.PositionInitialized = false;
+                }
+                else {
+                    var gridSize = this.GetGridSize();
+                    var pivot = this.GetPivot(this.config.Anchor);
+
+                    var topLeft = this.config.AnchorPosition - new Vector2(gridSize.X * pivot.X, gridSize.Y * pivot.Y);
+
+                    var viewport = ImGui.GetMainViewport();
+                    float maxX = Math.Max(viewport.WorkPos.X, viewport.WorkPos.X + viewport.WorkSize.X - gridSize.X);
+                    float maxY = Math.Max(viewport.WorkPos.Y, viewport.WorkPos.Y + viewport.WorkSize.Y - gridSize.Y);
+
+                    topLeft.X = Math.Clamp(topLeft.X, viewport.WorkPos.X, maxX);
+                    topLeft.Y = Math.Clamp(topLeft.Y, viewport.WorkPos.Y, maxY);
+
+                    ImGui.SetNextWindowPos(topLeft, ImGuiCond.Always, new Vector2(0, 0));
+                }
             }
         }
         else {
