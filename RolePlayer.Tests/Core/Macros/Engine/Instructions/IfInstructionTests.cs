@@ -17,7 +17,9 @@ public class IfInstructionTests {
         var playerState = Substitute.For<IPlayerStateProvider>();
         var emoteCache = Substitute.For<IEmoteCache>();
 
-        var emotes = new List<EnrichedEmote> { new EnrichedEmote { Id = 50, CommandAlias = "/dance" } };
+        var emotes = new List<EnrichedEmote> {
+            new EnrichedEmote { Id = 50, EnglishCommand = "/dance", UnlockLink = 42 }
+        };
         emoteCache.GetCachedEmotes().Returns(emotes);
 
         playerState.IsEmoteUnlocked(50).Returns(true);
@@ -42,7 +44,9 @@ public class IfInstructionTests {
         var playerState = Substitute.For<IPlayerStateProvider>();
         var emoteCache = Substitute.For<IEmoteCache>();
 
-        var emotes = new List<EnrichedEmote> { new EnrichedEmote { Id = 50, CommandAlias = "/dance" } };
+        var emotes = new List<EnrichedEmote> {
+            new EnrichedEmote { Id = 50, EnglishCommand = "/dance", UnlockLink = 42 }
+        };
         emoteCache.GetCachedEmotes().Returns(emotes);
 
         playerState.IsEmoteUnlocked(50).Returns(true);
