@@ -6,57 +6,155 @@ using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using RolePlayer.Core.Configuration.Contracts;
+using RolePlayer.Core.Configuration.Models;
+using RolePlayer.Core.Emotes.Contracts;
+using RolePlayer.Core.Macros.Contracts;
 using RolePlayer.UI.Input.Contracts;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 public class HotkeyService : IHotkeyService, IDisposable {
     private IKeyState keyState;
     private IDalamudPluginInterface pluginInterface;
     private IConfigurationService configService;
-    private bool wasKeyPressed = false;
+    private IEmoteExecutionService emoteExecution;
+    private IMacroExecutionService macroExecution;
+    private IMacroManagementService macroManagement;
+
+    private HashSet<VirtualKey> pressedKeys = new();
+    private bool mainUiKeyPressed = false;
 
     public event Action? OnHotkeyPressed;
 
-    public HotkeyService(IKeyState keyState, IDalamudPluginInterface pluginInterface, IConfigurationService configService) {
+    public HotkeyService(
+        IKeyState keyState,
+        IDalamudPluginInterface pluginInterface,
+        IConfigurationService configService,
+        IEmoteExecutionService emoteExecution,
+        IMacroExecutionService macroExecution,
+        IMacroManagementService macroManagement) {
+
         this.keyState = keyState;
         this.pluginInterface = pluginInterface;
         this.configService = configService;
+        this.emoteExecution = emoteExecution;
+        this.macroExecution = macroExecution;
+        this.macroManagement = macroManagement;
 
-        // On écoute la boucle de rendu ImGui pour garantir l'intégrité de l'état WantCaptureKeyboard
         this.pluginInterface.UiBuilder.Draw += this.OnDraw;
     }
 
-    private unsafe void OnDraw() {
-        var config = this.configService.GetConfig();
-        var targetKey = config.Hotkey;
+    public void RegisterHotkey(KeyCombination key, ActionReference action) {
+        var profile = this.configService.GetCurrentProfile();
+        var existing = profile.Hotkeys.FirstOrDefault(h => h.Key.Equals(key));
 
-        if (targetKey == 0) return;
+        if (existing != null) {
+            existing.Action = action;
+        }
+        else {
+            profile.Hotkeys.Add(new HotkeyBinding { Key = key, Action = action });
+        }
 
-        bool isKeyPressed = this.keyState[targetKey];
-        bool isInputFocused = false;
+        this.configService.Save();
+    }
 
+    public void UnregisterHotkey(KeyCombination key) {
+        var profile = this.configService.GetCurrentProfile();
+        if (profile.Hotkeys.RemoveAll(h => h.Key.Equals(key)) > 0) this.configService.Save();
+    }
+
+    public KeyCombination? GetAssignedKey(ActionReference action) {
+        var profile = this.configService.GetCurrentProfile();
+        return profile.Hotkeys.FirstOrDefault(h => h.Action.Equals(action))?.Key;
+    }
+
+    public bool IsKeyAssigned(KeyCombination key) {
+        var profile = this.configService.GetCurrentProfile();
+        return profile.Hotkeys.Any(h => h.Key.Equals(key));
+    }
+
+    private unsafe bool IsInputFocused() {
         try {
-            if (ImGui.GetIO().WantCaptureKeyboard) isInputFocused = true;
+            if (ImGui.GetIO().WantCaptureKeyboard) return true;
 
             var uiModule = UIModule.Instance();
             if (uiModule != null) {
                 var raptureAtkModule = uiModule->GetRaptureAtkModule();
-                if (raptureAtkModule != null && raptureAtkModule->AtkModule.IsTextInputActive()) isInputFocused = true;
+                if (raptureAtkModule != null && raptureAtkModule->AtkModule.IsTextInputActive()) return true;
             }
         }
         catch { }
 
-        if (isKeyPressed && !this.wasKeyPressed && !isInputFocused) {
-            bool ctrlPressed = this.keyState[VirtualKey.CONTROL];
-            bool shiftPressed = this.keyState[VirtualKey.SHIFT];
-            bool altPressed = this.keyState[VirtualKey.MENU];
+        return false;
+    }
 
-            if (ctrlPressed == config.HotkeyCtrl && shiftPressed == config.HotkeyShift && altPressed == config.HotkeyAlt) {
+    private void OnDraw() {
+        if (this.IsInputFocused()) return;
+
+        this.CheckMainUiHotkey();
+        this.CheckActionHotkeys();
+        this.CleanupPressedKeys();
+    }
+
+    private void CheckMainUiHotkey() {
+        var config = this.configService.GetConfig();
+        if (config.Hotkey == 0) return;
+
+        bool isCtrl = this.keyState[VirtualKey.CONTROL];
+        bool isShift = this.keyState[VirtualKey.SHIFT];
+        bool isAlt = this.keyState[VirtualKey.MENU];
+
+        if (config.HotkeyCtrl == isCtrl && config.HotkeyShift == isShift && config.HotkeyAlt == isAlt) {
+            bool isKeyDown = this.keyState[config.Hotkey];
+
+            if (isKeyDown && !this.mainUiKeyPressed) {
                 this.OnHotkeyPressed?.Invoke();
+                this.mainUiKeyPressed = true;
+            }
+            else if (!isKeyDown) {
+                this.mainUiKeyPressed = false;
             }
         }
+        else {
+            this.mainUiKeyPressed = false;
+        }
+    }
 
-        this.wasKeyPressed = isKeyPressed;
+    private void CheckActionHotkeys() {
+        var profile = this.configService.GetCurrentProfile();
+
+        bool isCtrl = this.keyState[VirtualKey.CONTROL];
+        bool isShift = this.keyState[VirtualKey.SHIFT];
+        bool isAlt = this.keyState[VirtualKey.MENU];
+
+        foreach (var binding in profile.Hotkeys) {
+            if (binding.Key.Ctrl != isCtrl || binding.Key.Shift != isShift || binding.Key.Alt != isAlt) continue;
+
+            bool isKeyDown = this.keyState[binding.Key.Key];
+            bool wasKeyDown = this.pressedKeys.Contains(binding.Key.Key);
+
+            if (isKeyDown && !wasKeyDown) {
+                this.ExecuteAction(binding.Action);
+                this.pressedKeys.Add(binding.Key.Key);
+            }
+        }
+    }
+
+    private void ExecuteAction(ActionReference action) {
+        if (action.Type == ActionType.Emote) {
+            this.emoteExecution.ExecuteEmote(action.EmoteId);
+        }
+        else if (action.Type == ActionType.Macro) {
+            var macro = this.macroManagement.GetMacros().FirstOrDefault(m => m.Id == action.MacroId);
+            if (macro != null) this.macroExecution.Execute(macro);
+        }
+    }
+
+    private void CleanupPressedKeys() {
+        foreach (var key in this.pressedKeys.ToList()) {
+            if (!this.keyState[key]) this.pressedKeys.Remove(key);
+        }
     }
 
     public void Dispose() {
