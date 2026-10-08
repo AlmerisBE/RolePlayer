@@ -14,6 +14,10 @@ public class HotbarFeature : IFeatureModule {
         services.AddSingleton<ILocalizationProvider, HotbarLocalizationProvider>();
         services.AddSingleton<IHotbarWindowFactory, HotbarWindowFactory>();
 
+        services.AddSingleton<IHotbarVisibilityService, HotbarVisibilityService>();
+        services.AddSingleton<IHotbarLayoutService, HotbarLayoutService>();
+        services.AddSingleton<IHotbarButtonRenderer, HotbarButtonRenderer>();
+
         services.AddSingleton<HotbarManagerComponent>();
     }
 }

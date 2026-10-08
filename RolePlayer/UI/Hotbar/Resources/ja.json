@@ -10,5 +10,13 @@
   "config_hb_fill_lefttoright": "左から右へ",
   "config_hb_fill_righttoleft": "右から左へ",
   "config_hb_fill_toptobottom": "上から下へ",
-  "config_hb_fill_bottomtotop": "下から上へ"
+  "config_hb_fill_bottomtotop": "下から上へ",
+  "hotkey_assign_title": "ショートカットを割り当てる",
+  "hotkey_listening": "キーの組み合わせを押してください...",
+  "hotkey_conflict": "この組み合わせはすでに割り当てられています：\n{0}\n\n上書きしますか？",
+  "hotkey_confirm": "上書きする",
+  "hotkey_cancel": "キャンセル",
+  "hotkey_remove": "ショートカットを削除",
+  "hotkey_current": "ショートカット：{0}",
+  "hotkey_none": "ショートカット：[ なし ]"
 }

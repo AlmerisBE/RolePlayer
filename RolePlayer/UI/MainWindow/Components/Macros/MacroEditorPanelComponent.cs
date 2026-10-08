@@ -12,6 +12,8 @@ using RolePlayer.Core.Macros.Contracts;
 using RolePlayer.Core.Macros.Engine.Contracts;
 using RolePlayer.Core.Macros.Models;
 using RolePlayer.Core.MetaData.Contracts;
+using RolePlayer.UI.Input.Components;
+using RolePlayer.UI.Input.Contracts;
 using RolePlayer.UI.Localization.Contracts;
 using RolePlayer.UI.MainWindow.Contracts;
 using RolePlayer.UI.MainWindow.Windows;
@@ -34,6 +36,8 @@ public class MacroEditorPanelComponent {
     private IMacroSelectionState selectionState;
     private IMacroCompiler macroCompiler;
     private MacroGuideWindow macroGuideWindow;
+    private IHotkeyService hotkeyService;
+    private HotkeyAssignerModal hotkeyAssignerModal;
 
     private string autoTranslateSearch = string.Empty;
     private List<AutoTranslateResult> autoTranslateResults = new();
@@ -53,7 +57,9 @@ public class MacroEditorPanelComponent {
         IContextManagementService contextService,
         IMacroSelectionState selectionState,
         IMacroCompiler macroCompiler,
-        MacroGuideWindow macroGuideWindow) {
+        MacroGuideWindow macroGuideWindow,
+        IHotkeyService hotkeyService,
+        HotkeyAssignerModal hotkeyAssignerModal) {
 
         this.macroService = macroService;
         this.macroExecutionService = macroExecutionService;
@@ -68,6 +74,8 @@ public class MacroEditorPanelComponent {
         this.selectionState = selectionState;
         this.macroCompiler = macroCompiler;
         this.macroGuideWindow = macroGuideWindow;
+        this.hotkeyService = hotkeyService;
+        this.hotkeyAssignerModal = hotkeyAssignerModal;
     }
 
     public void Draw() {
@@ -91,7 +99,6 @@ public class MacroEditorPanelComponent {
         var closeBtnWidth = ImGui.CalcTextSize(closeIcon).X + (ImGui.GetStyle().FramePadding.X * 2);
         ImGui.PopFont();
 
-        // 1. Titre de la macro et bouton de fermeture aligné à droite
         ImGui.AlignTextToFramePadding();
         ImGui.SetWindowFontScale(1.3f);
         string title = string.IsNullOrWhiteSpace(macro.Name) ? this.localization.Translate("config_macro_settings") : macro.Name;
@@ -109,7 +116,6 @@ public class MacroEditorPanelComponent {
 
         ImGui.Spacing();
 
-        // 2. Ligne des boutons d'actions secondaires
         ImGui.PushFont(UiBuilder.IconFont);
         if (ImGui.Button($"{copyIcon}##CopyMacroDetails")) ImGui.SetClipboardText(macro.Content);
         ImGui.PopFont();
@@ -149,7 +155,6 @@ public class MacroEditorPanelComponent {
         ImGui.Spacing();
         ImGui.Separator();
 
-        // 3. Zone déroulante du contenu
         if (ImGui.BeginChild("MacroEditorScrollArea")) {
             ImGui.Spacing();
 
@@ -206,6 +211,33 @@ public class MacroEditorPanelComponent {
             if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("macro_command_tooltip"));
 
             ImGui.EndDisabled();
+
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
+
+            var actionRef = new ActionReference { Type = ActionType.Macro, MacroId = macro.Id };
+            var currentHotkey = this.hotkeyService.GetAssignedKey(actionRef);
+
+            if (currentHotkey != null) {
+                ImGui.TextUnformatted(this.localization.Translate("hotkey_current", currentHotkey.ToString()));
+
+                if (ImGui.Button(this.localization.Translate("hotkey_assign_title"))) {
+                    this.hotkeyAssignerModal.Open(actionRef);
+                }
+                ImGui.SameLine();
+                if (ImGui.Button(this.localization.Translate("hotkey_remove"))) {
+                    this.hotkeyService.UnregisterHotkey(currentHotkey);
+                }
+            }
+            else {
+                ImGui.TextDisabled(this.localization.Translate("hotkey_none"));
+                if (ImGui.Button(this.localization.Translate("hotkey_assign_title"))) {
+                    this.hotkeyAssignerModal.Open(actionRef);
+                }
+            }
+
+            this.hotkeyAssignerModal.Draw();
 
             ImGui.Spacing();
             ImGui.Separator();

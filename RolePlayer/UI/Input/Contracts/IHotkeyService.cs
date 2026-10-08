@@ -9,5 +9,8 @@ public interface IHotkeyService {
     void RegisterHotkey(KeyCombination key, ActionReference action);
     void UnregisterHotkey(KeyCombination key);
     KeyCombination? GetAssignedKey(ActionReference action);
-    bool IsKeyAssigned(KeyCombination key);
+    ActionReference? GetAssignedAction(KeyCombination key);
+
+    void Suspend();
+    void Resume();
 }

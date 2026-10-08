@@ -9,6 +9,8 @@ using RolePlayer.Core.Macros.Contracts;
 using RolePlayer.Core.MetaData.Contracts;
 using RolePlayer.UI.EmoteBrowser.Contracts;
 using RolePlayer.UI.Hotbar.Components;
+using RolePlayer.UI.Input.Components;
+using RolePlayer.UI.Input.Contracts;
 using RolePlayer.UI.Localization.Contracts;
 using System.Linq;
 using System.Numerics;
@@ -25,6 +27,8 @@ public class EmoteDetailsPanel {
     private HotbarManagerComponent hotbarManager;
     private ILocalizationService localization;
     private IMacroManagementService macroService;
+    private IHotkeyService hotkeyService;
+    private HotkeyAssignerModal hotkeyAssignerModal;
 
     public EmoteDetailsPanel(
         IEmoteModState modStateProvider,
@@ -37,7 +41,9 @@ public class EmoteDetailsPanel {
         IContextManagementService contextService,
         HotbarManagerComponent hotbarManager,
         ILocalizationService localization,
-        IMacroManagementService macroService) {
+        IMacroManagementService macroService,
+        IHotkeyService hotkeyService,
+        HotkeyAssignerModal hotkeyAssignerModal) {
 
         this.modStateProvider = modStateProvider;
         this.selectionState = selectionState;
@@ -50,6 +56,8 @@ public class EmoteDetailsPanel {
         this.hotbarManager = hotbarManager;
         this.localization = localization;
         this.macroService = macroService;
+        this.hotkeyService = hotkeyService;
+        this.hotkeyAssignerModal = hotkeyAssignerModal;
     }
 
     public void Draw() {
@@ -149,6 +157,33 @@ public class EmoteDetailsPanel {
             else {
                 ImGui.TextDisabled(this.localization.Translate("browser_details_not_unlocked"));
             }
+
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
+
+            var actionRef = new ActionReference { Type = ActionType.Emote, EmoteId = emote.Id };
+            var currentHotkey = this.hotkeyService.GetAssignedKey(actionRef);
+
+            if (currentHotkey != null) {
+                ImGui.TextUnformatted(this.localization.Translate("hotkey_current", currentHotkey.ToString()));
+
+                if (ImGui.Button(this.localization.Translate("hotkey_assign_title"))) {
+                    this.hotkeyAssignerModal.Open(actionRef);
+                }
+                ImGui.SameLine();
+                if (ImGui.Button(this.localization.Translate("hotkey_remove"))) {
+                    this.hotkeyService.UnregisterHotkey(currentHotkey);
+                }
+            }
+            else {
+                ImGui.TextDisabled(this.localization.Translate("hotkey_none"));
+                if (ImGui.Button(this.localization.Translate("hotkey_assign_title"))) {
+                    this.hotkeyAssignerModal.Open(actionRef);
+                }
+            }
+
+            this.hotkeyAssignerModal.Draw();
 
             ImGui.Spacing();
             ImGui.Separator();

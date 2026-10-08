@@ -10,5 +10,13 @@
   "config_hb_fill_lefttoright": "De gauche à droite",
   "config_hb_fill_righttoleft": "De droite à gauche",
   "config_hb_fill_toptobottom": "De haut en bas",
-  "config_hb_fill_bottomtotop": "De bas en haut"
+  "config_hb_fill_bottomtotop": "De bas en haut",
+  "hotkey_assign_title": "Assigner un raccourci",
+  "hotkey_listening": "Appuyez sur une combinaison de touches...",
+  "hotkey_conflict": "Cette combinaison est déjà assignée à :\n{0}\n\nVoulez-vous l'écraser ?",
+  "hotkey_confirm": "Écraser",
+  "hotkey_cancel": "Annuler",
+  "hotkey_remove": "Supprimer le raccourci",
+  "hotkey_current": "Raccourci : {0}",
+  "hotkey_none": "Raccourci : [ Aucun ]"
 }

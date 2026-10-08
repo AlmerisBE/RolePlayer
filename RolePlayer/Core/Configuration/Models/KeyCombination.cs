@@ -11,6 +11,23 @@ public class KeyCombination : IEquatable<KeyCombination> {
     public bool Shift { get; set; }
     public bool Alt { get; set; }
 
+    public void GetAbbreviatedFormat(out string modifiers, out string mainKey) {
+        modifiers = string.Empty;
+        if (this.Ctrl) modifiers += "c";
+        if (this.Shift) modifiers += "s";
+        if (this.Alt) modifiers += "a";
+
+        mainKey = this.Key.ToString();
+
+        // Nettoyage des noms de touches peu esthétiques de l'énumération
+        if (mainKey.StartsWith("D") && mainKey.Length == 2 && char.IsDigit(mainKey[1])) {
+            mainKey = mainKey.Substring(1);
+        }
+        else if (mainKey.StartsWith("NUMPAD")) {
+            mainKey = "N" + mainKey.Substring(6);
+        }
+    }
+
     public bool Equals(KeyCombination? other) {
         if (other is null) return false;
         return this.Key == other.Key && this.Ctrl == other.Ctrl && this.Shift == other.Shift && this.Alt == other.Alt;

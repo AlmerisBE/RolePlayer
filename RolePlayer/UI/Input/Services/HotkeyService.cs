@@ -24,6 +24,7 @@ public class HotkeyService : IHotkeyService, IDisposable {
 
     private HashSet<VirtualKey> pressedKeys = new();
     private bool mainUiKeyPressed = false;
+    private bool isSuspended = false;
 
     public event Action? OnHotkeyPressed;
 
@@ -45,6 +46,25 @@ public class HotkeyService : IHotkeyService, IDisposable {
         this.pluginInterface.UiBuilder.Draw += this.OnDraw;
     }
 
+    public void Suspend() {
+        this.isSuspended = true;
+    }
+
+    public void Resume() {
+        this.isSuspended = false;
+        this.pressedKeys.Clear();
+
+        // Neutralise toutes les touches actuellement enfoncées (ex: celles utilisées dans la modale)
+        foreach (var key in this.keyState.GetValidVirtualKeys()) {
+            if (this.keyState[key]) {
+                this.pressedKeys.Add(key);
+            }
+        }
+
+        var config = this.configService.GetConfig();
+        this.mainUiKeyPressed = config.Hotkey != 0 && this.keyState[config.Hotkey];
+    }
+
     public void RegisterHotkey(KeyCombination key, ActionReference action) {
         var profile = this.configService.GetCurrentProfile();
         var existing = profile.Hotkeys.FirstOrDefault(h => h.Key.Equals(key));
@@ -57,6 +77,11 @@ public class HotkeyService : IHotkeyService, IDisposable {
         }
 
         this.configService.Save();
+
+        // En cas d'appel manuel hors modale, on neutralise la touche directement
+        if (this.keyState[key.Key]) {
+            this.pressedKeys.Add(key.Key);
+        }
     }
 
     public void UnregisterHotkey(KeyCombination key) {
@@ -69,9 +94,9 @@ public class HotkeyService : IHotkeyService, IDisposable {
         return profile.Hotkeys.FirstOrDefault(h => h.Action.Equals(action))?.Key;
     }
 
-    public bool IsKeyAssigned(KeyCombination key) {
+    public ActionReference? GetAssignedAction(KeyCombination key) {
         var profile = this.configService.GetCurrentProfile();
-        return profile.Hotkeys.Any(h => h.Key.Equals(key));
+        return profile.Hotkeys.FirstOrDefault(h => h.Key.Equals(key))?.Action;
     }
 
     private unsafe bool IsInputFocused() {
@@ -90,7 +115,10 @@ public class HotkeyService : IHotkeyService, IDisposable {
     }
 
     private void OnDraw() {
-        if (this.IsInputFocused()) return;
+        if (this.IsInputFocused() || this.isSuspended) {
+            this.CleanupPressedKeys();
+            return;
+        }
 
         this.CheckMainUiHotkey();
         this.CheckActionHotkeys();

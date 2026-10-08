@@ -10,5 +10,13 @@
   "config_hb_fill_lefttoright": "Left to Right",
   "config_hb_fill_righttoleft": "Right to Left",
   "config_hb_fill_toptobottom": "Top to Bottom",
-  "config_hb_fill_bottomtotop": "Bottom to Top"
+  "config_hb_fill_bottomtotop": "Bottom to Top",
+  "hotkey_assign_title": "Assign Hotkey",
+  "hotkey_listening": "Press any key combination...",
+  "hotkey_conflict": "This combination is already assigned to:\n{0}\n\nDo you want to overwrite it?",
+  "hotkey_confirm": "Overwrite",
+  "hotkey_cancel": "Cancel",
+  "hotkey_remove": "Remove Hotkey",
+  "hotkey_current": "Hotkey: {0}",
+  "hotkey_none": "Hotkey: [ None ]"
 }
