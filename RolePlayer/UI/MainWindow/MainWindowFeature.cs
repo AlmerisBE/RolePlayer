@@ -29,6 +29,7 @@ public class MainWindowFeature : IFeatureModule {
         services.AddSingleton<GroupsConfigSubTab>();
         services.AddSingleton<TagsConfigSubTab>();
         services.AddSingleton<ContextsConfigSubTab>();
+        services.AddSingleton<HotkeysConfigSubTab>();
 
         // Injection d'état pour les Macros
         services.AddSingleton<IMacroSelectionState, MacroSelectionState>();

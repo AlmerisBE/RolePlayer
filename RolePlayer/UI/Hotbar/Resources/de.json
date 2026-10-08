@@ -18,5 +18,12 @@
   "hotkey_cancel": "Abbrechen",
   "hotkey_remove": "Tastenkürzel entfernen",
   "hotkey_current": "Tastenkürzel: {0}",
-  "hotkey_none": "Tastenkürzel: [ Keine ]"
+  "hotkey_none": "Tastenkürzel: [ Keine ]",
+  "config_tab_hotkeys": "Tastenkürzel",
+  "config_hotkeys_description": "Verwalten Sie hier Ihre zugewiesenen Tastenkürzel für Emotes und Makros.",
+  "config_hotkeys_col_key": "Taste",
+  "config_hotkeys_col_type": "Typ",
+  "config_hotkeys_col_action": "Aktion",
+  "config_hotkeys_col_delete": "Entf",
+  "config_hotkeys_add_new": "Neues Tastenkürzel hinzufügen"
 }

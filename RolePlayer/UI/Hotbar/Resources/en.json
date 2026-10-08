@@ -18,5 +18,12 @@
   "hotkey_cancel": "Cancel",
   "hotkey_remove": "Remove Hotkey",
   "hotkey_current": "Hotkey: {0}",
-  "hotkey_none": "Hotkey: [ None ]"
+  "hotkey_none": "Hotkey: [ None ]",
+  "config_tab_hotkeys": "Hotkeys",
+  "config_hotkeys_description": "Manage your assigned hotkeys for emotes and macros here.",
+  "config_hotkeys_col_key": "Key",
+  "config_hotkeys_col_type": "Type",
+  "config_hotkeys_col_action": "Action",
+  "config_hotkeys_col_delete": "Del",
+  "config_hotkeys_add_new": "Add New Hotkey"
 }

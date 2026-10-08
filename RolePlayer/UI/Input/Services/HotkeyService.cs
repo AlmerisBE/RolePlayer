@@ -54,7 +54,6 @@ public class HotkeyService : IHotkeyService, IDisposable {
         this.isSuspended = false;
         this.pressedKeys.Clear();
 
-        // Neutralise toutes les touches actuellement enfoncées (ex: celles utilisées dans la modale)
         foreach (var key in this.keyState.GetValidVirtualKeys()) {
             if (this.keyState[key]) {
                 this.pressedKeys.Add(key);
@@ -78,7 +77,6 @@ public class HotkeyService : IHotkeyService, IDisposable {
 
         this.configService.Save();
 
-        // En cas d'appel manuel hors modale, on neutralise la touche directement
         if (this.keyState[key.Key]) {
             this.pressedKeys.Add(key.Key);
         }
@@ -101,7 +99,8 @@ public class HotkeyService : IHotkeyService, IDisposable {
 
     private unsafe bool IsInputFocused() {
         try {
-            if (ImGui.GetIO().WantCaptureKeyboard) return true;
+            // Remplacement critique : on ne bloque plus sur le focus de fenêtre, mais uniquement sur l'édition de texte ImGui
+            if (ImGui.GetIO().WantTextInput) return true;
 
             var uiModule = UIModule.Instance();
             if (uiModule != null) {

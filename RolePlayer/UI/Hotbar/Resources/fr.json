@@ -18,5 +18,12 @@
   "hotkey_cancel": "Annuler",
   "hotkey_remove": "Supprimer le raccourci",
   "hotkey_current": "Raccourci : {0}",
-  "hotkey_none": "Raccourci : [ Aucun ]"
+  "hotkey_none": "Raccourci : [ Aucun ]",
+  "config_tab_hotkeys": "Raccourcis",
+  "config_hotkeys_description": "Gérez ici vos raccourcis assignés aux emotes et macros.",
+  "config_hotkeys_col_key": "Touche",
+  "config_hotkeys_col_type": "Type",
+  "config_hotkeys_col_action": "Action",
+  "config_hotkeys_col_delete": "Suppr",
+  "config_hotkeys_add_new": "Ajouter un raccourci"
 }
