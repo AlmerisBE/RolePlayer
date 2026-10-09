@@ -10,5 +10,20 @@
   "config_hb_fill_lefttoright": "Von links nach rechts",
   "config_hb_fill_righttoleft": "Von rechts nach links",
   "config_hb_fill_toptobottom": "Von oben nach unten",
-  "config_hb_fill_bottomtotop": "Von unten nach oben"
+  "config_hb_fill_bottomtotop": "Von unten nach oben",
+  "hotkey_assign_title": "Tastenkürzel zuweisen",
+  "hotkey_listening": "Drücken Sie eine beliebige Tastenkombination...",
+  "hotkey_conflict": "Diese Kombination ist bereits zugewiesen an:\n{0}\n\nMöchten Sie sie überschreiben?",
+  "hotkey_confirm": "Überschreiben",
+  "hotkey_cancel": "Abbrechen",
+  "hotkey_remove": "Tastenkürzel entfernen",
+  "hotkey_current": "Tastenkürzel: {0}",
+  "hotkey_none": "Tastenkürzel: [ Keine ]",
+  "config_tab_hotkeys": "Tastenkürzel",
+  "config_hotkeys_description": "Verwalten Sie hier Ihre zugewiesenen Tastenkürzel für Emotes und Makros.",
+  "config_hotkeys_col_key": "Taste",
+  "config_hotkeys_col_type": "Typ",
+  "config_hotkeys_col_action": "Aktion",
+  "config_hotkeys_col_delete": "Entf",
+  "config_hotkeys_add_new": "Neues Tastenkürzel hinzufügen"
 }

@@ -10,5 +10,20 @@
   "config_hb_fill_lefttoright": "De gauche à droite",
   "config_hb_fill_righttoleft": "De droite à gauche",
   "config_hb_fill_toptobottom": "De haut en bas",
-  "config_hb_fill_bottomtotop": "De bas en haut"
+  "config_hb_fill_bottomtotop": "De bas en haut",
+  "hotkey_assign_title": "Assigner un raccourci",
+  "hotkey_listening": "Appuyez sur une combinaison de touches...",
+  "hotkey_conflict": "Cette combinaison est déjà assignée à :\n{0}\n\nVoulez-vous l'écraser ?",
+  "hotkey_confirm": "Écraser",
+  "hotkey_cancel": "Annuler",
+  "hotkey_remove": "Supprimer le raccourci",
+  "hotkey_current": "Raccourci : {0}",
+  "hotkey_none": "Raccourci : [ Aucun ]",
+  "config_tab_hotkeys": "Raccourcis",
+  "config_hotkeys_description": "Gérez ici vos raccourcis assignés aux emotes et macros.",
+  "config_hotkeys_col_key": "Touche",
+  "config_hotkeys_col_type": "Type",
+  "config_hotkeys_col_action": "Action",
+  "config_hotkeys_col_delete": "Suppr",
+  "config_hotkeys_add_new": "Ajouter un raccourci"
 }

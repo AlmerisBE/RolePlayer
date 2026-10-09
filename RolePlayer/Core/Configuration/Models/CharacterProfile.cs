@@ -9,4 +9,5 @@ public class CharacterProfile {
     public string CharacterName { get; set; } = string.Empty;
     public Guid ActiveContextId { get; set; } = Guid.Empty;
     public List<RoleplayMacro> Macros { get; set; } = new();
+    public List<HotkeyBinding> Hotkeys { get; set; } = new();
 }
