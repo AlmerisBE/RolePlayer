@@ -23,12 +23,16 @@ public class HotbarVisibilityService : IHotbarVisibilityService {
 
     public bool ShouldHide(HotbarConfig config) {
         if (!this.configService.GetConfig().EnableHotbars) return true;
-
         if (!this.clientState.IsLoggedIn) return true;
 
-        if (this.condition[ConditionFlag.WatchingCutscene]) return true;
+        if (this.condition[ConditionFlag.WatchingCutscene] || this.condition[ConditionFlag.WatchingCutscene78]) return true;
         if (this.condition[ConditionFlag.BetweenAreas] || this.condition[ConditionFlag.BetweenAreas51]) return true;
         if (this.condition[ConditionFlag.LoggingOut]) return true;
+
+        if (this.condition[ConditionFlag.OccupiedInEvent] ||
+            this.condition[ConditionFlag.OccupiedInQuestEvent] ||
+            this.condition[ConditionFlag.OccupiedSummoningBell]) { return true; }
+
         if (config.HideInCombat && this.condition[ConditionFlag.InCombat]) return true;
         if (config.HideInDuty && (this.condition[ConditionFlag.BoundByDuty] || this.condition[ConditionFlag.BoundByDuty56])) return true;
 
