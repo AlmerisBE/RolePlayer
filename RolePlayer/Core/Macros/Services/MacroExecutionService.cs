@@ -3,11 +3,13 @@
 using RolePlayer.Core.Macros.Contracts;
 using RolePlayer.Core.Macros.Engine.Contracts;
 using RolePlayer.Core.Macros.Models;
+using System;
 
 public class MacroExecutionService : IMacroExecutionService {
     private IMacroEngine engine;
 
     public bool IsExecuting => this.engine.IsRunning;
+    public Guid? ExecutingMacroId => this.engine.ExecutingMacroId;
 
     public MacroExecutionService(IMacroEngine engine) {
         this.engine = engine;

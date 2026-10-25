@@ -19,6 +19,8 @@ public class MacroEngine : IMacroEngine, IDisposable {
 
     public bool IsRunning => this.currentContext != null && this.currentContext.State != MacroExecutionState.Finished && this.currentContext.State != MacroExecutionState.Error;
 
+    public Guid? ExecutingMacroId => this.currentContext?.RootMacroId;
+
     public MacroEngine(
         IMacroCompiler compiler,
         ISystemVariableProvider systemVariableProvider,
