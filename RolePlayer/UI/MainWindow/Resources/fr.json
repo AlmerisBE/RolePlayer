@@ -155,5 +155,6 @@
   "macro_guide_vars_emote_unlocked": "Renvoie vrai si l'emote est débloquée. Exemple : {Emote.Unlocked./dance}",
   "macro_guide_vars_emote_active_cmd": "Renvoie vrai si le joueur exécute actuellement l'emote spécifiée.",
   "macro_guide_vars_emote_active_id": "Renvoie l'ID de l'emote actuellement active.",
-  "macro_guide_vars_player_job": "Renvoie l'abréviation de la classe/job actuel (ex: PLD, WHM)."
+  "macro_guide_vars_player_job": "Renvoie l'abréviation de la classe/job actuel (ex: PLD, WHM).",
+  "config_macro_stop": "Arrêter la Macro"
 }

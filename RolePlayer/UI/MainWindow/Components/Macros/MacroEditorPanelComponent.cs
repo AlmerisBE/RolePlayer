@@ -92,7 +92,6 @@ public class MacroEditorPanelComponent {
         string copyIcon = FontAwesomeIcon.Copy.ToIconString();
         string lockIcon = macro.IsLocked ? FontAwesomeIcon.Lock.ToIconString() : FontAwesomeIcon.Unlock.ToIconString();
         string guideIcon = FontAwesomeIcon.QuestionCircle.ToIconString();
-        string playIcon = FontAwesomeIcon.Play.ToIconString();
         string closeIcon = FontAwesomeIcon.Times.ToIconString();
 
         ImGui.PushFont(UiBuilder.IconFont);
@@ -146,11 +145,24 @@ public class MacroEditorPanelComponent {
         ImGui.SameLine();
 
         ImGui.PushFont(UiBuilder.IconFont);
-        ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.2f, 0.6f, 0.2f, 1.0f));
-        if (ImGui.Button($"{playIcon}##PlayMacroDetails")) this.macroExecutionService.Execute(macro);
-        ImGui.PopStyleColor();
-        ImGui.PopFont();
-        if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_macro_execute"));
+        if (this.macroExecutionService.IsExecuting) {
+            ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
+            if (ImGui.Button($"{FontAwesomeIcon.Stop.ToIconString()}##StopMacroDetails")) {
+                this.macroExecutionService.CancelAll();
+            }
+            ImGui.PopStyleColor();
+            ImGui.PopFont();
+            if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_macro_stop"));
+        }
+        else {
+            ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.2f, 0.6f, 0.2f, 1.0f));
+            if (ImGui.Button($"{FontAwesomeIcon.Play.ToIconString()}##PlayMacroDetails")) {
+                this.macroExecutionService.Execute(macro);
+            }
+            ImGui.PopStyleColor();
+            ImGui.PopFont();
+            if (ImGui.IsItemHovered()) ImGui.SetTooltip(this.localization.Translate("config_macro_execute"));
+        }
 
         ImGui.Spacing();
         ImGui.Separator();

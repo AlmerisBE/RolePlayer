@@ -155,5 +155,6 @@
   "macro_guide_vars_emote_unlocked": "エモートが解放されている場合、真を返します。例: {Emote.Unlocked./dance}",
   "macro_guide_vars_emote_active_cmd": "プレイヤーが現在指定されたエモートを実行している場合、真を返します。",
   "macro_guide_vars_emote_active_id": "現在アクティブなエモートのIDを返します。",
-  "macro_guide_vars_player_job": "現在のジョブの略称（例: PLD, WHM）を返します。"
+  "macro_guide_vars_player_job": "現在のジョブの略称（例: PLD, WHM）を返します。",
+  "config_macro_stop": "マクロを停止"
 }

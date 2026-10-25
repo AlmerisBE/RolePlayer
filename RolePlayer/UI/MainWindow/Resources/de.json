@@ -155,5 +155,6 @@
   "macro_guide_vars_emote_unlocked": "Gibt wahr zurück, wenn das Emote freigeschaltet ist. Beispiel: {Emote.Unlocked./dance}",
   "macro_guide_vars_emote_active_cmd": "Gibt wahr zurück, wenn der Spieler das angegebene Emote ausführt.",
   "macro_guide_vars_emote_active_id": "Gibt die ID des aktuell aktiven Emotes zurück.",
-  "macro_guide_vars_player_job": "Gibt die aktuelle Jobabkürzung zurück (z. B. PLD, WHM)."
+  "macro_guide_vars_player_job": "Gibt die aktuelle Jobabkürzung zurück (z. B. PLD, WHM).",
+  "config_macro_stop": "Makro stoppen"
 }
