@@ -1,6 +1,7 @@
 ﻿namespace RolePlayer.API.GameEvents.Services;
 
 using Dalamud.Game.Chat;
+using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Plugin.Services;
 using RolePlayer.API.GameEvents.Contracts;
@@ -11,6 +12,7 @@ using RolePlayer.Core.Logging.Contracts;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 
 public class ChatWatcher : IGameEventWatcher {
@@ -65,6 +67,24 @@ public class ChatWatcher : IGameEventWatcher {
         this.participants.Clear();
     }
 
+    private string ExtractTextWithCrossWorld(SeString? seString) {
+        if (seString == null || seString.Payloads == null) return string.Empty;
+
+        var sb = new StringBuilder();
+        foreach (var payload in seString.Payloads) {
+            if (payload is TextPayload tp) {
+                sb.Append(tp.Text);
+            }
+            else if (payload is IconPayload) {
+                // By converting any IconPayload to '@', we guarantee the cross-world separator is preserved 
+                // before passing the string to the PlayerNameNormalizer.
+                sb.Append('@');
+            }
+        }
+
+        return sb.ToString();
+    }
+
     private bool IsFallbackDiceRoll(string messageText) {
         if (this.dynamicDicePatterns == null || this.dynamicDicePatterns.Count == 0) {
             string lowerText = messageText.ToLowerInvariant();
@@ -114,7 +134,7 @@ public class ChatWatcher : IGameEventWatcher {
         var channel = message.LogKind.ToGameChatChannel();
 
         if (channel.HasValue) {
-            string senderName = this.nameNormalizer.Normalize(message.Sender?.TextValue ?? string.Empty);
+            string senderName = this.nameNormalizer.Normalize(this.ExtractTextWithCrossWorld(message.Sender));
             if (string.IsNullOrEmpty(senderName)) return;
 
             if (this.RestrictToParticipants && !this.participants.Contains(senderName)) return;
@@ -131,7 +151,7 @@ public class ChatWatcher : IGameEventWatcher {
         this.logger.Debug($"[ChatWatcher] Handling dice roll string: '{messageText}'");
 
         if (this.diceParser.TryParse(messageText, out int roll, out int maxRoll)) {
-            string sender = this.nameNormalizer.Normalize(message.Sender?.TextValue ?? string.Empty);
+            string sender = this.nameNormalizer.Normalize(this.ExtractTextWithCrossWorld(message.Sender));
 
             if (string.IsNullOrEmpty(sender)) {
                 foreach (var payload in message.Message.Payloads) {
@@ -142,14 +162,15 @@ public class ChatWatcher : IGameEventWatcher {
                 }
             }
 
-            if (string.IsNullOrEmpty(sender)) {
-                // Substitute cross-world icon in raw message text to properly match our normalized participant names
-                string normalizedMessageText = messageText.Replace('\uE05D', '@');
+            if (string.IsNullOrEmpty(sender) || !this.participants.Contains(sender)) {
+                // Reconstruct message text to include @ for icons, ensuring cross-world names can be matched against the participants list.
+                string normalizedMessageText = this.ExtractTextWithCrossWorld(message.Message);
 
                 foreach (var p in this.participants) {
-                    if (!normalizedMessageText.Contains(p, StringComparison.OrdinalIgnoreCase)) continue;
-                    sender = p;
-                    break;
+                    if (normalizedMessageText.Contains(p, StringComparison.OrdinalIgnoreCase)) {
+                        sender = p;
+                        break;
+                    }
                 }
             }
 
