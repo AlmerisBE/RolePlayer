@@ -3,15 +3,16 @@
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
+using RolePlayer.API.GameEvents.Contracts;
 using RolePlayer.Core.GameEngine.Contracts;
 using RolePlayer.Core.GameEngine.Models;
 using System;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
 
 public class EmoteWatcher : IGameEventWatcher {
     private IObjectTable objectTable;
     private IFramework framework;
+    private IPlayerNameNormalizer nameNormalizer;
 
     private HashSet<string> participants = new(StringComparer.OrdinalIgnoreCase);
     private Dictionary<nint, uint> previousEmotes = new();
@@ -20,9 +21,10 @@ public class EmoteWatcher : IGameEventWatcher {
     public event Action<GameEvent>? EventFired;
     public bool RestrictToParticipants { get; set; } = true;
 
-    public EmoteWatcher(IObjectTable objectTable, IFramework framework) {
+    public EmoteWatcher(IObjectTable objectTable, IFramework framework, IPlayerNameNormalizer nameNormalizer) {
         this.objectTable = objectTable;
         this.framework = framework;
+        this.nameNormalizer = nameNormalizer;
     }
 
     public void Start() {
@@ -47,22 +49,11 @@ public class EmoteWatcher : IGameEventWatcher {
         this.participants.Clear();
     }
 
-    private string CleanPlayerName(string name) {
-        if (string.IsNullOrEmpty(name)) return string.Empty;
-
-        var parts = name.Split(new[] { '\uE05D', '@' }, 2);
-        var cleanName = parts[0];
-
-        cleanName = Regex.Replace(cleanName, @"^[^\p{L}]+", "");
-
-        return cleanName.Trim();
-    }
-
     private unsafe void OnFrameworkUpdate(IFramework fw) {
         foreach (var obj in this.objectTable) {
             if (obj is not ICharacter chara) continue;
 
-            string name = this.CleanPlayerName(chara.Name.TextValue);
+            string name = this.nameNormalizer.Normalize(chara.Name.TextValue);
 
             if (this.RestrictToParticipants && !this.participants.Contains(name)) continue;
 
