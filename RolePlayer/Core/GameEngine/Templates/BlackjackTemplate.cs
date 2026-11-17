@@ -70,8 +70,8 @@ public class BlackjackTemplate : IDefaultGameTemplate {
                         }
                     },
                     Transitions = new List<GameTransition> {
-                        new GameTransition { TargetStageId = "bust", TriggerType = "OnEvent", ConditionExpression = "Var.score_{Event.Sender} > 21" },
-                        new GameTransition { TargetStageId = "perfect", TriggerType = "OnEvent", ConditionExpression = "Var.score_{Event.Sender} == 21" },
+                        new GameTransition { TargetStageId = "bust", TriggerType = "OnEvent", ConditionExpression = "Var.score_{Var.current_player} > 21" },
+                        new GameTransition { TargetStageId = "perfect", TriggerType = "OnEvent", ConditionExpression = "Var.score_{Var.current_player} == 21" },
                         new GameTransition { TargetStageId = "next_turn", TriggerType = "Manual" }
                     }
                 },
