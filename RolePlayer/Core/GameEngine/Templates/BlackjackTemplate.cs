@@ -94,6 +94,16 @@ public class BlackjackTemplate : IDefaultGameTemplate {
                     }
                 },
                 new GameStage {
+                    Id = "next_turn", Name = "Next Turn Routine", GmDescription = "Checks if the game should progress to the next player or resolve.",
+                    OnEnterActions = new List<GameActionConfig> {
+                        new GameActionConfig { ActionType = "IncrementVariable", Parameters = new Dictionary<string, string> { { "TargetVar", "played_count" }, { "Value", "1" } } }
+                    },
+                    Transitions = new List<GameTransition> {
+                        new GameTransition { TargetStageId = "resolution", TriggerType = "Auto", ConditionExpression = "Var.played_count >= Participants.Count" },
+                        new GameTransition { TargetStageId = "playing", TriggerType = "Auto", ConditionExpression = "Var.played_count < Participants.Count" }
+                    }
+                },
+                new GameStage {
                     Id = "resolution", Name = "Results", GmDescription = "Game over.",
                     OnEnterActions = new List<GameActionConfig> {
                         new GameActionConfig { ActionType = "BroadcastScores", Parameters = new Dictionary<string, string> { { "Prefix", "score_" } } },
