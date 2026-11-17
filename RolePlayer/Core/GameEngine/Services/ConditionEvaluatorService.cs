@@ -24,18 +24,38 @@ public class ConditionEvaluatorService : IConditionEvaluatorService {
 
     public bool Evaluate(string expression, GameSessionContext context) {
         return this.evaluator.Evaluate(expression, varName => {
-            if (varName.Equals("Participants.Count", StringComparison.OrdinalIgnoreCase)) return context.Participants.Count;
-            if (varName.Equals("Participants", StringComparison.OrdinalIgnoreCase)) return context.Participants;
+            string resolvedVarName = varName;
 
-            if (varName.StartsWith("Var.", StringComparison.OrdinalIgnoreCase)) {
-                string v = varName.Substring(4);
+            // Resolve dynamic tags nested within the variable identifier (e.g. Var.score_{Event.Sender})
+            if (context.CurrentEvent != null) {
+                resolvedVarName = resolvedVarName.Replace("{Event.Sender}", context.CurrentEvent.Sender, StringComparison.OrdinalIgnoreCase);
+
+                if (context.CurrentEvent is DiceRollGameEvent dice) {
+                    resolvedVarName = resolvedVarName.Replace("{Event.Roll}", dice.Roll.ToString(), StringComparison.OrdinalIgnoreCase);
+                    resolvedVarName = resolvedVarName.Replace("{Event.MaxRoll}", dice.MaxRoll.ToString(), StringComparison.OrdinalIgnoreCase);
+                }
+            }
+
+            if (resolvedVarName.Contains("{Var.", StringComparison.OrdinalIgnoreCase)) {
+                foreach (var kvp in context.Variables) {
+                    if (kvp.Value is not List<string>) {
+                        resolvedVarName = resolvedVarName.Replace($"{{Var.{kvp.Key}}}", kvp.Value?.ToString() ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+                    }
+                }
+            }
+
+            if (resolvedVarName.Equals("Participants.Count", StringComparison.OrdinalIgnoreCase)) return context.Participants.Count;
+            if (resolvedVarName.Equals("Participants", StringComparison.OrdinalIgnoreCase)) return context.Participants;
+
+            if (resolvedVarName.StartsWith("Var.", StringComparison.OrdinalIgnoreCase)) {
+                string v = resolvedVarName.Substring(4);
                 if (context.Variables.TryGetValue(v, out var val)) return val;
                 return null;
             }
 
-            if (varName.StartsWith("Event.", StringComparison.OrdinalIgnoreCase)) {
+            if (resolvedVarName.StartsWith("Event.", StringComparison.OrdinalIgnoreCase)) {
                 if (context.CurrentEvent == null) return null;
-                string prop = varName.Substring(6).ToLowerInvariant();
+                string prop = resolvedVarName.Substring(6).ToLowerInvariant();
 
                 if (prop == "sender") return context.CurrentEvent.Sender;
                 if (context.CurrentEvent is ChatGameEvent chat && prop == "message") return chat.Message;
