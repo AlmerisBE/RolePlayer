@@ -1,6 +1,6 @@
 ﻿namespace RolePlayer.API.GameEvents.Services;
 
-using Dalamud.Game.ClientState.Objects.Types;
+using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using Lumina.Excel.Sheets;
@@ -64,7 +64,8 @@ public class EmoteWatcher : IGameEventWatcher {
         uint localWorldId = localPlayer.HomeWorld.RowId;
 
         foreach (var obj in this.objectTable) {
-            if (obj is not ICharacter chara) continue;
+            // Check specifically for Player Characters to access HomeWorld safely
+            if (obj is not IPlayerCharacter chara) continue;
 
             string name = this.nameNormalizer.Normalize(chara.Name.TextValue);
 
