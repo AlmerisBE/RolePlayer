@@ -143,8 +143,11 @@ public class ChatWatcher : IGameEventWatcher {
             }
 
             if (string.IsNullOrEmpty(sender)) {
+                // Substitute cross-world icon in raw message text to properly match our normalized participant names
+                string normalizedMessageText = messageText.Replace('\uE05D', '@');
+
                 foreach (var p in this.participants) {
-                    if (!messageText.Contains(p, StringComparison.OrdinalIgnoreCase)) continue;
+                    if (!normalizedMessageText.Contains(p, StringComparison.OrdinalIgnoreCase)) continue;
                     sender = p;
                     break;
                 }
